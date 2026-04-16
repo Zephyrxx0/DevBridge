@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
+import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Message {
   role: "user" | "assistant";
@@ -14,7 +19,13 @@ export default function Home() {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -52,22 +63,70 @@ export default function Home() {
     }
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
+
   return (
-    <div className="flex h-screen flex-col bg-[#050505] text-zinc-100 font-sans selection:bg-indigo-500/30">
+    <div className="flex h-screen flex-col bg-background text-foreground">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-zinc-800/50 bg-black/20 px-8 py-4 backdrop-blur-xl">
+      <header className="flex items-center justify-between border-b border-border/50 bg-background/80 px-6 py-4 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
-            <span className="text-xl font-bold text-white">DB</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg">
+            <span className="text-lg font-bold text-primary-foreground">DB</span>
           </div>
           <div>
-            <h1 className="text-lg font-semibold tracking-tight">DevBridge</h1>
-            <p className="text-xs text-zinc-500 font-medium uppercase tracking-widest">Orchestrator v0.1</p>
+            <h1 className="text-lg font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+              DevBridge
+            </h1>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Orchestrator v0.1</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">System Online</span>
+        
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">System Online</span>
+          </div>
+          
+          {mounted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="h-9 w-9 rounded-lg hover:bg-muted transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  className="h-4 w-4"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                </svg>
+              ) : (
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  className="h-4 w-4"
+                >
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                </svg>
+              )}
+            </Button>
+          )}
         </div>
       </header>
 
@@ -75,81 +134,101 @@ export default function Home() {
       <main className="flex-1 overflow-hidden relative">
         <div 
           ref={scrollRef}
-          className="h-full overflow-y-auto px-4 py-8 space-y-6 scroll-smooth"
+          className="h-full overflow-y-auto px-4 py-8 scroll-smooth"
         >
-          <div className="max-w-3xl mx-auto space-y-8">
+          <div className="max-w-3xl mx-auto space-y-6">
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-4 duration-500`}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-4 duration-300`}
               >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-5 py-3 text-sm leading-relaxed shadow-sm ${
+                <div className="flex gap-3 max-w-[85%]">
+                  {m.role === "assistant" && (
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">DB</AvatarFallback>
+                    </Avatar>
+                  )}
+                  
+                  <Card className={`px-4 py-3 shadow-sm ${
                     m.role === "user"
-                      ? "bg-indigo-600 text-white shadow-indigo-500/10"
-                      : "bg-zinc-900 border border-zinc-800/50 text-zinc-200"
-                  }`}
-                >
-                  {m.content}
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card border border-border/50 text-card-foreground"
+                  }`}>
+                    <p className="text-sm leading-relaxed">{m.content}</p>
+                  </Card>
+                  
+                  {m.role === "user" && (
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">U</AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
               </div>
             ))}
+            
             {isLoading && (
-              <div className="flex justify-start animate-pulse">
-                <div className="bg-zinc-900 border border-zinc-800/50 rounded-2xl px-5 py-3">
-                  <div className="flex gap-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
-                    <div className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
-                    <div className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
-                  </div>
+              <div className="flex justify-start animate-in fade-in duration-200">
+                <div className="flex gap-3">
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">DB</AvatarFallback>
+                  </Avatar>
+                  <Card className="px-4 py-3 bg-card border border-border/50">
+                    <div className="flex gap-1.5">
+                      <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
+                      <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
+                      <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
+                    </div>
+                  </Card>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Ambient Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none opacity-[0.03] overflow-hidden">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500 blur-[150px] rounded-full" />
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500 blur-[150px] rounded-full" />
+        {/* Ambient Glow - subtle, not purple/blue */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none opacity-[0.02] overflow-hidden">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary blur-[150px] rounded-full" />
         </div>
       </main>
 
       {/* Input Area */}
-      <footer className="p-6 bg-gradient-to-t from-black to-transparent">
+      <footer className="p-6 border-t border-border/50 bg-background/50">
         <form 
           onSubmit={handleSubmit}
-          className="max-w-3xl mx-auto relative group"
+          className="max-w-3xl mx-auto relative"
         >
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={isLoading}
-            placeholder="Ask about project intent or implementation..."
-            className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all backdrop-blur-md placeholder:text-zinc-600"
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 flex items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-900/20"
-          >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2.5" 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              className="w-5 h-5 text-white"
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={isLoading}
+              placeholder="Ask about project intent or implementation..."
+              className="flex-1 bg-background border-border rounded-xl px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring transition-all placeholder:text-muted-foreground"
+            />
+            <Button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              size="icon"
+              className="h-[46px] w-12 shrink-0 rounded-xl bg-primary hover:bg-primary/90 transition-colors"
             >
-              <path d="m5 12 7-7 7 7" />
-              <path d="M12 19V5" />
-            </svg>
-          </button>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className="w-5 h-5 text-primary-foreground"
+              >
+                <path d="m5 12 7-7 7 7" />
+                <path d="M12 19V5" />
+              </svg>
+            </Button>
+          </div>
         </form>
-        <p className="text-[10px] text-zinc-600 text-center mt-4 font-medium uppercase tracking-[0.2em]">
+        <p className="text-[10px] text-muted-foreground text-center mt-4 font-medium uppercase tracking-[0.2em]">
           Grounded by Knowledge Graph • Experimental v0.1
         </p>
       </footer>
