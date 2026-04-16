@@ -1,94 +1,115 @@
-# Phase 01: Project Skeleton & Core Orchestrator - Plan
+---
+phase: 01-project-skeleton-core-orchestrator
+plan: "01"
+type: execute
+wave: 1
+depends_on: []
+files_modified:
+  - api/main.py
+  - api/agents/orchestrator.py
+  - api/requirements.txt
+  - web/package.json
+  - web/src/app/page.tsx
+  - web/src/app/layout.tsx
+  - web/src/app/globals.css
+autonomous: true
+requirements: []
 
-**Goal:** Establish the monorepo structure and implement a functional AI Orchestrator with a basic ReAct loop.
-
-## Proposed Changes
-
-### 1. Project Scaffolding
-- [ ] Create `api/` directory for the backend.
-- [ ] Initialize Next.js in `web/` using `create-next-app`.
-
-### 2. Backend Foundation (FastAPI)
-- [ ] Create `api/requirements.txt` with `fastapi`, `uvicorn`, `langgraph`, `langchain-google-vertexai`.
-- [ ] Implement `api/main.py` with basic health check and `/chat` endpoint.
-- [ ] Implement `api/agents/orchestrator.py` using LangGraph's `create_react_agent`.
-- [ ] Mock a `code_search` tool for the agent.
-
-### 3. Frontend Foundation (Next.js)
-- [ ] Setup a simple chat window in `web/src/app/page.tsx`.
-- [ ] Implement a proxy or environment variable to connect to the FastAPI backend.
-
-## Verification Plan
-
-### Automated Tests
-- Check if `api/main.py` is valid python and imports work.
-- Run `curl http://localhost:8000/` to verify backend status.
-- Run `npm run build` in `web/` to ensure no frontend breaks.
-
-### Manual Verification
-- Send a message through the web UI and see if the Orchestrator "thinks" and returns a response.
-
+must_haves:
+  truths:
+    - "Backend API responds at / and /chat"
+    - "Frontend shows chat interface"
+    - "Orchestrator can process messages"
+  artifacts:
+    - path: "api/main.py"
+      provides: "FastAPI with / and /chat"
+    - path: "api/agents/orchestrator.py"
+      provides: "LangGraph ReAct agent"
+    - path: "web/src/app/page.tsx"
+      provides: "Chat UI"
+  key_links:
+    - from: "web/src/app/page.tsx"
+      to: "http://localhost:8000/chat"
+      via: "fetch POST"
 ---
 
-<must_haves>
-- [ ] `api/main.py` successfully starts.
-- [ ] `web/` frontend is accessible.
-- [ ] `/chat` endpoint returns a response from Gemini.
-</must_haves>
+<objective>
+Establish the monorepo structure (Next.js frontend + FastAPI backend) and implement a functional AI Orchestrator with a basic ReAct loop that can respond to chat messages.
+</objective>
+
+<context>
+@.planning/phases/01-project-skeleton-core-orchestrator/01-CONTEXT.md
+
+## Existing Implementation Summary
+- api/main.py — FastAPI app with / and /chat endpoints
+- api/agents/orchestrator.py — LangGraph ReAct agent with code_search tool
+- web/ — Next.js 15 app with chat UI
+</context>
 
 <tasks>
-<task id="01-01" autonomous="true">
-<read_first>
-- .planning/phases/01-project-skeleton-core-orchestrator/01-CONTEXT.md
-</read_first>
-<action>
-Create the `api/` directory and initialize `api/requirements.txt` with core dependencies.
-Implement a generic FastAPI entry point in `api/main.py`.
-</action>
-<acceptance_criteria>
-- `api/requirements.txt` exists and contains `fastapi`.
-- `api/main.py` exists and responds to GET `/`.
-</acceptance_criteria>
+
+<task type="auto">
+  <name>Task 1: Verify backend implementation</name>
+  <files>api/main.py, api/agents/orchestrator.py, api/requirements.txt</files>
+  <read_first>
+  - api/main.py
+  - api/agents/orchestrator.py
+  - api/requirements.txt (check if exists)
+  </read_first>
+  <action>
+Verify the backend is correctly implemented:
+1. api/requirements.txt exists with required dependencies (fastapi, uvicorn, langgraph, langchain-google-vertexai, pydantic, python-dotenv)
+2. api/main.py has working / GET endpoint returning system status
+3. api/main.py has POST /chat endpoint that calls orchestrator.chat()
+4. api/agents/orchestrator.py implements Orchestrator class with chat() method using LangGraph create_react_agent
+  </action>
+  <verify>
+    <automated>python -c "from api.main import app; print('Backend imports OK')"</automated>
+  </verify>
+  <done>Backend responds to GET / with {"status": "online"} and POST /chat returns response</done>
 </task>
 
-<task id="01-02" autonomous="true">
-<read_first>
-- api/main.py
-</read_first>
-<action>
-Implement the LangGraph Orchestrator in `api/agents/orchestrator.py`.
-Use `create_react_agent` with a mock tool.
-Connect it to a POST `/chat` endpoint in `api/main.py`.
-</action>
-<acceptance_criteria>
-- `api/agents/orchestrator.py` implements a functional graph.
-- `api/main.py` has a `/chat` endpoint.
-</acceptance_criteria>
+<task type="auto">
+  <name>Task 2: Verify frontend implementation</name>
+  <files>web/src/app/page.tsx</files>
+  <read_first>
+  - web/src/app/page.tsx
+  - web/package.json
+  </read_first>
+  <action>
+Verify the frontend is correctly implemented:
+1. web/package.json exists (Next.js initialized)
+2. web/src/app/page.tsx has chat interface with message state
+3. handleSubmit function POSTs to http://localhost:8000/chat
+4. UI renders message bubbles with user/assistant roles
+  </read_first>
+  <verify>
+    <automated>cd web && npm run build 2>&1 | head -20</automated>
+  </verify>
+  <done>Frontend builds without errors, chat UI is functional</done>
 </task>
 
-<task id="01-03" autonomous="true">
-<read_first>
-- d:/Codes/Personal/DevBridge/
-</read_first>
-<action>
-Initialize the Next.js frontend in the `web/` directory using:
-`npx create-next-app@latest web --use-npm --tailwind --eslint --app --src-dir --import-alias "@/*" --no-git --yes`
-</action>
-<acceptance_criteria>
-- `web/package.json` exists.
-- `web/src/app/page.tsx` exists.
-</acceptance_criteria>
-</task>
-
-<task id="01-04" autonomous="true">
-<read_first>
-- web/src/app/page.tsx
-</read_first>
-<action>
-Create a basic chat UI in `web/src/app/page.tsx` that sends queries to `http://localhost:8000/chat`.
-</action>
-<acceptance_criteria>
-- Chat UI allows input and displays responses.
-</acceptance_criteria>
-</task>
 </tasks>
+
+<verification>
+- [x] api/requirements.txt exists with dependencies
+- [ ] Backend can import (requires GCP credentials)
+- [ ] web/build succeeds (requires node_modules fix)
+- [ ] / endpoints return status
+</verification>
+
+<success_criteria>
+Monorepo runs end-to-end:
+- Backend at http://localhost:8000 with / and /chat
+- Frontend at http://localhost:3000 with chat UI
+- Chat flow: UI -> /chat -> Orchestrator -> Response
+</success_criteria>
+
+<known_issues>
+1. Backend requires GCP Application Default Credentials to initialize ChatVertexAI
+2. Next.js 16 Turbopack root needs configuration fix
+</known_issues>
+
+<output>
+After completion, create `.planning/phases/01-project-skeleton-core-orchestrator/01-SUMMARY.md`
+</output>
