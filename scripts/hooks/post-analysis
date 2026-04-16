@@ -1,0 +1,24 @@
+#!/bin/sh
+# Post-analysis hook: runs fallow and code-review-graph after commits
+# This hook runs after post-commit to analyze code health and update graph
+
+# Navigate to repo root
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT" || exit 0
+
+# Skip analysis if this is a merge commit (avoid running twice)
+PARENT_COUNT=$(git rev-list --parents -n1 HEAD | wc -l)
+if [ "$PARENT_COUNT" -gt 2 ]; then
+    echo "[post-analysis] Merge commit detected, skipping analysis"
+    exit 0
+fi
+
+# Run fallow analysis (full analysis)
+echo "[post-analysis] Running fallow analysis..."
+fallow analyze --production 2>/dev/null || echo "[post-analysis] fallow not installed, skipping"
+
+# Run code-review-graph to update graph
+echo "[post-analysis] Updating code-review-graph..."
+code-review-graph update 2>/dev/null || echo "[post-analysis] code-review-graph not installed, skipping"
+
+echo "[post-analysis] Done"
