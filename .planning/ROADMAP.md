@@ -3,9 +3,9 @@
 ## Milestone 1: Foundational Bridge (v0.1)
 *Goal: E2E RAG pipeline with basic ingestion and single-agent search.*
 
-- [ ] **Phase 1: Project Skeleton & Core Orchestrator**
-  - [ ] Initialize Next.js & FastAPI project structure.
-  - [ ] Implement basic ReAct loop with Gemini 1.5 Flash.
+- [x] **Phase 1: Project Skeleton & Core Orchestrator** (completed 2026-04-16)
+  - [x] Initialize Next.js & FastAPI project structure.
+  - [x] Implement basic ReAct loop with Gemini 1.5 Flash.
 - [ ] **Phase 2: Data Foundation & Secret Management**
   - [ ] Configure Supabase `pgvector` extension.
   - [ ] Implement GCP Secret Manager integration for API keys.
