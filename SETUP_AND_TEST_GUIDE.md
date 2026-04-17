@@ -2,6 +2,35 @@
 
 This guide gives step-by-step setup and validation instructions for everything implemented up through Phase 2.
 
+## Quickstart (Fast Path)
+
+Run these commands from the project root:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r api/requirements.txt
+cd web
+npm install
+cd ..
+python -m pytest tests -q
+python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+In another terminal:
+
+```powershell
+cd web
+npm run dev
+```
+
+Then open:
+
+```text
+http://localhost:3000
+```
+
 ## 1. Prerequisites
 
 1. Install Git.
