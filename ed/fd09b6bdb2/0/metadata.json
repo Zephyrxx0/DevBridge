@@ -1,0 +1,32 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "edfd09b6bdb2",
+  "session_id": "80edb598-581f-4e14-8b8f-56fafb3cb5eb",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-17T18:11:26.5561753Z",
+  "branch": "phase-02-data-foundation-secrets-management",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".planning/STATE.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "03feb40921ba",
+  "checkpoint_transcript_start": 4,
+  "transcript_lines_at_start": 4,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-17T18:11:26.3768328Z",
+    "agent_lines": 2,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2,
+    "agent_percentage": 100
+  }
+}
