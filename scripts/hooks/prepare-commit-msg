@@ -1,0 +1,12 @@
+#!/bin/sh
+# Entire CLI prepare-commit-msg hook
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+if [ -x "$REPO_ROOT/.venv/Scripts/entire.exe" ]; then
+    "$REPO_ROOT/.venv/Scripts/entire.exe" hooks git prepare-commit-msg "$1" "$2" 2>/dev/null || true
+elif command -v entire >/dev/null 2>&1; then
+    entire hooks git prepare-commit-msg "$1" "$2" 2>/dev/null || true
+elif command -v entire.exe >/dev/null 2>&1; then
+    entire.exe hooks git prepare-commit-msg "$1" "$2" 2>/dev/null || true
+fi

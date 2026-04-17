@@ -1,0 +1,13 @@
+#!/bin/sh
+# Entire CLI pre-push hook
+# $1 is the remote name (for example: origin)
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+if [ -x "$REPO_ROOT/.venv/Scripts/entire.exe" ]; then
+    "$REPO_ROOT/.venv/Scripts/entire.exe" hooks git pre-push "$1" || true
+elif command -v entire >/dev/null 2>&1; then
+    entire hooks git pre-push "$1" || true
+elif command -v entire.exe >/dev/null 2>&1; then
+    entire.exe hooks git pre-push "$1" || true
+fi

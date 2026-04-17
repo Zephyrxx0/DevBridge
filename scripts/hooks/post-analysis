@@ -6,6 +6,27 @@
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT" || exit 0
 
+# Resolve local binaries first so hooks work without an activated shell.
+if [ -x "$REPO_ROOT/.venv/Scripts/fallow.exe" ]; then
+    FALLOW_CMD="$REPO_ROOT/.venv/Scripts/fallow.exe"
+elif command -v fallow >/dev/null 2>&1; then
+    FALLOW_CMD="fallow"
+elif command -v fallow.exe >/dev/null 2>&1; then
+    FALLOW_CMD="fallow.exe"
+else
+    FALLOW_CMD=""
+fi
+
+if [ -x "$REPO_ROOT/.venv/Scripts/code-review-graph.exe" ]; then
+    CRG_CMD="$REPO_ROOT/.venv/Scripts/code-review-graph.exe"
+elif command -v code-review-graph >/dev/null 2>&1; then
+    CRG_CMD="code-review-graph"
+elif command -v code-review-graph.exe >/dev/null 2>&1; then
+    CRG_CMD="code-review-graph.exe"
+else
+    CRG_CMD=""
+fi
+
 # Skip analysis if this is a merge commit (avoid running twice)
 PARENT_COUNT=$(git rev-list --parents -n1 HEAD | wc -l)
 if [ "$PARENT_COUNT" -gt 2 ]; then
@@ -15,10 +36,18 @@ fi
 
 # Run fallow analysis (full analysis)
 echo "[post-analysis] Running fallow analysis..."
-fallow analyze --production 2>/dev/null || echo "[post-analysis] fallow not installed, skipping"
+if [ -n "$FALLOW_CMD" ]; then
+    "$FALLOW_CMD" --production --summary || echo "[post-analysis] fallow run failed, skipping"
+else
+    echo "[post-analysis] fallow not installed, skipping"
+fi
 
 # Run code-review-graph to update graph
 echo "[post-analysis] Updating code-review-graph..."
-code-review-graph update 2>/dev/null || echo "[post-analysis] code-review-graph not installed, skipping"
+if [ -n "$CRG_CMD" ]; then
+    "$CRG_CMD" update || echo "[post-analysis] code-review-graph run failed, skipping"
+else
+    echo "[post-analysis] code-review-graph not installed, skipping"
+fi
 
 echo "[post-analysis] Done"
