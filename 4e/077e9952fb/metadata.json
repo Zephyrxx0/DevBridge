@@ -1,0 +1,27 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "4e077e9952fb",
+  "strategy": "manual-commit",
+  "branch": "phase-02-data-foundation-secrets-management",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "api/agents/orchestrator.py",
+    "api/db/vector_store.py",
+    "sql/setup_vector_store.sql"
+  ],
+  "sessions": [
+    {
+      "metadata": "/4e/077e9952fb/0/metadata.json",
+      "transcript": "/4e/077e9952fb/0/full.jsonl",
+      "content_hash": "/4e/077e9952fb/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
