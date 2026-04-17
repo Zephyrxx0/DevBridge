@@ -1,0 +1,7 @@
+.agent/
+.agents/
+.env
+.venv/
+.github/
+.gsd/
+__pycache__/
