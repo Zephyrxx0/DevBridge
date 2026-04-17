@@ -1,0 +1,26 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "68fb548a4e10",
+  "strategy": "manual-commit",
+  "branch": "phase-02-data-foundation-secrets-management",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "api/agents/orchestrator.py",
+    "api/requirements.txt"
+  ],
+  "sessions": [
+    {
+      "metadata": "/68/fb548a4e10/0/metadata.json",
+      "transcript": "/68/fb548a4e10/0/full.jsonl",
+      "content_hash": "/68/fb548a4e10/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
