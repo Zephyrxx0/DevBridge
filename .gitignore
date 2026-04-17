@@ -2,3 +2,13 @@
 .agents/
 .env
 .venv/
+.gemini/
+.vscode/
+.idea/
+.DS_Store
+node_modules/
+.npm/
+.pnpm-store/
+__pycache__/
+.github/
+api/agents/__pycache__/orchestrator.cpython-313.pyc

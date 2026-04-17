@@ -1,127 +1,108 @@
 ---
-phase: 01-project-skeleton-core-orchestrator
+phase: 02-data-foundation-secrets-management
 plan: "02"
 type: execute
-wave: 1
-depends_on: []
+wave: 2
+depends_on: ["01"]
 files_modified:
-  - web/package.json
-  - web/components/ui/button.tsx
-  - web/components/ui/card.tsx
-  - web/components/ui/theme-toggle.tsx
-  - web/styles/theme.css
-  - web/app/layout.tsx
-  - api/agents/orchestrator.py
-  - .env.example
+  - api/requirements.txt
+  - api/main.py
+files_created:
+  - api/db/session.py
 autonomous: true
-requirements: []
+requirements:
+  - "Configure Supabase pgvector extension"
 
 must_haves:
   truths:
-    - "Frontend uses shadcn/ui components with modern theming"
-    - "Dark and light mode toggle functional and persistent"
-    - "Backend starts without GCP credentials in development mode"
-    - "Chat interface displays with minimal/pretty/cool theme applied"
+    - "Application backend safely connects to the vector database infrastructure"
   artifacts:
-    - path: "web/styles/theme.css"
-      provides: "Shadcn CSS variables for dark/light themes"
-      min_lines: 20
-    - path: "web/components/ui/theme-toggle.tsx"
-      provides: "Theme toggle component"
-      exports: ["ThemeToggle"]
-    - path: "api/agents/orchestrator.py"
-      provides: "LLM initialization with mock fallback"
-      contains: "ChatVertexAI"
-    - path: ".env.example"
-      provides: "Example environment variables including GCP fields"
-      contains: "GCP_PROJECT_ID"
+    - path: "api/db/session.py"
+      provides: "Database SQLAlchemy AsyncEngine management"
   key_links:
-    - from: "web/app/layout.tsx"
-      to: "web/styles/theme.css"
-      via: "import '../styles/theme.css'"
-      pattern: "import.*theme\.css"
-    - from: "web/components/ui/theme-toggle.tsx"
-      to: "web/styles/theme.css"
-      via: "uses theme variables"
-      pattern: "className.*dark"
-    - from: "api/agents/orchestrator.py"
-      to: ".env.example"
-      via: "reads GCP credentials"
-      pattern: "process\\.env\\.GCP_"
+    - "api/main.py lifespan context manages the AsyncEngine lifecycle defined in api/db/session.py"
 ---
 
 <objective>
-Fix UAT gaps: Integrate shadcn/ui for modern UI components, implement theming system with dark/light toggle, apply refined UI using design skills, and fix backend GCP credential initialization issue with lazy loading and mock fallback.
+Establish efficient database connection pooling using SQLAlchemy AsyncEngine, managed safely by the FastAPI app lifespan.
 </objective>
 
 <execution_context>
-@$HOME/.config/opencode/get-shit-done/workflows/execute-plan.md
-@$HOME/.config/opencode/get-shit-done/templates/summary.md
+@.agent/get-shit-done/workflows/execute-plan.md
 </execution_context>
 
 <context>
-@.planning/phases/01-project-skeleton-core-orchestrator/01-PLAN.md
-@.planning/phases/01-project-skeleton-core-orchestrator/01-SUMMARY.md
-# Existing implementation context
-@api/main.py
-@api/agents/orchestrator.py
-@web/src/app/page.tsx
-@web/src/app/layout.tsx
+@.planning/phases/02-data-foundation-secrets-management/02-CONTEXT.md
+@.planning/phases/02-data-foundation-secrets-management/02-RESEARCH.md
 </context>
 
 <tasks>
 
 <task type="auto">
-  <name>Task 1: UI/UX Overhaul - Integrate shadcn/ui and implement theming</name>
-  <files>web/package.json, web/components/ui/button.tsx, web/components/ui/card.tsx, web/components/ui/theme-toggle.tsx, web/styles/theme.css, web/app/layout.tsx</files>
+  <name>Task 1: Update Dependencies</name>
+  <files>
+    api/requirements.txt
+  </files>
   <action>
-    1. Install shadcn/ui dependencies via MCP: run npx shadcn-ui@latest init (or equivalent) to set up shadcn/ui in web/
-    2. Add button and card components: npx shadcn-ui@latest add button card
-    3. Create theme.css using shadcn variables for dark/light mode theming (based on shadcn docs)
-    4. Create theme-toggle.tsx component that toggles between dark and light modes, stores preference in localStorage
-    5. Update layout.tsx to import theme.css and use ThemeToggle component
-    6. Apply frontend-design and ui-ux-pro-max skills to refine UI: adjust spacing, typography, and component usage for minimal/pretty/cool aesthetic
-    7. Ensure all new components are properly exported and typed
+    Append the following lines to `api/requirements.txt`:
+    `langchain-postgres==0.0.17`
+    `psycopg[binary]==3.3.3`
+    `sqlalchemy>=2.0.0`
   </action>
   <verify>
-    <automated>cd web && npm run build --if-present && echo "Frontend build successful"</automated>
+    <automated>pytest tests/test_vector_db.py</automated>
   </verify>
-  <done>Shadcn/ui components integrated, theme system functional, UI refined with modern aesthetics</done>
+  <done>Database dependencies are listed in requirements.txt.</done>
 </task>
 
 <task type="auto">
-  <name>Task 2: Backend Fix - Lazy LLM initialization with mock fallback</name>
-  <files>api/agents/orchestrator.py, .env.example</files>
+  <name>Task 2: Setup Database AsyncEngine</name>
+  <files>
+    api/db/session.py
+  </files>
   <action>
-    1. Modify api/agents/orchestrator.py to lazy-load ChatVertexAI only when needed
-    2. Implement mock fallback that returns a simple response when GCP credentials are missing
-    3. Add checks for required GCP environment variables (GCP_PROJECT_ID, etc.)
-    4. Update .env.example with all required GCP fields and example values
-    5. Ensure orchestrator.chat() works in both mock and real modes
-    6. Keep existing tool (code_search) functionality intact
+    Create `api/db/session.py`.
+    Import `create_async_engine` from `sqlalchemy.ext.asyncio`.
+    Create a global `engine = None` variable.
+    Create `async def init_db_pool(connection_string: str):` that initializes the `engine` using `create_async_engine(connection_string, pool_size=10)`. Make sure to replace `postgresql://` with `postgresql+psycopg://` and append `?sslmode=require` if it's a Supabase connection string.
+    Create `async def close_db_pool():` to dispose the engine via `await engine.dispose()`.
+    Create `def get_engine():` returning the global engine.
   </action>
   <verify>
-    <automated>cd api && python -c "from agents.orchestrator import Orchestrator; print('Orchestrator imports OK')"</automated>
+    <automated>pytest tests/test_vector_db.py</automated>
   </verify>
-  <done>Backend starts without GCP credentials, uses mock mode, and functions with credentials when provided</done>
+  <done>AsyncEngine is created.</done>
+</task>
+
+<task type="auto">
+  <name>Task 3: FastAPI Lifespan Connection Pooling</name>
+  <files>
+    api/main.py, api/db/session.py, api/core/config.py
+  </files>
+  <action>
+    Edit `api/main.py` to use a FastAPI `lifespan` context manager.
+    Import `asynccontextmanager` from `contextlib`.
+    Import `settings` from `api.core.config`.
+    Import `init_db_pool` and `close_db_pool` from `api.db.session`.
+    Implement:
+    ```python
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        if settings.supabase_connection_string:
+            await init_db_pool(settings.supabase_connection_string)
+        yield
+        await close_db_pool()
+    ```
+    Pass `lifespan=lifespan` when creating the `FastAPI` app instance (`app = FastAPI(title="DevBridge API", lifespan=lifespan)`).
+  </action>
+  <verify>
+    <automated>pytest tests/test_vector_db.py</automated>
+  </verify>
+  <done>FastAPI uses lifespan context for connection pool management.</done>
 </task>
 
 </tasks>
 
 <verification>
-- Frontend builds and serves without errors
-- Backend starts and responds to health check without GCP credentials
-- Theme toggle persists mode across reloads
-- Chat interface uses shadcn/ui components
+- `pytest tests/test_vector_db.py` runs without errors.
 </verification>
-
-<success_criteria>
-- Frontend accessible at http://localhost:3000 with modern themed UI
-- Backend accessible at http://localhost:8000/ with status online
-- Chat endpoint works in both mock and real modes
-- Dark/light mode toggle functional
-</success_criteria>
-
-<output>
-After completion, create .planning/phases/01-project-skeleton-core-orchestrator/02-SUMMARY.md
-</output>

@@ -1,8 +1,8 @@
 # Phase 02: Data Foundation & Secret Management - Context
 
-**Gathered:** 2026-04-16
-**Status:** Ready for planning
-**Source:** ROADMAP.md + Hacker Spec
+**Gathered:** 2026-04-17
+**Status:** Decisions Locked
+**Source:** ROADMAP.md + User Discussion (2026-04-17)
 
 <domain>
 ## Phase Boundary
@@ -13,9 +13,8 @@ This phase establishes the bedrock for data persistence and security. It will se
 
 Deliverables:
 - Supabase Integration: Configuration and setup of `pgvector`.
-- GCP Secret Manager Integration: Securely access `GEMINI_API_KEY` and other sensitive parameters at runtime.
-- Code Analysis: Incorporate `fallow` to analyze the Next.js frontend code health, and `code-review-graph` to maintain structural knowledge.
-- The `entire` CLI will remain the standard tool to checkpoint state.
+- GCP Secret Manager Integration: Securely access `SUPABASE_CONNECTION_STRING` and other sensitive parameters at runtime.
+- SQL Scripts: Provide manual setup for database extensions and tables.
 </domain>
 
 <decisions>
@@ -23,16 +22,16 @@ Deliverables:
 
 ### Vector Database
 - [Locked] Supabase with `pgvector` enabled.
-- [Decision] Use `langchain-postgres` combined with generic `psycopg` to integrate LangGraph tools with Supabase PostgreSQL without heavy ORMs.
+- [Decision] Manual SQL Setup: Provide `sql/setup_vector_store.sql` for the user to run manually in Supabase.
+- [Decision] Integration Timing: Deferred wiring of the `code_search` tool in the orchestrator to Phase 5. Phase 2 will focus on connection logic and TODO markers.
 
-### API Keys
+### API Keys / Secrets
 - [Locked] Google Cloud Secret Manager.
-- [Decision] Use the `google-cloud-secret-manager` python client. To optimize costs and latency, retrieve keys on startup or implement an LRU cache.
+- [Decision] Identifier: Use `SUPABASE_CONNECTION_STRING` as the secret ID in GCP.
+- [Decision] Environment Logic: Prioritize GCP Secret Manager via the `google-cloud-secret-manager` client, but maintain a robust local `.env` fallback as secrets are not yet fully configured in the cloud.
 
-### Tooling Enforced
-- Use **fallow** (from `mcp` / cli) to analyze the TypeScript/JavaScript project for unused code and cyclic dependencies before committing.
-- Use **code-review-graph** (CLI) to incrementally update graph representations of the codebase.
-- Use **entire** (CLI) to snapshot work.
+### Tooling & Dependencies
+- [Decision] Update `requirements.txt` to include `google-cloud-secret-manager`, `langchain-postgres`, and `psycopg[binary]`.
 
 </decisions>
 
@@ -46,4 +45,4 @@ Deliverables:
 
 ---
 *Phase: 02-data-foundation-secrets-management*
-*Context gathered: 2026-04-16*
+*Context updated: 2026-04-17*
