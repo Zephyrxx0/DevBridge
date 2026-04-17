@@ -1,0 +1,16 @@
+#!/bin/sh
+# Entire CLI hooks + post-analysis for every commit
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+if [ -x "$REPO_ROOT/.venv/Scripts/entire.exe" ]; then
+    "$REPO_ROOT/.venv/Scripts/entire.exe" hooks git post-commit 2>/dev/null || true
+elif command -v entire >/dev/null 2>&1; then
+    entire hooks git post-commit 2>/dev/null || true
+elif command -v entire.exe >/dev/null 2>&1; then
+    entire.exe hooks git post-commit 2>/dev/null || true
+fi
+
+if [ -f "$REPO_ROOT/scripts/hooks/post-analysis" ]; then
+    "$REPO_ROOT/scripts/hooks/post-analysis" 2>/dev/null || true
+fi

@@ -1,0 +1,12 @@
+#!/bin/sh
+# Entire CLI commit-msg hook
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+if [ -x "$REPO_ROOT/.venv/Scripts/entire.exe" ]; then
+    "$REPO_ROOT/.venv/Scripts/entire.exe" hooks git commit-msg "$1" || exit 1
+elif command -v entire >/dev/null 2>&1; then
+    entire hooks git commit-msg "$1" || exit 1
+elif command -v entire.exe >/dev/null 2>&1; then
+    entire.exe hooks git commit-msg "$1" || exit 1
+fi
