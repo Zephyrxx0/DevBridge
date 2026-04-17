@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-langgraph
+langgraph==1.1.7
 langchain-google-vertexai
 python-dotenv
 pydantic

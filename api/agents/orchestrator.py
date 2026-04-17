@@ -1,23 +1,14 @@
 import os
 import logging
-from typing import TypedDict, Annotated, Sequence
 from langchain_google_vertexai import ChatVertexAI
-from langgraph.graph import StateGraph, MessagesState
-from langgraph.prebuilt import ToolNode, create_react_agent
+from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.tools import tool
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-# Define the Agent State
-class AgentState(MessagesState):
-    """Simple messages state for the orchestrator."""
-
-    pass
 
 
 @tool
