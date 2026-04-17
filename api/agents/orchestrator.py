@@ -25,6 +25,7 @@ def code_search(query: str):
     """Search for code snippets and implementation logic in the codebase.
     Use this tool to understand 'Why' something was implemented by looking at context.
     """
+    # TODO(Phase 5): Connect code_search to vector_db.similarity_search
     # Placeholder for Phase 05
     return f"SEARCH_MOCK: No matches for '{query}' found yet. System initialization in progress."
 

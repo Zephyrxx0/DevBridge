@@ -1,10 +1,12 @@
 import logging
+import inspect
+import asyncio
 from typing import List, Optional
-from langchain_postgres import PGVector
-from langchain_postgres.vectorstores import PGVector
+from langchain_postgres import PGEngine, PGVectorStore
 from langchain_core.documents import Document
 from langchain_google_vertexai import VertexAIEmbeddings
 from api.core.secrets import secrets
+from api.db.session import get_engine
 
 logger = logging.getLogger(__name__)
 
@@ -13,33 +15,39 @@ class VectorStoreManager:
     Manages the connection to Supabase's pgvector using langchain-postgres.
     """
     def __init__(self):
-        self.connection_string = secrets.get_secret("SUPABASE_CONNECTION_STRING")
         self.collection_name = "devbridge_codebase"
-        self._vectorstore: Optional[PGVector] = None
+        self._vectorstore: Optional[PGVectorStore] = None
 
     def initialize(self) -> bool:
         """
         Attempts to initialize the PGVector connection.
         Returns True if successful, False otherwise.
         """
-        if not self.connection_string:
-            logger.warning("SUPABASE_CONNECTION_STRING not set. Vector store is disabled.")
+        engine = get_engine()
+        if engine is None:
+            logger.warning("Database engine is not initialized. Vector store is disabled.")
             return False
 
         try:
             # We use VertexAI embeddings for the vectors
             project_id = secrets.get_secret("GOOGLE_CLOUD_PROJECT") or "devbridge-default"
             embeddings = VertexAIEmbeddings(model_name="text-embedding-004", project=project_id)
-            
-            self._vectorstore = PGVector(
-                embeddings=embeddings,
+
+            self._vectorstore = PGVectorStore(
+                engine=engine,
                 collection_name=self.collection_name,
-                connection=self.connection_string,
-                use_jsonb=True,
+                embedding_service=embeddings,
             )
-            
-            # Explicitly create tables if they don't exist
-            self._vectorstore.create_tables_if_not_exists()
+
+            create_tables = self._vectorstore.create_tables_if_not_exists()
+            if inspect.isawaitable(create_tables):
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    asyncio.run(create_tables)
+                else:
+                    loop.create_task(create_tables)
+
             logger.info("Vector store initialized successfully.")
             return True
         except Exception as e:
