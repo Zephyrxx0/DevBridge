@@ -2,9 +2,10 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
+current_plan: 00 of 04
 status: Executing Phase 02
 stopped_at: Completed 02-00-PLAN.md
-last_updated: "2026-04-17T16:17:48.675Z"
+last_updated: "2026-04-17T16:19:12.581Z"
 progress:
   total_phases: 2
   completed_phases: 1
@@ -31,6 +32,7 @@ progress:
 ## Decisions
 
 - **Phase 02 / Plan 00:** Keep new tests dependency-light and non-networked so they pass before cloud credentials and database infrastructure are wired.
+- [Phase 02]: Plan 00 uses placeholder-only tests to lock contracts before cloud wiring.
 
 ## Blockers
 
