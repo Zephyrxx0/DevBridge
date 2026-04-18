@@ -37,5 +37,21 @@
 - [ ] Supabase project with `pgvector` enabled.
 - [ ] GitHub Actions for deployment to Cloud Run.
 
+## Milestone v0.1 Gap Traceability
+
+| Milestone Requirement | Current Status | Gap Evidence | Planned Closure Phase |
+|-----------------------|----------------|--------------|-----------------------|
+| MR-01 E2E RAG pipeline with basic ingestion + search | unsatisfied | Ingestion/search not wired end-to-end in runtime flow | Phase 12, Phase 13 |
+| MR-02 Supabase pgvector foundation | partial | Vector foundation exists but not connected to orchestrator retrieval path | Phase 12 |
+| FR-AI-02 Search agent over pgvector + metadata | unsatisfied | `code_search` tool remains mock-backed | Phase 12 |
+| Runtime cloud config consistency | high-risk | Env key mismatch can force mock fallback | Phase 13 |
+
+### Gap Closure Acceptance Criteria
+
+- [ ] Runtime path supports ingest -> chunk -> vector persist without manual test harness.
+- [ ] Orchestrator search tool executes real vector similarity query and returns grounded hits.
+- [ ] End-to-end test validates ingest/index/search flow from API boundary.
+- [ ] Cloud project env configuration is unified across config and orchestrator modules.
+
 ---
-*Last updated: 2026-04-15 after initialization research*
+*Last updated: 2026-04-18 after milestone gap planning*
