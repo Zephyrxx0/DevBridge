@@ -1,0 +1,27 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "c6f0190f4639",
+  "strategy": "manual-commit",
+  "branch": "phase-02-data-foundation-secrets-management",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".fallow/cache.bin",
+    ".fallow/churn.bin",
+    ".gitignore"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c6/f0190f4639/0/metadata.json",
+      "transcript": "/c6/f0190f4639/0/full.jsonl",
+      "content_hash": "/c6/f0190f4639/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
