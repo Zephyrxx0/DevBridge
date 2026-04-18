@@ -2,6 +2,7 @@ fastapi
 uvicorn
 langgraph==1.1.7
 langchain-google-vertexai
+langchain-google-genai
 python-dotenv
 pydantic
 google-cloud-aiplatform

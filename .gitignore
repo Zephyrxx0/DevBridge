@@ -10,6 +10,7 @@ node_modules/
 .npm/
 .pnpm-store/
 __pycache__/
+*.py[cod]
 .github/
-api/agents/__pycache__/orchestrator.cpython-313.pyc
 .gsd/
+config/service-account-key.json

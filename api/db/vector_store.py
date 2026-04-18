@@ -2,7 +2,7 @@ import logging
 import inspect
 import asyncio
 from typing import List, Optional
-from langchain_postgres import PGEngine, PGVectorStore
+from langchain_postgres import PGVectorStore
 from langchain_core.documents import Document
 from langchain_google_vertexai import VertexAIEmbeddings
 from api.core.secrets import secrets

@@ -24,40 +24,32 @@ def code_search(query: str):
 def get_llm():
     """Lazy LLM initialization with mock fallback.
 
-    Checks for GCP credentials and returns appropriate LLM:
-    - If GOOGLE_APPLICATION_CREDENTIALS is set or ADC is available: real ChatVertexAI
+    Checks for Gemini API credentials and returns appropriate LLM:
+    - If GCP_PROJECT_ID is set: real ChatVertexAI
     - Otherwise: mock LLM that returns placeholder responses
     """
-    # Check for GCP credentials
-    creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-    has_gcp_creds = bool(creds_path and os.path.exists(creds_path))
+    model_name = os.environ.get("VERTEX_AI_MODEL", "gemini-1.5-flash")
+    gcp_project_id = os.environ.get("GCP_PROJECT_ID")
+    gcp_location = os.environ.get("GCP_LOCATION", "us-central1")
 
-    if has_gcp_creds:
-        logger.info("GCP credentials found, initializing ChatVertexAI")
-        return ChatVertexAI(model_name="gemini-1.5-flash")
+    if gcp_project_id:
+        logger.info(f"GCP_PROJECT_ID found ({gcp_project_id}), initializing ChatVertexAI")
+        return ChatVertexAI(
+            model_name=model_name,
+            project=gcp_project_id,
+            location=gcp_location
+        )
 
-    # Check if we're in a GCP environment (no creds file but maybe ADC)
-    try:
-        import google.auth
-
-        google.auth.default()
-        logger.info("GCP ADC available, initializing ChatVertexAI")
-        return ChatVertexAI(model_name="gemini-1.5-flash")
-    except (ImportError, google.auth.exceptions.DefaultCredentialsError):
-        pass
-    except Exception:
-        pass
-
-    # No credentials available - return mock LLM
+    # No credentials available - return mock LLM.
     logger.warning(
-        "No GCP credentials found, using mock LLM fallback. Set GOOGLE_APPLICATION_CREDENTIALS or run 'gcloud auth application-default login' for real responses."
+        "No GCP_PROJECT_ID found, using mock LLM fallback. Set GCP_PROJECT_ID to enable AI responses."
     )
 
     class MockLLM:
-        """Mock LLM that returns placeholder responses when GCP is not configured."""
+        """Mock LLM that returns placeholder responses when Gemini API is not configured."""
 
         def __init__(self):
-            self.model_name = "mock-gcp-unavailable"
+            self.model_name = "mock-gemini-unavailable"
 
         def invoke(self, messages):
             msg_content = ""
@@ -69,7 +61,7 @@ def get_llm():
                     msg_content = last_msg.get("content", "")
 
             return AIMessage(
-                content=f"[Mock] GCP not configured. Set GOOGLE_APPLICATION_CREDENTIALS or run `gcloud auth application-default login` to enable AI responses.\n\nYour message was: {msg_content}"
+                content=f"[Mock] Vertex AI not configured. Set GCP_PROJECT_ID and authenticate with ADC to enable AI responses.\n\nYour message was: {msg_content}"
             )
 
         async def ainvoke(self, messages):
