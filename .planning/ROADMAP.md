@@ -12,8 +12,10 @@
   - [x] Configure Supabase `pgvector` extension.
   - [x] Implement GCP Secret Manager integration for API keys.
 - [ ] **Phase 3: Code Parsing with Tree-sitter**
-  - [ ] Implement chunking logic for `.ts` and `.py` using Tree-sitter.
+  - [ ] Implement chunking logic for .ts and .py using Tree-sitter.
   - [ ] Define metadata schema for code chunks.
+  - [ ] Plan 01: Ingestion contracts and scoped file discovery.
+  - [ ] Plan 02: Tree-sitter semantic chunker with hybrid fallback.
 - [ ] **Phase 4: GCS & Pub/Sub Ingestion Triggers**
   - [ ] Setup GCS bucket for code snapshots.
   - [ ] Implement Pub/Sub triggered Cloud Run Job flow.
