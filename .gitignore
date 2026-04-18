@@ -13,4 +13,5 @@ __pycache__/
 *.py[cod]
 .github/
 .gsd/
+.fallow/*.bin
 config/service-account-key.json
