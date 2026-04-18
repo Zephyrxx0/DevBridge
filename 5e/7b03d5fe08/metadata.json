@@ -1,0 +1,35 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "5e7b03d5fe08",
+  "strategy": "manual-commit",
+  "branch": "phase-03-code-parsing-with-tree-sitter",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".planning/ROADMAP.md",
+    ".planning/STATE.md",
+    ".planning/phases/03-code-parsing-with-tree-sitter/03-01-SUMMARY.md",
+    ".planning/phases/03-code-parsing-with-tree-sitter/03-02-SUMMARY.md",
+    "api/ingestion/__init__.py",
+    "api/ingestion/discovery.py",
+    "api/ingestion/pipeline.py",
+    "api/ingestion/tree_sitter_chunker.py",
+    "api/ingestion/types.py",
+    "api/requirements.txt",
+    "tests/test_chunking_phase03.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/5e/7b03d5fe08/0/metadata.json",
+      "transcript": "/5e/7b03d5fe08/0/full.jsonl",
+      "content_hash": "/5e/7b03d5fe08/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
