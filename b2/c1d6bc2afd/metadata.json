@@ -1,0 +1,25 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "b2c1d6bc2afd",
+  "strategy": "manual-commit",
+  "branch": "phase-03-code-parsing-with-tree-sitter",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".planning/phases/03-code-parsing-with-tree-sitter/03-UAT.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b2/c1d6bc2afd/0/metadata.json",
+      "transcript": "/b2/c1d6bc2afd/0/full.jsonl",
+      "content_hash": "/b2/c1d6bc2afd/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
