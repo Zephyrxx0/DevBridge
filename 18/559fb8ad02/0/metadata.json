@@ -1,0 +1,33 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "18559fb8ad02",
+  "session_id": "80edb598-581f-4e14-8b8f-56fafb3cb5eb",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T15:22:30.0330223Z",
+  "branch": "phase-03-code-parsing-with-tree-sitter",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".planning/phases/01-project-skeleton-core-orchestrator/01-VALIDATION.md",
+    ".planning/phases/02-data-foundation-secrets-management/02-VALIDATION.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "03feb40921ba",
+  "checkpoint_transcript_start": 4,
+  "transcript_lines_at_start": 4,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T15:22:29.8871733Z",
+    "agent_lines": 153,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 153,
+    "agent_percentage": 100
+  }
+}
