@@ -1,0 +1,9 @@
+/gsd-execute-phase 4, create a new branch and start execution of phase-04 there, if already done, do verification and validation
+
+---
+
+/caveman-help
+
+---
+
+/caveman

@@ -1,0 +1,33 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "974c4474cb16",
+  "session_id": "f7851648-374a-4503-88bd-c8a299f931a0",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-24T17:22:58.8186586Z",
+  "branch": "phase-05-vector-indexing-hybrid-search",
+  "checkpoints_count": 4,
+  "files_touched": [
+    ".planning/phases/05-vector-indexing-hybrid-search/05-CONTEXT.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "3c4f83f78183",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-24T17:22:58.6030393Z",
+    "agent_lines": 0,
+    "human_added": 0,
+    "human_modified": 118,
+    "human_removed": 0,
+    "total_committed": 118,
+    "agent_percentage": 0
+  }
+}
