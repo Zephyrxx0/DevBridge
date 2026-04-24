@@ -1,0 +1,19 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "0a1c61128a38",
+  "strategy": "manual-commit",
+  "branch": "phase-05-vector-indexing-hybrid-search",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".planning/phases/05-vector-indexing-hybrid-search/05-UAT.md",
+    ".planning/phases/05-vector-indexing-hybrid-search/05-VALIDATION.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0a/1c61128a38/0/metadata.json",
+      "transcript": "/0a/1c61128a38/0/full.jsonl",
+      "content_hash": "/0a/1c61128a38/0/content_hash.txt",
+      "prompt": ""
+    }
+  ]
+}
