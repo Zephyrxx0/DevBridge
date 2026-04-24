@@ -34,6 +34,8 @@ GEMINI.md
 CLAUDE.md
 .DS_Store
 *.txt
+*.log
+*.csv
 
 #Critical
 .env

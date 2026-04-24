@@ -24,6 +24,29 @@ class CodeChunk:
     content: str = ""
 
 
+@dataclass(frozen=True)
+class EmbeddingJob:
+    """Payload for an asynchronous embedding generation job."""
+    chunk_id: str
+    repo: str
+    file_path: str
+    content: str
+    attempt: int = 1
+    max_retries: int = 3
+    idempotency_key: str | None = None
+
+    def to_dict(self) -> dict:
+        return {
+            "chunk_id": self.chunk_id,
+            "repo": self.repo,
+            "file_path": self.file_path,
+            "content": self.content,
+            "attempt": self.attempt,
+            "max_retries": self.max_retries,
+            "idempotency_key": self.idempotency_key or self.chunk_id,
+        }
+
+
 def normalize_file_path(file_path: str) -> str:
     normalized = file_path.replace("\\", "/")
     if normalized.startswith("./"):
