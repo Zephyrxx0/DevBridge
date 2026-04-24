@@ -1,0 +1,28 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "28ab9d58f744",
+  "session_id": "f8095e37-5148-4461-b478-7c8d1d20f28c",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-24T19:29:13.7459267Z",
+  "branch": "phase-05-vector-indexing-hybrid-search",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "api/agents/orchestrator.py",
+    "api/core/config.py",
+    "api/ingest/embedding_worker.py",
+    "api/ingest/trigger.py",
+    "tests/test_phase05_vector_search.py"
+  ],
+  "agent": "Gemini CLI",
+  "model": "gemini-3-flash-preview",
+  "turn_id": "6981cf90c949",
+  "initial_attribution": {
+    "calculated_at": "2026-04-24T19:29:13.5235649Z",
+    "agent_lines": 0,
+    "human_added": 272,
+    "human_modified": 15,
+    "human_removed": 0,
+    "total_committed": 272,
+    "agent_percentage": 0
+  }
+}
