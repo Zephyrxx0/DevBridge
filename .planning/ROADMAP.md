@@ -20,6 +20,17 @@
 - [ ] **Phase 4: GCS & Pub/Sub Ingestion Triggers**
   - [ ] Setup GCS bucket for code snapshots.
   - [ ] Implement Pub/Sub triggered Cloud Run Job flow.
+
+### Phase 4: GCS & Pub/Sub Ingestion Triggers
+
+**Goal:** Setup GCS bucket for code snapshots and implement Pub/Sub triggered Cloud Run Job flow for ingestion.
+
+**Requirements:** No explicit requirements mapped (infrastructure setup)
+
+**Plans:** 2 plans
+
+- [x] 04-01-PLAN.md — GCS bucket and Pub/Sub topic configuration
+- [x] 04-02-PLAN.md — Pub/Sub triggered Cloud Run Job for ingestion
 - [ ] **Phase 5: Vector Indexing & Hybrid Search**
   - [ ] Integrate `text-embedding-004` logic into ingestion.
   - [ ] Implement PostgreSQL hybrid search functions.
