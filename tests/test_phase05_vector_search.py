@@ -201,3 +201,37 @@ async def test_code_search_output_schema():
         assert "auth.py" in response
         # It should contain a JSON block or a clear list
         assert "[" in response and "]" in response
+
+def test_project_env_key_alignment():
+    """
+    Verify canonical env key (GOOGLE_CLOUD_PROJECT) usage, 
+    legacy fallback (GCP_PROJECT_ID), and production mode rejection.
+    """
+    from api.core.config import Settings
+    import os
+    from unittest.mock import patch
+
+    # 1. Canonical usage
+    with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "canonical-project", "ENV": "development"}, clear=True):
+        s = Settings()
+        assert s.google_cloud_project == "canonical-project"
+
+    # 2. Legacy fallback
+    with patch.dict(os.environ, {"GCP_PROJECT_ID": "legacy-project", "ENV": "development"}, clear=True):
+        s = Settings()
+        assert s.google_cloud_project == "legacy-project"
+
+    # 3. Production mode rejection
+    with patch.dict(os.environ, {"ENV": "production"}, clear=True):
+        with pytest.raises(ValueError, match="GOOGLE_CLOUD_PROJECT must be set in production mode"):
+            Settings()
+
+    # 4. Canonical takes precedence over legacy
+    with patch.dict(os.environ, {
+        "GOOGLE_CLOUD_PROJECT": "canonical-project",
+        "GCP_PROJECT_ID": "legacy-project",
+        "ENV": "development"
+    }, clear=True):
+        s = Settings()
+        assert s.google_cloud_project == "canonical-project"
+
