@@ -32,9 +32,9 @@
 
 - [x] 04-01-PLAN.md — GCS bucket and Pub/Sub topic configuration
 - [x] 04-02-PLAN.md — Pub/Sub triggered Cloud Run Job for ingestion
-- [ ] **Phase 5: Vector Indexing & Hybrid Search**
-  - [ ] Integrate `text-embedding-004` logic into ingestion.
-  - [ ] Implement PostgreSQL hybrid search functions.
+- [x] **Phase 5: Vector Indexing & Hybrid Search** (completed 2026-04-25)
+  - [x] Plan 01: Create indexing primitives (SQL & Vector store).
+  - [x] Plan 02: Wire runtime ingestion-to-search flow.
 - [ ] **Phase 6: Basic Chat Interface & SSE**
   - [ ] Create Next.js dashboard for querying.
   - [ ] Implement Server-Sent Events (SSE) for streaming agent responses.
