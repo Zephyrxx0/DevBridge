@@ -1,0 +1,19 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "b321a0c67b3e",
+  "strategy": "manual-commit",
+  "branch": "phase-05-vector-indexing-hybrid-search",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".planning/ROADMAP.md",
+    ".planning/STATE.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b3/21a0c67b3e/0/metadata.json",
+      "transcript": "/b3/21a0c67b3e/0/full.jsonl",
+      "content_hash": "/b3/21a0c67b3e/0/content_hash.txt",
+      "prompt": ""
+    }
+  ]
+}
