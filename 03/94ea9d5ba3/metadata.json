@@ -1,0 +1,25 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "0394ea9d5ba3",
+  "strategy": "manual-commit",
+  "branch": "phase-04-gcs-pubsub-ingestion-triggers",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".planning/v0.1-v0.1-MILESTONE-AUDIT.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/03/94ea9d5ba3/0/metadata.json",
+      "transcript": "/03/94ea9d5ba3/0/full.jsonl",
+      "content_hash": "/03/94ea9d5ba3/0/content_hash.txt",
+      "prompt": "/03/94ea9d5ba3/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}

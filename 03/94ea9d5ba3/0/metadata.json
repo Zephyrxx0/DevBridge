@@ -1,0 +1,30 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "0394ea9d5ba3",
+  "session_id": "f7851648-374a-4503-88bd-c8a299f931a0",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-24T17:06:38.7545211Z",
+  "branch": "phase-04-gcs-pubsub-ingestion-triggers",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".planning/v0.1-v0.1-MILESTONE-AUDIT.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "e9bb67ef2033",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-24T17:06:38.5243382Z",
+    "agent_lines": 0,
+    "human_added": 0,
+    "human_modified": 138,
+    "human_removed": 0,
+    "total_committed": 138,
+    "agent_percentage": 0
+  }
+}
