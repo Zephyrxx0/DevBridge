@@ -1,0 +1,26 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "3bb7f91200bb",
+  "strategy": "manual-commit",
+  "branch": "phase-04-gcs-pubsub-ingestion-triggers",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".planning/phases/04-gcs-pubsub-ingestion-triggers/04-VALIDATION.md",
+    ".planning/phases/04-gcs-pubsub-ingestion-triggers/04-VERIFICATION.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/3b/b7f91200bb/0/metadata.json",
+      "transcript": "/3b/b7f91200bb/0/full.jsonl",
+      "content_hash": "/3b/b7f91200bb/0/content_hash.txt",
+      "prompt": "/3b/b7f91200bb/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
