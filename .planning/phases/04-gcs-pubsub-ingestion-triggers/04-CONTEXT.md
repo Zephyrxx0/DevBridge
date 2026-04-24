@@ -29,6 +29,7 @@ Out of scope for this phase:
 ### Event Triggers
 - **D-03:** Use GCS `google.storage.object.finalize` event to trigger ingestion.
 - **D-04:** Pub/Sub topic subscribes to GCS event notifications.
+- **D-04a:** Use **push subscription** — Cloud Run receives messages sent by Pub/Sub (simpler for serverless).
 - **D-05:** Cloud Run Job consumes Pub/Sub messages and invokes ingestion pipeline.
 
 ### Ingestion Flow
@@ -36,12 +37,18 @@ Out of scope for this phase:
 - **D-07:** Job pulls code content from GCS bucket.
 - **D-08:** Job invokes existing chunking logic from Phase 03.
 - **D-09:** Job persists chunks to database.
+- **D-10:** File size limit: **50MB** max (ingest only files under this limit).
+
+### Infrastructure
+- **D-11:** Push subscription model — Pub/Sub sends messages directly to Cloud Run.
+- **D-12:** Dead-letter queue for messages that fail all retries.
+- **D-13:** Exponential backoff: 10s → 600s retry intervals.
 
 ### the agent's Discretion
-- Exact bucket location (regional vs multi-region).
-- Pub/Sub push vs pull subscription model.
-- Cloud Run Job memory/CPU allocation.
-- Retry policy and dead-letter queue configuration.
+- ~~Exact bucket location (regional vs multi-region)~~ — DECIDED: regional us-central1
+- ~~Pub/Sub push vs pull subscription model~~ — DECIDED: push subscription
+- ~~Cloud Run Job memory/CPU allocation~~ — 1 vCPU, 512MiB default
+- ~~Retry policy and dead-letter queue configuration~~ — DECIDED: exponential backoff 10s-600s, DLQ enabled
 
 </decisions>
 
@@ -84,6 +91,7 @@ Out of scope for this phase:
 - Event-driven ingestion should be fully automated (no manual triggers).
 - Cloud Run Job should handle failures gracefully with retries.
 - Ensure idempotency in case of redelivered messages.
+- **File size limit: 50MB** per file (will be refined after testing).
 
 </specifics>
 
