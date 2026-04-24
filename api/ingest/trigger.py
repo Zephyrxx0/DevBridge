@@ -19,7 +19,9 @@ from sqlalchemy import text
 
 from api.core.config import settings
 from api.db.session import get_engine, init_db_pool
+from api.ingest.embedding_queue import enqueue_embedding_jobs
 from api.ingestion.tree_sitter_chunker import chunk_source
+from api.ingestion.types import EmbeddingJob
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -150,6 +152,27 @@ async def _ingest_file(bucket: str, object_name: str) -> IngestionResult:
             
             await conn.commit()
             
+            # 5. Enqueue embedding jobs (Phase 05 Wave 2)
+            embedding_jobs = [
+                EmbeddingJob(
+                    repo=chunk.repo,
+                    file_path=chunk.file_path,
+                    chunk_id=chunk.chunk_id,
+                    content=chunk.content,
+                    idempotency_key=f"embed-{chunk.chunk_id}"
+                )
+                for chunk in chunks
+            ]
+            
+            # Fire-and-forget enqueueing, don't block ingestion success on queue transport
+            # although in current implementation it is awaited.
+            try:
+                await enqueue_embedding_jobs(embedding_jobs)
+            except Exception as e:
+                logger.error("Failed to enqueue embedding jobs: %s", e)
+                # We don't fail the ingestion if enqueuing fails, 
+                # as chunks are already persisted. A separate process could retry.
+            
             return IngestionResult(
                 status="success",
                 file_path=file_path,
@@ -186,17 +209,26 @@ async def handle_pubsub_event(event: dict) -> dict:
         except json.JSONDecodeError:
             message = {}
     
-    data = message.get("data", {})
-    if isinstance(data, str):
-        try:
-            data = json.loads(data)
-        except json.JSONDecodeError:
-            data = {}
-    
-    gcs_event = _parse_pubsub_message({"message": data})
+    # Try parsing full event first
+    gcs_event = _parse_pubsub_message(event)
     
     bucket = gcs_event.get("bucket", "")
     object_name = gcs_event.get("object", "")
+    
+    # Fallback to data payload if not found in attributes
+    if not bucket or not object_name:
+        data = message.get("data", {})
+        if isinstance(data, str):
+            try:
+                import base64
+                decoded = json.loads(base64.b64decode(data).decode("utf-8"))
+                data = decoded
+            except Exception:
+                data = {}
+        
+        gcs_event = _parse_pubsub_message({"message": data})
+        bucket = bucket or gcs_event.get("bucket", "")
+        object_name = object_name or gcs_event.get("object", "")
     
     if not bucket or not object_name:
         return {

@@ -12,28 +12,55 @@ logger = logging.getLogger(__name__)
 
 
 @tool
-def code_search(query: str):
+async def code_search(query: str):
     """Search for code snippets and implementation logic in the codebase.
     Use this tool to understand 'Why' something was implemented by looking at context.
     """
-    # TODO(Phase 5): Connect code_search to vector_db.similarity_search
-    # Placeholder for Phase 05
-    return f"SEARCH_MOCK: No matches for '{query}' found yet. System initialization in progress."
+    from api.db.vector_store import vector_db
+    import json
+    
+    # Ensure vector store is initialized
+    if not vector_db._vectorstore:
+        vector_db.initialize()
+
+    try:
+        results = await vector_db.hybrid_search(query, k=5)
+        
+        if not results:
+            return f"No matches found for '{query}'. Try a different query or broader terms."
+            
+        citations = []
+        for res in results:
+            citations.append({
+                "file": res.get("file_path"),
+                "lines": f"{res.get('start_line')}-{res.get('end_line')}",
+                "snippet": res.get("snippet", "")[:300] + "..." if len(res.get("snippet", "")) > 300 else res.get("snippet", "")
+            })
+            
+        summary = f"Found {len(results)} relevant code snippets."
+        
+        # T-05-05: Information Disclosure - return bounded snippets and citation metadata only
+        output = f"{summary}\n\nCitations:\n{json.dumps(citations, indent=2)}"
+        return output
+    except Exception as e:
+        logger.error(f"Error in code_search: {e}")
+        return f"An error occurred during search. Please try again later."
 
 
 def get_llm():
     """Lazy LLM initialization with mock fallback.
 
     Checks for Gemini API credentials and returns appropriate LLM:
-    - If GCP_PROJECT_ID is set: real ChatVertexAI
+    - If google_cloud_project is set in settings: real ChatVertexAI
     - Otherwise: mock LLM that returns placeholder responses
     """
+    from api.core.config import settings
     model_name = os.environ.get("VERTEX_AI_MODEL", "gemini-1.5-flash")
-    gcp_project_id = os.environ.get("GCP_PROJECT_ID")
+    gcp_project_id = settings.google_cloud_project
     gcp_location = os.environ.get("GCP_LOCATION", "us-central1")
 
     if gcp_project_id:
-        logger.info(f"GCP_PROJECT_ID found ({gcp_project_id}), initializing ChatVertexAI")
+        logger.info(f"GOOGLE_CLOUD_PROJECT found ({gcp_project_id}), initializing ChatVertexAI")
         return ChatVertexAI(
             model_name=model_name,
             project=gcp_project_id,

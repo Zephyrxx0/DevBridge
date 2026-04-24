@@ -125,3 +125,79 @@ async def test_embedding_queue_contract():
     job = jobs[0]
     payload = job.to_dict()
     assert payload["idempotency_key"] == "c1"
+
+@pytest.mark.asyncio
+async def test_ingest_to_search_flow_contract():
+    """
+    Verify the ingestion-to-embedding-worker contract.
+    This tests that handle_pubsub_event enqueues jobs correctly.
+    """
+    from api.ingest.trigger import handle_pubsub_event
+    
+    # Mock GCS download and database engine
+    with patch("api.ingest.trigger._download_from_gcs", new_callable=AsyncMock) as mock_download, \
+         patch("api.db.session.engine") as mock_engine, \
+         patch("api.ingest.trigger.init_db_pool", new_callable=AsyncMock), \
+         patch("api.ingest.trigger.enqueue_embedding_jobs", new_callable=AsyncMock) as mock_enqueue:
+        
+        mock_download.return_value = "def test(): pass"
+        
+        # Mock DB connection and results
+        mock_conn = AsyncMock()
+        mock_engine.connect.return_value.__aenter__.return_value = mock_conn
+        
+        # Mock result of "SELECT id FROM code_chunks" to be empty (trigger insert)
+        mock_result = MagicMock()
+        mock_result.fetchone.return_value = None
+        mock_conn.execute.return_value = mock_result
+        
+        # Event payload
+        event = {
+            "message": {
+                "attributes": {
+                    "bucketId": "test-bucket",
+                    "objectId": "test.py"
+                }
+            }
+        }
+        
+        result = await handle_pubsub_event(event)
+        
+        assert result["status"] == "success"
+        assert mock_enqueue.called
+        
+        # Verify job content
+        jobs = mock_enqueue.call_args[0][0]
+        assert len(jobs) > 0
+        assert jobs[0].file_path == "test.py"
+        assert jobs[0].content == "def test(): pass"
+
+@pytest.mark.asyncio
+async def test_code_search_output_schema():
+    """Verify code_search tool produces the expected citation schema."""
+    from api.agents.orchestrator import code_search
+    
+    # Mock hybrid_search
+    mock_results = [
+        {
+            "file_path": "auth.py",
+            "start_line": 10,
+            "end_line": 20,
+            "score": 0.88,
+            "snippet": "class Auth:\n    def login(self):...",
+            "reason": {"semantic_score": 0.85}
+        }
+    ]
+    
+    with patch("api.db.vector_store.vector_db.hybrid_search", new_callable=AsyncMock) as mock_hybrid:
+        mock_hybrid.return_value = mock_results
+        
+        # Call tool
+        # tool functions in langchain are usually called directly in tests
+        response = await code_search.ainvoke({"query": "how to login"})
+        
+        # Verify JSON citations list and summary
+        assert "Citations:" in response
+        assert "auth.py" in response
+        # It should contain a JSON block or a clear list
+        assert "[" in response and "]" in response
