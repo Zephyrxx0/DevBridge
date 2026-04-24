@@ -70,3 +70,15 @@ Approval: approved 2026-04-24
 | Gaps found | 0 |
 | Resolved | 0 |
 | Escalated | 0 |
+
+## Validation Re-Audit 2026-04-24
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+Cross-artifact confirmation:
+- `04-UAT.md` exists with `status: complete` and `issues: 0`.
+- `04-SECURITY.md` exists with `threats_open: 0`.
