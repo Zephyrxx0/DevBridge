@@ -3,31 +3,31 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 current_plan: 00 of 00
-status: Phase 03 execution completed
-stopped_at: Completed Phase 03 plans with verification and full test pass
-last_updated: "2026-04-18T23:59:00.000Z"
+status: Phase 04 execution completed
+stopped_at: Completed Phase 04 plans with all terraform configs and handler
+last_updated: "2026-04-24T21:10:00.000Z"
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_phases: 4
+  completed_phases: 4
+  total_plans: 11
+  completed_plans: 11
 ---
 
 # STATE
 
-**Last Updated:** 2026-04-18
+**Last Updated:** 2026-04-24
 
 ## Current Position
 
 - **Milestone:** v0.1 (Foundational Bridge)
 - **Active Phase:** 04-gcs-pubsub-ingestion-triggers
 - **Current Plan:** 00 of 00
-- **Plan Status:** Ready for planning
+- **Plan Status:** Completed - Ready for Phase 05
 
 ## Session
 
-- **Stopped at:** Completed Phase 03 execution and verification
-- **Resume file:** .planning/phases/03-code-parsing-with-tree-sitter/03-02-SUMMARY.md
+- **Stopped at:** Completed Phase 04 execution (both 04-01 and 04-02)
+- **Resume file:** .planning/phases/04-gcs-pubsub-ingestion-triggers/04-02-SUMMARY.md
 
 ## Decisions
 
@@ -42,6 +42,8 @@ progress:
 - [Phase 03]: Added ingestion contracts, deterministic chunk IDs, and source-scope discovery filters.
 - [Phase 03]: Implemented Tree-sitter chunker with oversized symbol splitting and fallback chunk emission.
 - [Phase 03]: Verified Phase 03 with targeted tests plus full test suite (`9 passed`).
+- [Phase 04]: Created GCS bucket with versioning, Pub/Sub topic with DLQ, Eventarc trigger for Cloud Run Job.
+- [Phase 04]: Implemented ingestion handler with raw SQL persistence (no ORM model exists).
 
 ## Blockers
 
@@ -49,4 +51,4 @@ progress:
 
 ---
 
-*State updated: 2026-04-18 after closing Phase 03*
+*State updated: 2026-04-24 after closing Phase 04*

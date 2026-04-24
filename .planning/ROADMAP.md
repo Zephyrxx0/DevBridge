@@ -17,9 +17,10 @@
   - [x] Define metadata schema for code chunks.
   - [x] Plan 01: Ingestion contracts and scoped file discovery.
   - [x] Plan 02: Tree-sitter semantic chunker with hybrid fallback.
-- [ ] **Phase 4: GCS & Pub/Sub Ingestion Triggers**
-  - [ ] Setup GCS bucket for code snapshots.
-  - [ ] Implement Pub/Sub triggered Cloud Run Job flow.
+- [x] **Phase 4: GCS & Pub/Sub Ingestion Triggers**
+  (completed 2026-04-24)
+  - [x] Setup GCS bucket for code snapshots.
+  - [x] Implement Pub/Sub triggered Cloud Run Job flow.
 
 ### Phase 4: GCS & Pub/Sub Ingestion Triggers
 
