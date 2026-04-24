@@ -33,6 +33,7 @@ __pycache__/
 GEMINI.md
 CLAUDE.md
 .DS_Store
+*.txt
 
 #Critical
 .env
