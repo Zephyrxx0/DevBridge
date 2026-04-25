@@ -2,7 +2,9 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from langchain_core.messages import AIMessage
 
+from api.agents.orchestrator import Orchestrator
 from api.ingestion.history import ingest_commit_history, ingest_pr_metadata
 
 
@@ -76,3 +78,60 @@ async def test_ingestion_persistence():
     assert update_params["file_path"] == "api/auth/login.py"
     assert update_params["commit_sha"] == "abc123def"
     assert update_params["pr_number"] == 42
+
+
+@pytest.mark.asyncio
+async def test_agent_intent_grounding():
+    """Verify Why-intent retrieval calls PR history tools and returns citation."""
+
+    class FakeGraph:
+        def __init__(self):
+            self.last_input = None
+
+        async def ainvoke(self, input_data, config=None):
+            self.last_input = input_data
+            return {
+                "messages": [
+                    AIMessage(
+                        content="Login logic changed to enforce refresh-token rotation and avoid stale-session races."
+                    )
+                ]
+            }
+
+    fake_graph = FakeGraph()
+
+    with patch("api.db.vector_store.vector_db._vectorstore", new=MagicMock()), \
+         patch("api.db.vector_store.vector_db.search_pr_history", new_callable=AsyncMock) as mock_search, \
+         patch("api.db.vector_store.vector_db.get_pr_detail", new_callable=AsyncMock) as mock_detail:
+        mock_search.return_value = [
+            {
+                "repo": "acme/devbridge",
+                "number": 42,
+                "title": "Stabilize login refresh flow",
+                "summary": "Moved refresh checks before session extension to prevent stale token reuse.",
+            }
+        ]
+        mock_detail.return_value = {
+            "repo": "acme/devbridge",
+            "number": 42,
+            "summary": "Refresh token rotation fix for login path.",
+            "description": "Detailed rationale",
+        }
+
+        orchestrator = Orchestrator()
+        orchestrator._graph = fake_graph
+
+        response = await orchestrator.chat(
+            "Why was the login logic changed in PR 42?", thread_id="phase07-e2e"
+        )
+
+    assert mock_search.await_count == 1
+    assert mock_detail.await_count == 1
+
+    graph_prompt = fake_graph.last_input["messages"][0].content
+    assert "PR history context for intent grounding" in graph_prompt
+    assert "Stabilize login refresh flow" in graph_prompt
+
+    assert "refresh-token rotation" in response
+    assert "Citations:" in response
+    assert "acme/devbridge#42" in response

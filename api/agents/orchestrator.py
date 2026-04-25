@@ -1,5 +1,6 @@
 import os
 import logging
+import json
 from langchain_google_vertexai import ChatVertexAI
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
@@ -9,6 +10,19 @@ from langchain_core.tools import tool
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _is_why_intent(message: str) -> bool:
+    """Heuristic intent detector for change-rationale questions."""
+    normalized = (message or "").strip().lower()
+    if not normalized:
+        return False
+    return (
+        "why" in normalized
+        or "reason" in normalized
+        or "changed" in normalized
+        or "change" in normalized
+    )
 
 
 @tool
@@ -193,14 +207,68 @@ class Orchestrator:
             )
         return self._graph
 
+    async def _build_history_context(self, message: str) -> tuple[str, str]:
+        """Fetch lightweight PR history context for intent grounding."""
+        try:
+            raw_history = await search_pr_history.ainvoke({"query": message, "k": 3})
+        except Exception as e:
+            logger.warning(f"History search failed: {e}")
+            return "", ""
+
+        try:
+            history_rows = json.loads(raw_history) if isinstance(raw_history, str) else []
+        except Exception:
+            return "", ""
+
+        if not isinstance(history_rows, list) or not history_rows:
+            return "", ""
+
+        top = history_rows[0]
+        repo = top.get("repo")
+        number = top.get("number")
+        if not repo or number is None:
+            return "", ""
+
+        citation = f"- {repo}#{number}"
+        detail_summary = ""
+        try:
+            raw_detail = await get_pr_detail.ainvoke({"repo": repo, "pr_number": int(number)})
+            parsed_detail = json.loads(raw_detail) if isinstance(raw_detail, str) else {}
+            if isinstance(parsed_detail, dict):
+                detail_summary = parsed_detail.get("summary") or parsed_detail.get("description") or ""
+        except Exception as e:
+            logger.warning(f"PR detail lookup failed: {e}")
+
+        pr_summary = top.get("summary") or detail_summary or ""
+        context = (
+            "PR history context for intent grounding:\n"
+            f"- PR: {repo}#{number}\n"
+            f"- Title: {top.get('title', '')}\n"
+            f"- Summary: {pr_summary}\n"
+            "Use this context when answering user's why-question."
+        )
+        return context, citation
+
     async def chat(self, message: str, thread_id: str):
+        context_block = ""
+        citation = ""
+        if _is_why_intent(message):
+            context_block, citation = await self._build_history_context(message)
+
+        prompt = message
+        if context_block:
+            prompt = f"{message}\n\n{context_block}"
+
         config = {"configurable": {"thread_id": thread_id}}
-        input_data = {"messages": [HumanMessage(content=message)]}
+        input_data = {"messages": [HumanMessage(content=prompt)]}
 
         # Run the graph asynchronously
         result = await self.graph.ainvoke(input_data, config=config)
+        response = result["messages"][-1].content
+        if citation and "Citations:" not in response:
+            response = f"{response}\n\nCitations:\n{citation}"
 
-        return result["messages"][-1].content
+        return response
 
 
 # Verify module imports successfully without crashing
