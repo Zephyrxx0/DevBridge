@@ -35,9 +35,14 @@
 - [x] **Phase 5: Vector Indexing & Hybrid Search** (completed 2026-04-25)
   - [x] Plan 01: Create indexing primitives (SQL & Vector store).
   - [x] Plan 02: Wire runtime ingestion-to-search flow.
-- [ ] **Phase 6: Basic Chat Interface & SSE**
-  - [ ] Create Next.js dashboard for querying.
-  - [ ] Implement Server-Sent Events (SSE) for streaming agent responses.
+- [x] **Phase 6: Basic Chat Interface & SSE** (completed 2026-04-25)
+  - [x] Create Next.js dashboard for querying.
+  - [x] Implement Server-Sent Events (SSE) for streaming agent responses.
+
+**Plans:** 2 plans
+
+- [x] 06-01-PLAN.md — SSE streaming endpoint on backend
+- [x] 06-02-PLAN.md — Frontend SSE client with typewriter effect
 
 ### Gap Closure (Post v0.1 Audit)
 
@@ -64,4 +69,4 @@
 - [ ] **Phase 11: Security Audit & E2E Testing**
 
 ---
-*Last updated: 2026-04-18*
+*Last updated: 2026-04-25*
