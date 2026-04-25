@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1
-milestone_name: Audit)
-status: Phase 06 execution completed
-stopped_at: Completed Phase 06 (06-01 and 06-02)
-last_updated: "2026-04-25T16:20:05.171Z"
+milestone: v0.2
+milestone_name: Team Intelligence)
+status: Phase 07 context gathered
+stopped_at: Phase 07 context gathered
+last_updated: "2026-04-25T22:30:00.000Z"
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # STATE
@@ -18,17 +18,21 @@ progress:
 
 ## Current Position
 
-- **Milestone:** v0.1 (Foundational Bridge)
-- **Active Phase:** 06-basic-chat-interface-sse
-- **Current Plan:** 02 of 02
-- **Plan Status:** Completed - Verification passed
+- **Milestone:** v0.2 (Team Intelligence)
+- **Active Phase:** 07-history-intent-ingestion
+- **Phase Status:** Context gathered — ready for planning
 
 ## Session
 
-- **Stopped at:** Completed Phase 06 execution
-- **Resume file:** `.planning/phases/06-basic-chat-interface-sse/06-VERIFICATION.md`
+- **Stopped at:** Phase 07 context gathered
+- **Resume file:** `.planning/phases/07-history-intent-ingestion/07-CONTEXT.md`
 
 ## Decisions
+
+- **Phase 07 / Context:** Full history stack — commits, PR descriptions, code diffs, review comments.
+- **Phase 07 / Metadata:** Full metadata — author, timestamp, changed files, diff stats, PR numbers, review state, code owner.
+- **Phase 07 / Ingestion:** Reactive (on-demand) — triggered when user requests or webhook fires.
+- **Phase 07 / Linking:** Dual linking — file-level + symbol-level links to code chunks.
 
 - **Phase 02 / Plan 00:** Keep new tests dependency-light and non-networked so they pass before cloud credentials and database infrastructure are wired.
 - [Phase 02]: Plan 00 uses placeholder-only tests to lock contracts before cloud wiring.
