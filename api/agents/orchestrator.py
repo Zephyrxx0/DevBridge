@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 @tool
-async def code_search(query: str):
+async def code_search(query: str, include_history: bool = False):
     """Search for code snippets and implementation logic in the codebase.
     Use this tool to understand 'Why' something was implemented by looking at context.
     """
@@ -31,10 +31,22 @@ async def code_search(query: str):
             
         citations = []
         for res in results:
+            history = {}
+            if include_history:
+                history = await vector_db.get_chunk_history(
+                    file_path=res.get("file_path", ""),
+                    start_line=res.get("start_line"),
+                    end_line=res.get("end_line"),
+                )
+
             citations.append({
                 "file": res.get("file_path"),
                 "lines": f"{res.get('start_line')}-{res.get('end_line')}",
-                "snippet": res.get("snippet", "")[:300] + "..." if len(res.get("snippet", "")) > 300 else res.get("snippet", "")
+                "snippet": res.get("snippet", "")[:300] + "..." if len(res.get("snippet", "")) > 300 else res.get("snippet", ""),
+                "history": {
+                    "commit_sha": history.get("commit_sha"),
+                    "pr_number": history.get("pr_number"),
+                } if include_history else None,
             })
             
         summary = f"Found {len(results)} relevant code snippets."
@@ -45,6 +57,45 @@ async def code_search(query: str):
     except Exception as e:
         logger.error(f"Error in code_search: {e}")
         return f"An error occurred during search. Please try again later."
+
+
+@tool
+async def search_pr_history(query: str = "", file_path: str = "", k: int = 5):
+    """Search pull-request history by semantic intent or file path."""
+    from api.db.vector_store import vector_db
+    import json
+
+    if not vector_db._vectorstore:
+        vector_db.initialize()
+
+    try:
+        results = await vector_db.search_pr_history(
+            query_text=query or None,
+            file_path=file_path or None,
+            k=k,
+        )
+        if not results:
+            return "No pull request history matched the query."
+        return json.dumps(results, indent=2, default=str)
+    except Exception as e:
+        logger.error(f"Error in search_pr_history: {e}")
+        return "Failed to search pull request history."
+
+
+@tool
+async def get_pr_detail(repo: str, pr_number: int):
+    """Get full pull-request detail including description and summary."""
+    from api.db.vector_store import vector_db
+    import json
+
+    try:
+        detail = await vector_db.get_pr_detail(repo=repo, number=pr_number)
+        if not detail:
+            return f"No pull request detail found for {repo}#{pr_number}."
+        return json.dumps(detail, indent=2, default=str)
+    except Exception as e:
+        logger.error(f"Error in get_pr_detail: {e}")
+        return "Failed to load pull request detail."
 
 
 def get_llm():
@@ -117,7 +168,7 @@ def get_llm():
 
 
 # Define tools
-tools = [code_search]
+tools = [code_search, search_pr_history, get_pr_detail]
 
 # Create the ReAct Graph - LLM is initialized lazily via get_llm()
 checkpointer = MemorySaver()

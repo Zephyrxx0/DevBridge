@@ -134,6 +134,115 @@ class VectorStoreManager:
             rows = result.fetchall()
             return [dict(row._mapping) for row in rows]
 
+    async def search_pr_history(
+        self,
+        query_text: str | None = None,
+        file_path: str | None = None,
+        k: int = 5,
+    ) -> List[Dict[str, Any]]:
+        """Search pull request history by semantic similarity or file path."""
+        engine = get_engine()
+        if engine is None:
+            return []
+
+        async with engine.connect() as conn:
+            if file_path:
+                by_path_sql = text(
+                    """
+                    SELECT DISTINCT pr.repo, pr.number, pr.title, pr.summary, pr.author, pr.merged_at
+                    FROM pull_requests pr
+                    JOIN code_chunks cc
+                      ON cc.repo = pr.repo
+                     AND cc.pr_number = pr.number
+                    WHERE cc.file_path = :file_path
+                    ORDER BY pr.merged_at DESC NULLS LAST, pr.created_at DESC
+                    LIMIT :k
+                    """
+                )
+                result = await conn.execute(by_path_sql, {"file_path": file_path, "k": k})
+                rows = result.fetchall()
+                if rows:
+                    return [dict(row._mapping) for row in rows]
+
+            if not query_text:
+                return []
+
+            if not self._vectorstore:
+                logger.warning("Vector store is not initialized, returning empty PR search results.")
+                return []
+
+            embedding = await asyncio.to_thread(self._vectorstore.embedding_service.embed_query, query_text)
+            semantic_sql = text(
+                """
+                SELECT repo, number, title, summary, author, merged_at,
+                       (embedding <=> CAST(:query_embedding AS vector)) AS distance
+                FROM pull_requests
+                WHERE embedding IS NOT NULL
+                ORDER BY embedding <=> CAST(:query_embedding AS vector)
+                LIMIT :k
+                """
+            )
+            result = await conn.execute(
+                semantic_sql,
+                {
+                    "query_embedding": embedding,
+                    "k": k,
+                },
+            )
+            return [dict(row._mapping) for row in result.fetchall()]
+
+    async def get_pr_detail(self, repo: str, number: int) -> Dict[str, Any] | None:
+        """Fetch a pull request detail record from storage."""
+        engine = get_engine()
+        if engine is None:
+            return None
+
+        detail_sql = text(
+            """
+            SELECT repo, number, title, description, summary, author, merged_at, created_at
+            FROM pull_requests
+            WHERE repo = :repo
+              AND number = :number
+            LIMIT 1
+            """
+        )
+
+        async with engine.connect() as conn:
+            result = await conn.execute(detail_sql, {"repo": repo, "number": number})
+            row = result.fetchone()
+            return dict(row._mapping) if row else None
+
+    async def get_chunk_history(self, file_path: str, start_line: int | None, end_line: int | None) -> Dict[str, Any]:
+        """Get commit/PR metadata for a search hit."""
+        engine = get_engine()
+        if engine is None:
+            return {}
+
+        params = {
+            "file_path": file_path,
+            "start_line": start_line,
+            "end_line": end_line,
+        }
+
+        history_sql = text(
+            """
+            SELECT commit_sha, pr_number
+            FROM code_chunks
+            WHERE file_path = :file_path
+              AND (
+                (:start_line IS NULL OR start_line IS NULL OR start_line <= :start_line)
+                AND (:end_line IS NULL OR end_line IS NULL OR end_line >= :end_line)
+              )
+            ORDER BY created_at DESC
+            LIMIT 1
+            """
+        )
+
+        async with engine.connect() as conn:
+            result = await conn.execute(history_sql, params)
+            row = result.fetchone()
+            return dict(row._mapping) if row else {}
+
 # Singleton
 vector_db = VectorStoreManager()
 
