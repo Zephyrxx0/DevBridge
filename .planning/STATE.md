@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: Audit)
-status: Ready to execute
-stopped_at: Completed 07-history-intent-ingestion-01-PLAN.md
-last_updated: "2026-04-25T20:59:34.659Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 07-history-intent-ingestion-02-PLAN.md
+last_updated: "2026-04-25T21:08:40.218Z"
 progress:
   total_phases: 1
   completed_phases: 1
@@ -29,7 +29,7 @@ Plan: 2 of 2
 
 ## Session
 
-- **Stopped at:** Completed 07-history-intent-ingestion-01-PLAN.md
+- **Stopped at:** Completed 07-history-intent-ingestion-02-PLAN.md
 - **Resume file:** None
 
 ## Decisions
@@ -58,6 +58,7 @@ Plan: 2 of 2
 - [Phase 06]: Fail fast — clear error in message bubble, user retries manually.
 - [Phase 07-history-intent-ingestion]: Use GitHub API as canonical source for PR + commit history with Secret Manager-first token resolution.
 - [Phase 07-history-intent-ingestion]: Keep code_search history enrichment optional via include_history to preserve default response shape.
+- [Phase 07-history-intent-ingestion]: Route Why/change prompts through PR history prefetch before agent response generation.
 
 ## Blockers
 
