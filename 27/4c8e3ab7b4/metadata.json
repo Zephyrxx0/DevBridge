@@ -1,0 +1,18 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "274c8e3ab7b4",
+  "strategy": "manual-commit",
+  "branch": "gsd/phase-07-history-intent-ingestion",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".planning/STATE.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/27/4c8e3ab7b4/0/metadata.json",
+      "transcript": "/27/4c8e3ab7b4/0/full.jsonl",
+      "content_hash": "/27/4c8e3ab7b4/0/content_hash.txt",
+      "prompt": "/27/4c8e3ab7b4/0/prompt.txt"
+    }
+  ]
+}

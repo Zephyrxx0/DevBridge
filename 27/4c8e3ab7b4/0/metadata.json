@@ -1,0 +1,27 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "274c8e3ab7b4",
+  "session_id": "399496ed-81ce-4da6-85c1-8f88a43bd5b8",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-25T21:00:42.0074258Z",
+  "branch": "gsd/phase-07-history-intent-ingestion",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".planning/STATE.md"
+  ],
+  "agent": "Gemini CLI",
+  "model": "gemini-3-flash-preview",
+  "turn_id": "4dab3272674b",
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-25T21:00:41.7441364Z",
+    "agent_lines": 3,
+    "human_added": 764,
+    "human_modified": 13,
+    "human_removed": 0,
+    "total_committed": 780,
+    "agent_percentage": 0.38461538461538464
+  }
+}
