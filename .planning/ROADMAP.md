@@ -58,7 +58,7 @@
 ## Milestone 2: Team Intelligence (v0.2)
 *Goal: Context awareness from annotations and history.*
 
-- [ ] **Phase 7: History & Intent Ingestion**
+- [ ] **Phase 7: History & Intent Ingestion** (in progress: 1/2 plans)
 - [ ] **Phase 8: Human Annotation API**
 - [ ] **Phase 9: Collaborative Agents (Debug & PR Review)**
 
@@ -69,4 +69,4 @@
 - [ ] **Phase 11: Security Audit & E2E Testing**
 
 ---
-*Last updated: 2026-04-25*
+*Last updated: 2026-04-26*
