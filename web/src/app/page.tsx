@@ -41,24 +41,91 @@ export default function Home() {
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
+    // Track streaming content for typewriter effect
+    let accumulatedContent = "";
+    let firstChunkReceived = false;
+
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      const response = await fetch(`${apiUrl}/chat`, {
+      
+      const response = await fetch(`${apiUrl}/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage, thread_id: "demo-thread" }),
       });
 
-      if (!response.ok) throw new Error("Failed to connect to orchestrator");
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
 
-      const data = await response.json();
-      setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
-    } catch {
+      // Get the ReadableStream from the response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error("Response body is not readable");
+      }
+
+      // Add empty assistant message for streaming content
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+
+        // Decode the chunk and process SSE events
+        const chunk = decoder.decode(value, { stream: true });
+        const events = chunk.split("\n\n");
+
+        for (const event of events) {
+          if (!event.startsWith("data: ")) continue;
+          
+          try {
+            const data = JSON.parse(event.slice(6));
+            
+            if (data.type === "chunk" && data.content) {
+              // First chunk - transition from typing indicator to response display (D-03)
+              if (!firstChunkReceived) {
+                firstChunkReceived = true;
+                setIsLoading(false); // Stop typing indicator once content starts flowing
+              }
+              
+              accumulatedContent += data.content;
+              
+              // Update the last message (assistant) with accumulated content
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1] = {
+                  role: "assistant",
+                  content: accumulatedContent
+                };
+                return newMessages;
+              });
+            } else if (data.type === "done") {
+              // Stream complete
+              setIsLoading(false);
+            } else if (data.type === "error") {
+              // Error from server
+              throw new Error(data.message || "Streaming error occurred");
+            }
+          } catch {
+            // Skip malformed JSON
+          }
+        }
+      }
+
+      // Ensure loading is turned off after stream completes
+      if (!firstChunkReceived) {
+        setIsLoading(false);
+      }
+    } catch (err) {
+      // Error handling - fail fast, show in message bubble
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Error: Could not connect to the backend. Please ensure the FastAPI server is running." }
+        { role: "assistant", content: `Error: ${errorMessage}` }
       ]);
-    } finally {
       setIsLoading(false);
     }
   };
