@@ -1,11 +1,15 @@
 import os
 import logging
 import json
+import asyncio
+from uuid import UUID
 from langchain_google_vertexai import ChatVertexAI
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.tools import tool
+
+from api.db.models import Annotation
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +29,12 @@ def _is_why_intent(message: str) -> bool:
     )
 
 
+def _extract_annotation_tags(query: str) -> list[str]:
+    known = {"warning", "architecture", "gotcha", "todo", "context", "deprecated"}
+    words = {w.strip(".,:;!?()[]{}\"'").lower() for w in query.split()}
+    return sorted(known.intersection(words))
+
+
 @tool
 async def code_search(query: str, include_history: bool = False):
     """Search for code snippets and implementation logic in the codebase.
@@ -38,21 +48,42 @@ async def code_search(query: str, include_history: bool = False):
         vector_db.initialize()
 
     try:
-        results = await vector_db.hybrid_search(query, k=5)
+        # Wrap vector search in 10s timeout per D-02
+        results = await asyncio.wait_for(vector_db.hybrid_search(query, k=5), timeout=10.0)
         
         if not results:
             return f"No matches found for '{query}'. Try a different query or broader terms."
             
-        citations = []
-        for res in results:
-            history = {}
-            if include_history:
-                history = await vector_db.get_chunk_history(
-                    file_path=res.get("file_path", ""),
-                    start_line=res.get("start_line"),
-                    end_line=res.get("end_line"),
+        # Parallelize history lookup if requested
+        history_results = [{} for _ in results]
+        if include_history:
+            history_tasks = []
+            for res in results:
+                history_tasks.append(
+                    vector_db.get_chunk_history(
+                        file_path=res.get("file_path", ""),
+                        start_line=res.get("start_line"),
+                        end_line=res.get("end_line"),
+                    )
                 )
+            
+            try:
+                # Use a shared timeout for all history fetches
+                raw_history_results = await asyncio.wait_for(
+                    asyncio.gather(*history_tasks, return_exceptions=True),
+                    timeout=5.0
+                )
+                for i, hist in enumerate(raw_history_results):
+                    if not isinstance(hist, Exception):
+                        history_results[i] = hist
+                    else:
+                        logger.warning(f"History lookup failed: {hist}")
+            except asyncio.TimeoutError:
+                logger.warning("History lookup timed out for some results")
 
+        citations = []
+        for i, res in enumerate(results):
+            history = history_results[i]
             citations.append({
                 "file": res.get("file_path"),
                 "lines": f"{res.get('start_line')}-{res.get('end_line')}",
@@ -60,7 +91,7 @@ async def code_search(query: str, include_history: bool = False):
                 "history": {
                     "commit_sha": history.get("commit_sha"),
                     "pr_number": history.get("pr_number"),
-                } if include_history else None,
+                } if include_history and history else None,
             })
             
         summary = f"Found {len(results)} relevant code snippets."
@@ -83,14 +114,20 @@ async def search_pr_history(query: str = "", file_path: str = "", k: int = 5):
         vector_db.initialize()
 
     try:
-        results = await vector_db.search_pr_history(
-            query_text=query or None,
-            file_path=file_path or None,
-            k=k,
+        results = await asyncio.wait_for(
+            vector_db.search_pr_history(
+                query_text=query or None,
+                file_path=file_path or None,
+                k=k,
+            ),
+            timeout=10.0
         )
         if not results:
             return "No pull request history matched the query."
         return json.dumps(results, indent=2, default=str)
+    except asyncio.TimeoutError:
+        logger.warning(f"PR history search timed out for query: {query}")
+        return "PR history search timed out."
     except Exception as e:
         logger.error(f"Error in search_pr_history: {e}")
         return "Failed to search pull request history."
@@ -103,10 +140,16 @@ async def get_pr_detail(repo: str, pr_number: int):
     import json
 
     try:
-        detail = await vector_db.get_pr_detail(repo=repo, number=pr_number)
+        detail = await asyncio.wait_for(
+            vector_db.get_pr_detail(repo=repo, number=pr_number),
+            timeout=10.0
+        )
         if not detail:
             return f"No pull request detail found for {repo}#{pr_number}."
         return json.dumps(detail, indent=2, default=str)
+    except asyncio.TimeoutError:
+        logger.warning(f"PR detail lookup timed out for {repo}#{pr_number}")
+        return "PR detail lookup timed out."
     except Exception as e:
         logger.error(f"Error in get_pr_detail: {e}")
         return "Failed to load pull request detail."
@@ -207,12 +250,72 @@ class Orchestrator:
             )
         return self._graph
 
+    async def assemble_context(
+        self,
+        query: str,
+        repo_id: str,
+        code_results: list[dict],
+        tags: list[str] | None = None,
+    ) -> str:
+        """Compose context with code snippets followed by relevant annotations."""
+        context_parts: list[str] = []
+        requested_tags = tags if tags is not None else _extract_annotation_tags(query)
+
+        # Task 1: Parallelize annotation retrieval across chunks
+        annotation_tasks = []
+        for chunk in code_results:
+            file_path = chunk.get("file_path") or "unknown"
+            annotation_tasks.append(
+                Annotation.get_annotations(
+                    repo_id=UUID(repo_id),
+                    file_path=file_path,
+                    tags=requested_tags,
+                    limit=5,
+                )
+            )
+
+        # Run all annotation fetches in parallel with a shared timeout
+        try:
+            annotations_list = await asyncio.wait_for(
+                asyncio.gather(*annotation_tasks, return_exceptions=True),
+                timeout=10.0
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Parallel annotation retrieval timed out")
+            annotations_list = [[] for _ in code_results]
+
+        for i, chunk in enumerate(code_results):
+            file_path = chunk.get("file_path") or "unknown"
+            start_line = chunk.get("start_line")
+            end_line = chunk.get("end_line")
+            snippet = chunk.get("snippet") or ""
+
+            header = f"## {file_path}:{start_line}-{end_line}" if start_line and end_line else f"## {file_path}"
+            context_parts.append(header)
+            context_parts.append(snippet)
+
+            # Extract result from gather list
+            annotations = annotations_list[i] if i < len(annotations_list) else []
+            if isinstance(annotations, Exception):
+                logger.warning(f"Annotation retrieval failed for {file_path}: {annotations}")
+                annotations = []
+
+            if annotations:
+                context_parts.append("## Annotations (team knowledge)")
+                context_parts.extend(a.format_for_llm() for a in annotations)
+
+        return "\n\n".join(context_parts)
+
     async def _build_history_context(self, message: str) -> tuple[str, str]:
         """Fetch lightweight PR history context for intent grounding."""
         try:
-            raw_history = await search_pr_history.ainvoke({"query": message, "k": 3})
-        except Exception as e:
-            logger.warning(f"History search failed: {e}")
+            # Task 2: Implement Tool Timeouts (D-02)
+            raw_history = await asyncio.wait_for(
+                search_pr_history.ainvoke({"query": message, "k": 3}),
+                timeout=10.0
+            )
+        except (Exception, asyncio.TimeoutError) as e:
+            logger.warning(f"History search failed or timed out: {e}")
             return "", ""
 
         try:
@@ -232,12 +335,16 @@ class Orchestrator:
         citation = f"- {repo}#{number}"
         detail_summary = ""
         try:
-            raw_detail = await get_pr_detail.ainvoke({"repo": repo, "pr_number": int(number)})
+            # Task 2: Implement Tool Timeouts (D-02)
+            raw_detail = await asyncio.wait_for(
+                get_pr_detail.ainvoke({"repo": repo, "pr_number": int(number)}),
+                timeout=10.0
+            )
             parsed_detail = json.loads(raw_detail) if isinstance(raw_detail, str) else {}
             if isinstance(parsed_detail, dict):
                 detail_summary = parsed_detail.get("summary") or parsed_detail.get("description") or ""
-        except Exception as e:
-            logger.warning(f"PR detail lookup failed: {e}")
+        except (Exception, asyncio.TimeoutError) as e:
+            logger.warning(f"PR detail lookup failed or timed out: {e}")
 
         pr_summary = top.get("summary") or detail_summary or ""
         context = (
