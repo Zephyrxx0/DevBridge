@@ -1,4 +1,7 @@
 from contextlib import asynccontextmanager
+import logging
+import os
+import secrets as pysecrets
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -9,8 +12,11 @@ import asyncio
 from api.agents.orchestrator import Orchestrator
 from api.core.config import settings
 from api.db.session import close_db_pool, init_db_pool
+from api.routes import annotations
+from api.routes import webhooks
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,14 +30,48 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="DevBridge API", lifespan=lifespan)
 orchestrator = Orchestrator()
 
-# Configure CORS for Next.js
+# Configure CORS for Next.js with explicit origin allowlist.
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to your frontend URL
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def inject_user_context(request, call_next):
+    # Only trust forwarded identity when internal auth token and proxy host checks pass.
+    expected_internal_token = os.getenv("INTERNAL_AUTH_TOKEN")
+    incoming_internal_token = request.headers.get("X-Internal-Auth") or ""
+
+    trusted_proxy_ips = {
+        ip.strip()
+        for ip in os.getenv("TRUSTED_PROXY_IPS", "127.0.0.1,::1").split(",")
+        if ip.strip()
+    }
+    client_host = request.client.host if request.client else None
+    client_is_trusted = client_host in trusted_proxy_ips
+
+    token_matches = bool(expected_internal_token) and pysecrets.compare_digest(
+        incoming_internal_token,
+        expected_internal_token or "",
+    )
+    if token_matches and client_is_trusted:
+        user_id = request.headers.get("X-User-Id")
+        if user_id:
+            request.state.user_id = user_id
+    return await call_next(request)
+
+app.include_router(annotations.router)
+app.include_router(webhooks.router)
 
 class ChatRequest(BaseModel):
     message: str
@@ -54,7 +94,8 @@ async def chat(request: ChatRequest):
             "thread_id": request.thread_id
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Chat request failed")
+        raise HTTPException(status_code=500, detail="Chat request failed")
 
 
 @app.post("/chat/stream")
@@ -98,8 +139,8 @@ async def chat_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'type': 'done'})}\n\n"
                     
             except Exception as e:
-                error_message = str(e)
-                yield f"data: {json.dumps({'type': 'error', 'message': f'Streaming error: {error_message}'})}\n\n"
+                logger.exception("Streaming request failed")
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Streaming error'})}\n\n"
         
         return StreamingResponse(
             event_generator(),
@@ -111,7 +152,8 @@ async def chat_stream(request: ChatRequest):
             }
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to initialize streaming response")
+        raise HTTPException(status_code=500, detail="Streaming request failed")
 
 if __name__ == "__main__":
     import uvicorn
