@@ -1,0 +1,179 @@
+<objective>
+Validate built features through conversational testing with persistent state.
+
+Purpose: Confirm what Claude built actually works from user's perspective. One test at a time, plain text responses, no interrogation. When issues are found, automatically diagnose, plan fixes, and prepare for execution.
+
+Output: {phase_num}-UAT.md tracking all test results. If issues found: diagnosed gaps, verified fix plans ready for /gsd-execute-phase
+</objective>
+
+<execution_context>
+@$HOME/.gemini/get-shit-done/workflows/verify-work.md
+@$HOME/.gemini/get-shit-done/templates/UAT.md
+</execution_context>
+
+<context>
+Phase: $ARGUMENTS (optional)
+- If provided: Test specific phase (e.g., "4")
+- If not provided: Check for active sessions or prompt for phase
+
+Context files are resolved inside the workflow (`init verify-work`) and delegated via `<files_to_read>` blocks.
+</context>
+
+<process>
+Execute the verify-work workflow from @$HOME/.gemini/get-shit-done/workflows/verify-work.md end-to-end.
+Preserve all workflow gates (session management, test presentation, diagnosis, fix planning, routing).
+</process>
+
+/gsd:verify-work phase-08
+
+---
+
+<objective>
+Extract implementation decisions that downstream agents need — researcher and planner will use CONTEXT.md to know what to investigate and what choices are locked.
+
+**How it works:**
+1. Load prior context (PROJECT.md, REQUIREMENTS.md, STATE.md, prior CONTEXT.md files)
+2. Scout codebase for reusable assets and patterns
+3. Analyze phase — skip gray areas already decided in prior phases
+4. Present remaining gray areas — user selects which to discuss
+5. Deep-dive each selected area until satisfied
+6. Create CONTEXT.md with decisions that guide research and planning
+
+**Output:** `{phase_num}-CONTEXT.md` — decisions clear enough that downstream agents can act without asking the user again
+</objective>
+
+<execution_context>
+@$HOME/.gemini/get-shit-done/workflows/discuss-phase.md
+@$HOME/.gemini/get-shit-done/workflows/discuss-phase-assumptions.md
+@$HOME/.gemini/get-shit-done/workflows/discuss-phase-power.md
+@$HOME/.gemini/get-shit-done/templates/context.md
+</execution_context>
+
+<runtime_note>
+**Copilot (VS Code):** Use `vscode_askquestions` wherever this workflow calls `AskUserQuestion`. They are equivalent — `vscode_askquestions` is the VS Code Copilot implementation of the same interactive question API.
+</runtime_note>
+
+<context>
+Phase number: $ARGUMENTS (required)
+
+Context files are resolved in-workflow using `init phase-op` and roadmap/state tool calls.
+</context>
+
+<process>
+**Mode routing:**
+```bash
+DISCUSS_MODE=$(node "$HOME/.gemini/get-shit-done/bin/gsd-tools.cjs" config-get workflow.discuss_mode 2>/dev/null || echo "discuss")
+```
+
+If `DISCUSS_MODE` is `"assumptions"`: Read and execute @$HOME/.gemini/get-shit-done/workflows/discuss-phase-assumptions.md end-to-end.
+
+If `DISCUSS_MODE` is `"discuss"` (or unset, or any other value): Read and execute @$HOME/.gemini/get-shit-done/workflows/discuss-phase.md end-to-end.
+
+**MANDATORY:** The execution_context files listed above ARE the instructions. Read the workflow file BEFORE taking any action. The objective and success_criteria sections in this command file are summaries — the workflow file contains the complete step-by-step process with all required behaviors, config checks, and interaction patterns. Do not improvise from the summary.
+</process>
+
+<success_criteria>
+- Prior context loaded and applied (no re-asking decided questions)
+- Gray areas identified through intelligent analysis
+- User chose which areas to discuss
+- Each selected area explored until satisfied
+- Scope creep redirected to deferred ideas
+- CONTEXT.md captures decisions, not vague vision
+- User knows next steps
+</success_criteria>
+
+/gsd:discuss-phase 9, create a new branch first and then start discussion there
+
+---
+
+<objective>
+Create executable phase prompts (PLAN.md files) for a roadmap phase with integrated research and verification.
+
+**Default flow:** Research (if needed) → Plan → Verify → Done
+
+**Orchestrator role:** Parse arguments, validate phase, research domain (unless skipped), spawn gsd-planner, verify with gsd-plan-checker, iterate until pass or max iterations, present results.
+</objective>
+
+<execution_context>
+@$HOME/.gemini/get-shit-done/workflows/plan-phase.md
+@$HOME/.gemini/get-shit-done/references/ui-brand.md
+</execution_context>
+
+<runtime_note>
+**Copilot (VS Code):** Use `vscode_askquestions` wherever this workflow calls `AskUserQuestion`. They are equivalent — `vscode_askquestions` is the VS Code Copilot implementation of the same interactive question API. Do not skip questioning steps because `AskUserQuestion` appears unavailable; use `vscode_askquestions` instead.
+</runtime_note>
+
+<context>
+Phase number: $ARGUMENTS (optional — auto-detects next unplanned phase if omitted)
+
+**Flags:**
+- `--research` — Force re-research even if RESEARCH.md exists
+- `--skip-research` — Skip research, go straight to planning
+- `--gaps` — Gap closure mode (reads VERIFICATION.md, skips research)
+- `--skip-verify` — Skip verification loop
+- `--prd <file>` — Use a PRD/acceptance criteria file instead of discuss-phase. Parses requirements into CONTEXT.md automatically. Skips discuss-phase entirely.
+- `--reviews` — Replan incorporating cross-AI review feedback from REVIEWS.md (produced by `/gsd-review`)
+- `--text` — Use plain-text numbered lists instead of TUI menus (required for `/rc` remote sessions)
+
+Normalize phase input in step 2 before any directory lookups.
+</context>
+
+<process>
+Execute the plan-phase workflow from @$HOME/.gemini/get-shit-done/workflows/plan-phase.md end-to-end.
+Preserve all workflow gates (validation, research, planning, verification loop, routing).
+</process>
+
+/gsd:plan-phase 09
+
+---
+
+<objective>
+Execute all plans in a phase using wave-based parallel execution.
+
+Orchestrator stays lean: discover plans, analyze dependencies, group into waves, spawn subagents, collect results. Each subagent loads the full execute-plan context and handles its own plan.
+
+Optional wave filter:
+- `--wave N` executes only Wave `N` for pacing, quota management, or staged rollout
+- phase verification/completion still only happens when no incomplete plans remain after the selected wave finishes
+
+Flag handling rule:
+- The optional flags documented below are available behaviors, not implied active behaviors
+- A flag is active only when its literal token appears in `$ARGUMENTS`
+- If a documented flag is absent from `$ARGUMENTS`, treat it as inactive
+
+Context budget: ~15% orchestrator, 100% fresh per subagent.
+</objective>
+
+<execution_context>
+@$HOME/.gemini/get-shit-done/workflows/execute-phase.md
+@$HOME/.gemini/get-shit-done/references/ui-brand.md
+</execution_context>
+
+<runtime_note>
+**Copilot (VS Code):** Use `vscode_askquestions` wherever this workflow calls `AskUserQuestion`. They are equivalent — `vscode_askquestions` is the VS Code Copilot implementation of the same interactive question API.
+</runtime_note>
+
+<context>
+Phase: $ARGUMENTS
+
+**Available optional flags (documentation only — not automatically active):**
+- `--wave N` — Execute only Wave `N` in the phase. Use when you want to pace execution or stay inside usage limits.
+- `--gaps-only` — Execute only gap closure plans (plans with `gap_closure: true` in frontmatter). Use after verify-work creates fix plans.
+- `--interactive` — Execute plans sequentially inline (no subagents) with user checkpoints between tasks. Lower token usage, pair-programming style. Best for small phases, bug fixes, and verification gaps.
+
+**Active flags must be derived from `$ARGUMENTS`:**
+- `--wave N` is active only if the literal `--wave` token is present in `$ARGUMENTS`
+- `--gaps-only` is active only if the literal `--gaps-only` token is present in `$ARGUMENTS`
+- `--interactive` is active only if the literal `--interactive` token is present in `$ARGUMENTS`
+- If none of these tokens appear, run the standard full-phase execution flow with no flag-specific filtering
+- Do not infer that a flag is active just because it is documented in this prompt
+
+Context files are resolved inside the workflow via `gsd-tools init execute-phase` and per-subagent `<files_to_read>` blocks.
+</context>
+
+<process>
+Execute the execute-phase workflow from @$HOME/.gemini/get-shit-done/workflows/execute-phase.md end-to-end.
+Preserve all workflow gates (wave execution, checkpoint handling, verification, state updates, routing).
+</process>
+
+/gsd:execute-phase 09
