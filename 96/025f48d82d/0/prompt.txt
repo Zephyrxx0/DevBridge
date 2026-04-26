@@ -297,3 +297,105 @@ If `DISCUSS_MODE` is `"discuss"` (or unset, or any other value): Read and execut
 ---
 
 these are correct, proceed
+
+---
+
+<objective>
+Create executable phase prompts (PLAN.md files) for a roadmap phase with integrated research and verification.
+
+**Default flow:** Research (if needed) → Plan → Verify → Done
+
+**Orchestrator role:** Parse arguments, validate phase, research domain (unless skipped), spawn gsd-planner, verify with gsd-plan-checker, iterate until pass or max iterations, present results.
+</objective>
+
+<execution_context>
+@$HOME/.gemini/get-shit-done/workflows/plan-phase.md
+@$HOME/.gemini/get-shit-done/references/ui-brand.md
+</execution_context>
+
+<runtime_note>
+**Copilot (VS Code):** Use `vscode_askquestions` wherever this workflow calls `AskUserQuestion`. They are equivalent — `vscode_askquestions` is the VS Code Copilot implementation of the same interactive question API. Do not skip questioning steps because `AskUserQuestion` appears unavailable; use `vscode_askquestions` instead.
+</runtime_note>
+
+<context>
+Phase number: $ARGUMENTS (optional — auto-detects next unplanned phase if omitted)
+
+**Flags:**
+- `--research` — Force re-research even if RESEARCH.md exists
+- `--skip-research` — Skip research, go straight to planning
+- `--gaps` — Gap closure mode (reads VERIFICATION.md, skips research)
+- `--skip-verify` — Skip verification loop
+- `--prd <file>` — Use a PRD/acceptance criteria file instead of discuss-phase. Parses requirements into CONTEXT.md automatically. Skips discuss-phase entirely.
+- `--reviews` — Replan incorporating cross-AI review feedback from REVIEWS.md (produced by `/gsd-review`)
+- `--text` — Use plain-text numbered lists instead of TUI menus (required for `/rc` remote sessions)
+
+Normalize phase input in step 2 before any directory lookups.
+</context>
+
+<process>
+Execute the plan-phase workflow from @$HOME/.gemini/get-shit-done/workflows/plan-phase.md end-to-end.
+Preserve all workflow gates (validation, research, planning, verification loop, routing).
+</process>
+
+/gsd:plan-phase 10
+
+---
+
+continue
+
+---
+
+continue
+
+---
+
+<objective>
+Execute all plans in a phase using wave-based parallel execution.
+
+Orchestrator stays lean: discover plans, analyze dependencies, group into waves, spawn subagents, collect results. Each subagent loads the full execute-plan context and handles its own plan.
+
+Optional wave filter:
+- `--wave N` executes only Wave `N` for pacing, quota management, or staged rollout
+- phase verification/completion still only happens when no incomplete plans remain after the selected wave finishes
+
+Flag handling rule:
+- The optional flags documented below are available behaviors, not implied active behaviors
+- A flag is active only when its literal token appears in `$ARGUMENTS`
+- If a documented flag is absent from `$ARGUMENTS`, treat it as inactive
+
+Context budget: ~15% orchestrator, 100% fresh per subagent.
+</objective>
+
+<execution_context>
+@$HOME/.gemini/get-shit-done/workflows/execute-phase.md
+@$HOME/.gemini/get-shit-done/references/ui-brand.md
+</execution_context>
+
+<runtime_note>
+**Copilot (VS Code):** Use `vscode_askquestions` wherever this workflow calls `AskUserQuestion`. They are equivalent — `vscode_askquestions` is the VS Code Copilot implementation of the same interactive question API.
+</runtime_note>
+
+<context>
+Phase: $ARGUMENTS
+
+**Available optional flags (documentation only — not automatically active):**
+- `--wave N` — Execute only Wave `N` in the phase. Use when you want to pace execution or stay inside usage limits.
+- `--gaps-only` — Execute only gap closure plans (plans with `gap_closure: true` in frontmatter). Use after verify-work creates fix plans.
+- `--interactive` — Execute plans sequentially inline (no subagents) with user checkpoints between tasks. Lower token usage, pair-programming style. Best for small phases, bug fixes, and verification gaps.
+
+**Active flags must be derived from `$ARGUMENTS`:**
+- `--wave N` is active only if the literal `--wave` token is present in `$ARGUMENTS`
+- `--gaps-only` is active only if the literal `--gaps-only` token is present in `$ARGUMENTS`
+- `--interactive` is active only if the literal `--interactive` token is present in `$ARGUMENTS`
+- If none of these tokens appear, run the standard full-phase execution flow with no flag-specific filtering
+- Do not infer that a flag is active just because it is documented in this prompt
+
+Context files are resolved inside the workflow via `gsd-tools init execute-phase` and per-subagent `<files_to_read>` blocks.
+</context>
+
+<process>
+Execute the execute-phase workflow from @$HOME/.gemini/get-shit-done/workflows/execute-phase.md end-to-end.
+Preserve all workflow gates (wave execution, checkpoint handling, verification, state updates, routing).
+</process>
+
+/gsd:execute-phase 10
