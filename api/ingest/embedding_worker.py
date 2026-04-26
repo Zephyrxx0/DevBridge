@@ -9,7 +9,8 @@ import logging
 import json
 import asyncio
 import base64
-from typing import Dict, Any
+import os
+from typing import Dict, Any, List, Optional
 
 from api.db.vector_store import vector_db
 from api.ingestion.types import EmbeddingJob
@@ -19,50 +20,137 @@ from api.core.config import settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def process_embedding_job(job: EmbeddingJob) -> bool:
+class BatchProcessor:
     """
-    Process a single embedding job.
-    
-    Args:
-        job: The EmbeddingJob to process.
+    Collects EmbeddingJobs and processes them in batches for efficiency.
+    Implements timer-based (5s) and size-based (50 items) flushes.
+    """
+    def __init__(self, batch_size: int = 50, flush_interval: float = 5.0):
+        self.batch_size = batch_size
+        self.flush_interval = flush_interval
+        self.queue = asyncio.Queue()
+        self._loop_task = None
+        self._pending_futures: Dict[str, asyncio.Future] = {}
+
+    def _start_if_needed(self):
+        if self._loop_task is None or self._loop_task.done():
+            self._loop_task = asyncio.create_task(self._run_loop())
+
+    async def add_job(self, job: EmbeddingJob) -> bool:
+        """Add a job to the batch and wait for its completion."""
+        self._start_if_needed()
         
-    Returns:
-        True if successful, False if it should be retried.
+        # Create a future to track this specific job's completion
+        future = asyncio.get_running_loop().create_future()
+        self._pending_futures[job.chunk_id] = future
+        
+        await self.queue.put(job)
+        return await future
+
+    async def _run_loop(self):
+        """Background loop to process batches."""
+        logger.info("Starting BatchProcessor loop")
+        while True:
+            batch: List[EmbeddingJob] = []
+            try:
+                # Wait for the first job in the batch
+                try:
+                    job = await asyncio.wait_for(self.queue.get(), timeout=self.flush_interval)
+                    batch.append(job)
+                except asyncio.TimeoutError:
+                    # Nothing in queue, just continue waiting
+                    continue
+
+                # Collect more jobs up to batch_size
+                while len(batch) < self.batch_size and not self.queue.empty():
+                    batch.append(self.queue.get_nowait())
+
+                if batch:
+                    await self._process_batch(batch)
+
+            except Exception as e:
+                logger.exception("Unexpected error in BatchProcessor loop: %s", e)
+                # Fail any futures in the batch that weren't handled
+                for job in batch:
+                    if job.chunk_id in self._pending_futures and not self._pending_futures[job.chunk_id].done():
+                        self._pending_futures[job.chunk_id].set_result(False)
+
+    async def _process_batch(self, batch: List[EmbeddingJob]):
+        """Processes a batch of jobs with fallback to individual processing."""
+        chunk_ids = [job.chunk_id for job in batch]
+        contents = [job.content for job in batch]
+        
+        logger.info("Processing batch of %d embedding jobs", len(batch))
+        
+        try:
+            # 1. Initialize vector store if needed
+            if not vector_db._vectorstore:
+                if not vector_db.initialize():
+                    raise RuntimeError("Failed to initialize vector store")
+
+            # 2. Batch generate embeddings
+            # VertexAIEmbeddings.aembed_documents is the async batch method
+            embeddings = await vector_db._vectorstore.embedding_service.aembed_documents(contents)
+            
+            # 3. Batch upsert to database
+            upsert_items = [
+                {"chunk_id": cid, "embedding": emb}
+                for cid, emb in zip(chunk_ids, embeddings)
+            ]
+            await vector_db.upsert_vectors_batch(upsert_items)
+            
+            # Mark all jobs in batch as successful
+            for cid in chunk_ids:
+                future = self._pending_futures.pop(cid, None)
+                if future and not future.done():
+                    future.set_result(True)
+            
+            logger.info("Successfully processed batch of %d", len(batch))
+
+        except Exception as e:
+            logger.warning("Batch processing failed, falling back to individual retries: %s", e)
+            # T3: Resilient partial success fallback
+            for job in batch:
+                success = await process_embedding_job_individual(job)
+                future = self._pending_futures.pop(job.chunk_id, None)
+                if future and not future.done():
+                    future.set_result(success)
+
+# Global processor instance
+processor = BatchProcessor(
+    batch_size=int(os.environ.get("BATCH_SIZE", "50")),
+    flush_interval=float(os.environ.get("FLUSH_INTERVAL", "5.0"))
+)
+
+async def process_embedding_job_individual(job: EmbeddingJob) -> bool:
+    """
+    Process a single embedding job (used as fallback).
     """
     # T-05-06: Payload size check
-    if len(job.content) > 1_000_000: # Hard limit for sanity
+    if len(job.content) > 1_000_000:
         logger.error("Job %s content too large: %d chars", job.chunk_id, len(job.content))
-        return True # Don't retry if it's too large, it will likely always fail
+        return True
     
     try:
-        # Initialize vector store if needed (this also initializes VertexAI embeddings)
         if not vector_db._vectorstore:
             if not vector_db.initialize():
-                logger.error("Failed to initialize vector store for job %s", job.chunk_id)
                 return False
         
-        # 1. Generate embedding
-        # VertexAIEmbeddings.embed_query is usually synchronous in LangChain but we use to_thread
-        # We use embed_query because it returns a List[float] which our upsert_vector expects
         embedding = await asyncio.to_thread(
             vector_db._vectorstore.embedding_service.embed_query, 
             job.content
         )
         
-        # 2. Upsert vector
         await vector_db.upsert_vector(job.chunk_id, embedding)
-        
-        logger.info("Successfully processed embedding for chunk_id: %s", job.chunk_id)
         return True
         
     except Exception as e:
-        logger.exception("Error processing embedding job %s (attempt %d/%d): %s", 
-                         job.chunk_id, job.attempt, job.max_retries, e)
+        logger.error("Error processing individual embedding job %s: %s", job.chunk_id, e)
         return False
 
 async def handle_worker_event(event: Dict[str, Any]) -> bool:
     """
-    Entry point for worker event (e.g., from Pub/Sub or Cloud Tasks).
+    Entry point for worker event. Now uses BatchProcessor for efficiency.
     """
     try:
         # Extract payload
@@ -99,7 +187,8 @@ async def handle_worker_event(event: Dict[str, Any]) -> bool:
                 return False
             await init_db_pool(conn_str)
             
-        success = await process_embedding_job(job)
+        # Use BatchProcessor
+        success = await processor.add_job(job)
         return success
         
     except Exception as e:
@@ -108,7 +197,6 @@ async def handle_worker_event(event: Dict[str, Any]) -> bool:
 
 if __name__ == "__main__":
     # For local testing or Cloud Run job invocation
-    import os
     event_data = os.environ.get("PUBSUB_EVENT_DATA", "{}")
     try:
         event = json.loads(event_data)
