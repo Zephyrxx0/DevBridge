@@ -230,6 +230,30 @@ tools = [code_search, search_pr_history, get_pr_detail]
 # Create the ReAct Graph - LLM is initialized lazily via get_llm()
 checkpointer = MemorySaver()
 
+# D-06: System prompt requiring citations for any information retrieved via code_search
+# This ensures transparency and traceability per Phase 12 requirements
+SYSTEM_PROMPT = """You are DevBridge, a team-aware knowledge system for codebases.
+
+When you answer questions about code, you MUST include citations for any information 
+retrieved via the code_search tool.
+
+Format your response with:
+- **Citations:** Explicit file paths and line numbers for every code fact you present
+- Example: "The function is defined in `api/ingest/trigger.py:77-82`"
+
+For "why" questions, use the PR/Commit history context provided to explain the rationale 
+behind code changes.
+"""
+
+
+def state_modifier(messages):
+    """Add system prompt to messages for citation enforcement."""
+    from langchain_core.messages import HumanMessage, SystemMessage
+    
+    # Convert any existing messages to proper format and prepend system prompt
+    system_msg = SystemMessage(content=SYSTEM_PROMPT)
+    return [system_msg] + messages
+
 
 class Orchestrator:
     def __init__(self):
@@ -246,7 +270,10 @@ class Orchestrator:
     def graph(self):
         if self._graph is None:
             self._graph = create_react_agent(
-                self.llm, tools=tools, checkpointer=checkpointer
+                self.llm, 
+                tools=tools, 
+                checkpointer=checkpointer,
+                state_modifier=state_modifier  # D-06: Citation enforcement
             )
         return self._graph
 
