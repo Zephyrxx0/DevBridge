@@ -1,0 +1,16 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "c0b59d9644f9",
+  "strategy": "manual-commit",
+  "branch": "phase-10-performance-optimization",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/c0/b59d9644f9/0/metadata.json",
+      "transcript": "/c0/b59d9644f9/0/full.jsonl",
+      "content_hash": "/c0/b59d9644f9/0/content_hash.txt",
+      "prompt": "/c0/b59d9644f9/0/prompt.txt"
+    }
+  ]
+}
