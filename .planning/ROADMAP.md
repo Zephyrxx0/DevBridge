@@ -46,19 +46,25 @@
 
 ### Gap Closure (Post v0.1 Audit)
 
-- [ ] **Phase 12: Milestone Gap Wiring - Ingestion + Search**
+- [x] **Phase 12: Milestone Gap Wiring - Ingestion + Search** (completed 2026-04-26)
   - [x] Wire runtime ingestion trigger path (`ingest -> chunk -> persist`).
   - [x] Connect orchestrator `code_search` to vector similarity search.
   - [x] Close MR-01 and FR-AI-02 wiring blockers from `v0.1-v0.1-MILESTONE-AUDIT.md`.
 
 **Plans:** 1 plan
 
-- [ ] 12-01-PLAN.md — Tracking schema, trigger logic, and agent citations
+- [x] 12-01-PLAN.md — Tracking schema, trigger logic, and agent citations
 
 - [ ] **Phase 13: Milestone Gap Hardening - E2E + Runtime Config**
   - [ ] Add milestone E2E test: ingest sample -> index write -> chat search hit.
   - [ ] Align cloud project env usage (`GOOGLE_CLOUD_PROJECT` vs `GCP_PROJECT_ID`).
   - [ ] Re-run milestone audit gates and close remaining v0.1 flow gaps.
+
+**Plans:** 3 plans
+
+- [ ] 13-01-PLAN.md — E2E Test Infrastructure
+- [ ] 13-02-PLAN.md — Runtime Config Unification
+- [ ] 13-03-PLAN.md — Milestone Audit Verification
 
 ## Milestone 2: Team Intelligence (v0.2)
 *Goal: Context awareness from annotations and history.*
@@ -105,6 +111,8 @@
 
 - [x] **Phase 10: Performance & Optimization**
  (completed 2026-04-26)
+- [ ] **Phase 14: Design website pages from spec**
+  - [ ] Run /gsd-plan-phase 14 to break down into plans
 - [ ] **Phase 11: Security Audit & E2E Testing**
 
 ### Phase 11: Security Audit & E2E Testing
@@ -120,6 +128,15 @@
 
 - [ ] 11-01-PLAN.md — Security Audit & Automated Scanning
 - [ ] 11-02-PLAN.md — E2E Testing Framework & Ingestion Loop
+
+### Phase 14: Design website pages from spec
+
+**Goal:** Design website pages from spec
+**Depends on**: Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 14 to break down)
 
 ---
 *Last updated: 2026-04-26*
