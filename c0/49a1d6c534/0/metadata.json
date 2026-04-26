@@ -1,0 +1,27 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "c049a1d6c534",
+  "session_id": "0fa1ff83-99d0-4050-b14a-1bf817f7919a",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-26T16:29:19.3973388Z",
+  "branch": "gsd/phase-13-e2e-runtime-config",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".planning/STATE.md"
+  ],
+  "agent": "Gemini CLI",
+  "model": "gemini-3-flash-preview",
+  "turn_id": "fd2d58935a87",
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-26T16:29:19.1202669Z",
+    "agent_lines": 6,
+    "human_added": 887,
+    "human_modified": 14,
+    "human_removed": 0,
+    "total_committed": 907,
+    "agent_percentage": 0.6615214994487321
+  }
+}
