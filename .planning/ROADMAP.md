@@ -60,7 +60,26 @@
 
 - [x] **Phase 7: History & Intent Ingestion** (completed 2026-04-26)
 - [ ] **Phase 8: Human Annotation API**
+  - [ ] Plan 01: Annotations table + CRUD API
+  - [ ] Plan 02: Retrieval integration + feedback loop
 - [ ] **Phase 9: Collaborative Agents (Debug & PR Review)**
+
+### Phase 7: History & Intent Ingestion
+
+**Goal:** Ingest GitHub PR and commit history to provide context for "why" code changed.
+
+**Success Criteria:**
+1. PR history available in orchestrator context.
+2. Commit messages linked to code chunks.
+
+### Phase 8: Human Annotation API
+
+**Goal:** Implement API for human feedback and annotations on code chunks and agent responses.
+
+**Success Criteria:**
+1. CRUD API for annotations.
+2. Annotations included in retrieval context.
+3. Feedback loop for agent response quality.
 
 ## Milestone 3: Scale & Polish (v1.0)
 *Goal: Production-ready performance and UX.*
