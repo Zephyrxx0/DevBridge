@@ -18,7 +18,7 @@ from google.cloud import storage
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
 
-from api.core.config import settings
+from api.core.config import GOOGLE_CLOUD_PROJECT, settings
 from api.db.session import get_engine, init_db_pool
 from api.ingest.embedding_queue import enqueue_embedding_jobs
 from api.ingestion.tree_sitter_chunker import chunk_source
@@ -103,8 +103,8 @@ async def _ingest_file(bucket: str, object_name: str, job_id: str = None) -> Ing
     # Parse the file path - D-01, D-02 from Phase 12 Context
     repo, file_path = _parse_repo_path(object_name)
     
-    # Ensure GCP project context per D-07
-    gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or settings.google_cloud_project
+    # Ensure GCP project context per D-07 - use config.py as single source of truth
+    gcp_project = GOOGLE_CLOUD_PROJECT
     if gcp_project:
         logger.info(f"Processing ingestion for GCP project: {gcp_project}")
     

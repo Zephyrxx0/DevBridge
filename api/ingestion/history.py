@@ -13,7 +13,7 @@ from langchain_core.messages import HumanMessage
 from langchain_google_vertexai import ChatVertexAI, VertexAIEmbeddings
 from sqlalchemy import text
 
-from api.core.config import settings
+from api.core.config import GOOGLE_CLOUD_PROJECT, settings
 from api.db.session import get_engine, init_db_pool
 
 
@@ -49,7 +49,8 @@ def _sanitize_text(value: str | None, max_len: int = 20000) -> str:
 
 
 def _get_github_token() -> str:
-    project_id = settings.google_cloud_project or os.environ.get("GOOGLE_CLOUD_PROJECT")
+    # Use GOOGLE_CLOUD_PROJECT from config.py as single source of truth
+    project_id = GOOGLE_CLOUD_PROJECT
     if project_id:
         try:
             from google.cloud import secretmanager

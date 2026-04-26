@@ -1,4 +1,5 @@
 import os
+import warnings
 from typing import Any
 
 from google.cloud import secretmanager
@@ -11,6 +12,34 @@ from pydantic_settings import (
 )
 
 
+def _log_startup_config() -> None:
+    """Log which config is in use at startup."""
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT_ID")
+    source = "GOOGLE_CLOUD_PROJECT" if os.environ.get("GOOGLE_CLOUD_PROJECT") else "GCP_PROJECT_ID (deprecated)"
+    print(f"[CONFIG] Using project: {project or 'NOT SET'} (source: {source})")
+
+
+# Log startup config immediately when module is loaded
+_log_startup_config()
+
+
+def _check_deprecated_project_id() -> None:
+    """Check for deprecated GCP_PROJECT_ID and emit warning."""
+    if os.environ.get("GCP_PROJECT_ID") and not os.environ.get("GOOGLE_CLOUD_PROJECT"):
+        warnings.warn(
+            "GCP_PROJECT_ID is deprecated. Use GOOGLE_CLOUD_PROJECT instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
+
+_check_deprecated_project_id()
+
+
+# Single source of truth for project ID - prefer GOOGLE_CLOUD_PROJECT over deprecated GCP_PROJECT_ID
+GOOGLE_CLOUD_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT_ID") or None
+
+
 class GCPSecretSource(PydanticBaseSettingsSource):
     def get_field_value(self, field: FieldInfo, field_name: str) -> tuple[Any, str, bool]:
         # Required by abstract base class; this source resolves all fields in __call__.
@@ -18,11 +47,6 @@ class GCPSecretSource(PydanticBaseSettingsSource):
 
     def __call__(self) -> dict[str, Any]:
         project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
-        if not project_id:
-            project_id = os.environ.get("GCP_PROJECT_ID")
-            if project_id:
-                import logging
-                logging.getLogger(__name__).warning("Using legacy GCP_PROJECT_ID fallback in GCPSecretSource. Please migrate to GOOGLE_CLOUD_PROJECT.")
 
         if not project_id:
             return {}
@@ -54,13 +78,7 @@ class Settings(BaseSettings):
 
     def __init__(self, **values):
         super().__init__(**values)
-        if not self.google_cloud_project:
-            legacy = os.environ.get("GCP_PROJECT_ID")
-            if legacy:
-                import logging
-                logging.getLogger(__name__).warning("Using legacy GCP_PROJECT_ID fallback. Please migrate to GOOGLE_CLOUD_PROJECT.")
-                self.google_cloud_project = legacy
-        
+
         # T-05-04: Reject empty project identity in production mode
         if self.env.lower() == "production" and not self.google_cloud_project:
             raise ValueError("GOOGLE_CLOUD_PROJECT must be set in production mode")
@@ -76,10 +94,10 @@ class Settings(BaseSettings):
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         return (
             init_settings,
-            GCPSecretSource(settings_cls),
             env_settings,
             dotenv_settings,
             file_secret_settings,
+            GCPSecretSource(settings_cls),
         )
 
 

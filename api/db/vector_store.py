@@ -8,7 +8,7 @@ from langchain_postgres import PGVectorStore
 from langchain_core.documents import Document
 from langchain_google_vertexai import VertexAIEmbeddings
 from sqlalchemy import text
-from api.core.secrets import secrets
+from api.core.config import GOOGLE_CLOUD_PROJECT, settings
 from api.db.session import get_engine
 
 logger = logging.getLogger(__name__)
@@ -32,15 +32,12 @@ class VectorStoreManager:
             return False
 
         try:
-            # We use VertexAI embeddings for the vectors
-            # Canonical key: GOOGLE_CLOUD_PROJECT with legacy GCP_PROJECT_ID fallback
-            project_id = secrets.get_secret("GOOGLE_CLOUD_PROJECT")
+            # Use GOOGLE_CLOUD_PROJECT from config.py as single source of truth
+            # The config module handles deprecation warnings for legacy GCP_PROJECT_ID
+            project_id = GOOGLE_CLOUD_PROJECT
             if not project_id:
-                project_id = os.environ.get("GCP_PROJECT_ID")
-                if project_id:
-                    logger.warning("Using legacy GCP_PROJECT_ID fallback. Please migrate to GOOGLE_CLOUD_PROJECT.")
-
-            project_id = project_id or "devbridge-default"
+                project_id = "devbridge-default"
+                logger.warning("No project ID configured, using default")
             embeddings = VertexAIEmbeddings(model_name="text-embedding-004", project=project_id)
 
             self._vectorstore = PGVectorStore(
