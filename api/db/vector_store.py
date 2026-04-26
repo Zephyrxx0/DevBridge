@@ -80,6 +80,13 @@ class VectorStoreManager:
         """
         Deterministic vector upsert by chunk_id.
         """
+        await self.upsert_vectors_batch([{"chunk_id": chunk_id, "embedding": embedding}])
+
+    async def upsert_vectors_batch(self, items: List[Dict[str, Any]]):
+        """
+        Batch update embeddings for multiple chunks.
+        Expects a list of dicts with 'chunk_id' and 'embedding' keys.
+        """
         engine = get_engine()
         if engine is None:
             raise ValueError("Database engine is not initialized.")
@@ -91,12 +98,9 @@ class VectorStoreManager:
                     created_at = NOW()
                 WHERE chunk_id = :chunk_id
             """)
-            await conn.execute(update_sql, {
-                "embedding": embedding,
-                "chunk_id": chunk_id
-            })
+            await conn.execute(update_sql, items)
             await conn.commit()
-            logger.debug(f"Upserted embedding for chunk_id: {chunk_id}")
+            logger.debug(f"Batch upserted {len(items)} embeddings")
 
     async def hybrid_search(self, query_text: str, k: int = 10, filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """
