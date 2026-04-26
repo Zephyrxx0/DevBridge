@@ -1,0 +1,27 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "78c13ea4c9c9",
+  "session_id": "fcfc4682-15f0-4763-8356-fa21494a7c23",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-26T10:25:55.3568808Z",
+  "branch": "phase-09-collaborative-agents",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/db/models.py"
+  ],
+  "agent": "Gemini CLI",
+  "model": "gemini-3-flash-preview",
+  "turn_id": "67f38b91e66c",
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-26T10:25:54.7335767Z",
+    "agent_lines": 120,
+    "human_added": 65,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 186,
+    "agent_percentage": 64.51612903225806
+  }
+}

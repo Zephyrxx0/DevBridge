@@ -1,0 +1,18 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "78c13ea4c9c9",
+  "strategy": "manual-commit",
+  "branch": "phase-09-collaborative-agents",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/db/models.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/78/c13ea4c9c9/0/metadata.json",
+      "transcript": "/78/c13ea4c9c9/0/full.jsonl",
+      "content_hash": "/78/c13ea4c9c9/0/content_hash.txt",
+      "prompt": "/78/c13ea4c9c9/0/prompt.txt"
+    }
+  ]
+}
