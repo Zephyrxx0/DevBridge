@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from uuid import UUID
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
@@ -29,15 +30,22 @@ async def get_human_annotations(repo_id: str, file_path: str = None, tags: list[
         # Resolve repo_id to UUID if it's a string
         r_id = UUID(repo_id) if isinstance(repo_id, str) else repo_id
         
-        annotations = await Annotation.get_annotations(
-            repo_id=r_id,
-            file_path=file_path,
-            tags=tags,
-            limit=10
+        # Add 10s timeout per Phase 10 performance patterns
+        annotations = await asyncio.wait_for(
+            Annotation.get_annotations(
+                repo_id=r_id,
+                file_path=file_path,
+                tags=tags,
+                limit=10
+            ),
+            timeout=10.0
         )
         if not annotations:
             return "No human annotations found for the given criteria."
         return "\n\n".join(a.format_for_llm() for a in annotations)
+    except asyncio.TimeoutError:
+        logger.warning(f"Annotation retrieval timed out for {file_path}")
+        return "Annotation retrieval timed out."
     except Exception as e:
         logger.error(f"Error in get_human_annotations: {e}")
         return f"Failed to retrieve annotations: {str(e)}"
