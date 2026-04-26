@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Dict
 
 from sqlalchemy import text
 from fastapi_cache.backends import Backend
