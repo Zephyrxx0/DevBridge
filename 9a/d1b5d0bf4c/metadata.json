@@ -3,7 +3,7 @@
   "checkpoint_id": "9ad1b5d0bf4c",
   "strategy": "manual-commit",
   "branch": "gsd/phase-13-e2e-runtime-config",
-  "checkpoints_count": 11,
+  "checkpoints_count": 13,
   "files_touched": [
     ".planning/ROADMAP.md"
   ],
@@ -19,6 +19,12 @@
       "transcript": "/9a/d1b5d0bf4c/1/full.jsonl",
       "content_hash": "/9a/d1b5d0bf4c/1/content_hash.txt",
       "prompt": "/9a/d1b5d0bf4c/1/prompt.txt"
+    },
+    {
+      "metadata": "/9a/d1b5d0bf4c/2/metadata.json",
+      "transcript": "/9a/d1b5d0bf4c/2/full.jsonl",
+      "content_hash": "/9a/d1b5d0bf4c/2/content_hash.txt",
+      "prompt": "/9a/d1b5d0bf4c/2/prompt.txt"
     }
   ],
   "token_usage": {
