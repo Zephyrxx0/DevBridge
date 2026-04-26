@@ -134,10 +134,14 @@
 
 **Goal:** Design website pages from spec
 **Depends on**: Phase 6
-**Plans:** 0 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 14 to break down)
+- [ ] 14-01-PLAN.md — Landing page + Repo workspace shell
+- [ ] 14-02-PLAN.md — Code browser (file tree + code viewer)
+- [ ] 14-03-PLAN.md — Repo map + Search page
+- [ ] 14-04-PLAN.md — PR dashboard + Annotation center
 
 ---
+
 *Last updated: 2026-04-26*
