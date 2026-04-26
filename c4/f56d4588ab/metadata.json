@@ -1,0 +1,16 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "c4f56d4588ab",
+  "strategy": "manual-commit",
+  "branch": "phase-09-collaborative-agents",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/c4/f56d4588ab/0/metadata.json",
+      "transcript": "/c4/f56d4588ab/0/full.jsonl",
+      "content_hash": "/c4/f56d4588ab/0/content_hash.txt",
+      "prompt": "/c4/f56d4588ab/0/prompt.txt"
+    }
+  ]
+}
