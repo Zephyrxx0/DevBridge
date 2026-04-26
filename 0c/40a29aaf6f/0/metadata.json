@@ -1,0 +1,35 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "0c40a29aaf6f",
+  "session_id": "59400303-6adc-4b37-80ec-6a4a7585da7e",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-26T19:51:36.9792476Z",
+  "branch": "gsd/phase-13-e2e-runtime-config",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/src/app/repo/[id]/files/[...path]/page.tsx",
+    "web/src/app/repo/[id]/files/page.tsx"
+  ],
+  "agent": "Claude Code",
+  "model": "auto",
+  "turn_id": "6adef3859522",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-26T19:51:36.823329Z",
+    "agent_lines": 0,
+    "human_added": 0,
+    "human_modified": 538,
+    "human_removed": 0,
+    "total_committed": 538,
+    "agent_percentage": 0
+  }
+}
