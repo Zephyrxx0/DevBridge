@@ -3,7 +3,7 @@
   "checkpoint_id": "531967542868",
   "strategy": "manual-commit",
   "branch": "gsd/phase-13-e2e-runtime-config",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "api/core/config.py"
   ],
@@ -19,6 +19,12 @@
       "transcript": "/53/1967542868/1/full.jsonl",
       "content_hash": "/53/1967542868/1/content_hash.txt",
       "prompt": "/53/1967542868/1/prompt.txt"
+    },
+    {
+      "metadata": "/53/1967542868/2/metadata.json",
+      "transcript": "/53/1967542868/2/full.jsonl",
+      "content_hash": "/53/1967542868/2/content_hash.txt",
+      "prompt": "/53/1967542868/2/prompt.txt"
     }
   ],
   "token_usage": {
