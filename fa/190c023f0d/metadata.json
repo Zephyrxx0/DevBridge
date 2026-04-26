@@ -1,0 +1,18 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "fa190c023f0d",
+  "strategy": "manual-commit",
+  "branch": "phase-09-collaborative-agents",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/main.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/fa/190c023f0d/0/metadata.json",
+      "transcript": "/fa/190c023f0d/0/full.jsonl",
+      "content_hash": "/fa/190c023f0d/0/content_hash.txt",
+      "prompt": "/fa/190c023f0d/0/prompt.txt"
+    }
+  ]
+}
