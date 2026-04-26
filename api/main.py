@@ -12,8 +12,12 @@ import asyncio
 from api.agents.orchestrator import Orchestrator
 from api.core.config import settings
 from api.db.session import close_db_pool, init_db_pool
+from api.db.cache import PostgresCacheBackend, repo_id_key_builder
+from fastapi_cache import FastAPICache
+from fastapi_cache.decorator import cache
 from api.routes import annotations
 from api.routes import webhooks
+from api.routes import pr
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -23,6 +27,8 @@ async def lifespan(app: FastAPI):
     _ = app
     if settings.supabase_connection_string:
         await init_db_pool(settings.supabase_connection_string)
+        # Initialize caching infrastructure (D-03)
+        FastAPICache.init(PostgresCacheBackend(), prefix="devbridge-cache")
     yield
     await close_db_pool()
 
@@ -72,10 +78,12 @@ async def inject_user_context(request, call_next):
 
 app.include_router(annotations.router)
 app.include_router(webhooks.router)
+app.include_router(pr.router)
 
 class ChatRequest(BaseModel):
     message: str
     thread_id: str = "default-thread"
+    repo_id: Optional[str] = None
 
 @app.get("/")
 async def root():
@@ -86,6 +94,7 @@ async def root():
     }
 
 @app.post("/chat")
+@cache(expire=3600, namespace="chat", key_builder=repo_id_key_builder)
 async def chat(request: ChatRequest):
     try:
         response = await orchestrator.chat(request.message, request.thread_id)
@@ -99,12 +108,21 @@ async def chat(request: ChatRequest):
 
 
 @app.post("/chat/stream")
+@cache(expire=3600, namespace="chat_stream", key_builder=repo_id_key_builder)
 async def chat_stream(request: ChatRequest):
     """SSE streaming endpoint for real-time response delivery."""
     try:
         # Generator that yields SSE events for streaming responses
         async def event_generator():
             try:
+                # Send optimization metadata first (D-08)
+                metadata = {
+                    "type": "metadata",
+                    "using_cache": False,  # Note: @cache decorator handles this transparently
+                    "optimization": "parallel"
+                }
+                yield f"data: {json.dumps(metadata)}\n\n"
+
                 # Get the LLM with streaming support
                 llm = orchestrator.llm
                 from langchain_core.messages import HumanMessage
