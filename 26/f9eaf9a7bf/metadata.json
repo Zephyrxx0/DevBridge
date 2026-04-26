@@ -1,0 +1,18 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "26f9eaf9a7bf",
+  "strategy": "manual-commit",
+  "branch": "phase-10-performance-optimization",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/agents/orchestrator.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/26/f9eaf9a7bf/0/metadata.json",
+      "transcript": "/26/f9eaf9a7bf/0/full.jsonl",
+      "content_hash": "/26/f9eaf9a7bf/0/content_hash.txt",
+      "prompt": "/26/f9eaf9a7bf/0/prompt.txt"
+    }
+  ]
+}
