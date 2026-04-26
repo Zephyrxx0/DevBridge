@@ -55,16 +55,17 @@
 
 - [x] 12-01-PLAN.md — Tracking schema, trigger logic, and agent citations
 
-- [ ] **Phase 13: Milestone Gap Hardening - E2E + Runtime Config**
-  - [ ] Add milestone E2E test: ingest sample -> index write -> chat search hit.
-  - [ ] Align cloud project env usage (`GOOGLE_CLOUD_PROJECT` vs `GCP_PROJECT_ID`).
-  - [ ] Re-run milestone audit gates and close remaining v0.1 flow gaps.
+- [x] **Phase 13: Milestone Gap Hardening - E2E + Runtime Config**
+  (completed 2026-04-26)
+  - [x] Add milestone E2E test: ingest sample -> index write -> chat search hit.
+  - [x] Align cloud project env usage (`GOOGLE_CLOUD_PROJECT` vs `GCP_PROJECT_ID`).
+  - [x] Re-run milestone audit gates and close remaining v0.1 flow gaps.
 
 **Plans:** 3 plans
 
 - [x] 13-01-PLAN.md — E2E Test Infrastructure
 - [x] 13-02-PLAN.md — Runtime Config Unification
-- [ ] 13-03-PLAN.md — Milestone Audit Verification
+- [x] 13-03-PLAN.md — Milestone Audit Verification
 
 ## Milestone 2: Team Intelligence (v0.2)
 *Goal: Context awareness from annotations and history.*
