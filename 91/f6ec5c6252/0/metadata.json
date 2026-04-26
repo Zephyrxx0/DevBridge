@@ -1,0 +1,16 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "91f6ec5c6252",
+  "session_id": "0fa1ff83-99d0-4050-b14a-1bf817f7919a",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-26T12:28:36.6326451Z",
+  "branch": "phase-12-milestone-gap-wiring-ingestion-search",
+  "checkpoints_count": 3,
+  "files_touched": [],
+  "agent": "Gemini CLI",
+  "model": "gemini-3-flash-preview",
+  "turn_id": "fd2d58935a87",
+  "session_metrics": {
+    "turn_count": 3
+  }
+}
