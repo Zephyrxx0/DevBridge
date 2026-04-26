@@ -16,6 +16,7 @@ from typing import Any, Optional
 
 from google.cloud import storage
 from sqlalchemy import text
+from sqlalchemy.dialects.postgresql import insert
 
 from api.core.config import settings
 from api.db.session import get_engine, init_db_pool
@@ -25,6 +26,23 @@ from api.ingestion.types import EmbeddingJob
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _parse_repo_path(object_name: str) -> tuple[str, str]:
+    """Parse GCS object name into repo and file path.
+    
+    Format: owner/repo/path/to/file (e.g., 'google/gemini/src/main.py')
+    Returns: (repo: owner/repo, file_path: path/to/file)
+    """
+    parts = object_name.split("/", 2)
+    if len(parts) >= 2:
+        # First two parts form the repo (owner/repo)
+        repo = f"{parts[0]}/{parts[1]}"
+        # Remaining parts form the file path
+        file_path = parts[2] if len(parts) > 2 else ""
+        return repo, file_path
+    # Default for objects without proper structure
+    return "default", object_name
 
 
 @dataclass
@@ -74,32 +92,52 @@ async def _download_from_gcs(bucket_name: str, object_name: str) -> str:
     return content
 
 
-async def _ingest_file(bucket: str, object_name: str) -> IngestionResult:
-    """Ingest a single file from GCS."""
-    # Parse the file path
-    file_path = object_name
-    repo = "default"  # TODO: Extract repo from object path
+async def _ingest_file(bucket: str, object_name: str, job_id: str = None) -> IngestionResult:
+    """Ingest a single file from GCS.
+    
+    Args:
+        bucket: GCS bucket name
+        object_name: GCS object name (format: owner/repo/path/to/file)
+        job_id: Optional ingestion_jobs record ID for tracking
+    """
+    # Parse the file path - D-01, D-02 from Phase 12 Context
+    repo, file_path = _parse_repo_path(object_name)
+    
+    # Ensure GCP project context per D-07
+    gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or settings.google_cloud_project
+    if gcp_project:
+        logger.info(f"Processing ingestion for GCP project: {gcp_project}")
+    
+    # Get database session
+    from api.db.session import engine
+    if engine is None:
+        conn_str = settings.supabase_connection_string
+        if not conn_str:
+            return IngestionResult(
+                status="error",
+                file_path=file_path,
+                bucket=bucket,
+                chunk_count=0,
+                error="Database not configured",
+            )
+        await init_db_pool(conn_str)
     
     try:
+        # Update ingestion_jobs status to 'processing' at start - D-05
+        if job_id:
+            async with engine.connect() as conn:
+                await conn.execute(text("""
+                    UPDATE ingestion_jobs 
+                    SET status = 'processing', updated_at = NOW()
+                    WHERE id = :job_id
+                """), {"job_id": job_id})
+                await conn.commit()
+        
         # Download content
         content = await _download_from_gcs(bucket, object_name)
         
         # Parse and chunk
         chunks = chunk_source(repo=repo, file_path=file_path, source=content)
-        
-        # Get database session
-        from api.db.session import engine
-        if engine is None:
-            conn_str = settings.supabase_connection_string
-            if not conn_str:
-                return IngestionResult(
-                    status="error",
-                    file_path=file_path,
-                    bucket=bucket,
-                    chunk_count=0,
-                    error="Database not configured",
-                )
-            await init_db_pool(conn_str)
         
         # Get a connection to execute raw SQL for chunk persistence
         async with engine.connect() as conn:
@@ -173,6 +211,16 @@ async def _ingest_file(bucket: str, object_name: str) -> IngestionResult:
                 # We don't fail the ingestion if enqueuing fails, 
                 # as chunks are already persisted. A separate process could retry.
             
+            # Update ingestion_jobs status on success - D-05
+            if job_id and engine:
+                async with engine.connect() as conn:
+                    await conn.execute(text("""
+                        UPDATE ingestion_jobs 
+                        SET status = 'success', chunk_count = :chunk_count, updated_at = NOW()
+                        WHERE id = :job_id
+                    """), {"job_id": job_id, "chunk_count": len(chunks)})
+                    await conn.commit()
+            
             return IngestionResult(
                 status="success",
                 file_path=file_path,
@@ -182,6 +230,20 @@ async def _ingest_file(bucket: str, object_name: str) -> IngestionResult:
         
     except Exception as e:
         logger.exception("Failed to ingest %s from %s", object_name, bucket)
+        
+        # Update ingestion_jobs status on error - D-05
+        if job_id and engine:
+            try:
+                async with engine.connect() as conn:
+                    await conn.execute(text("""
+                        UPDATE ingestion_jobs 
+                        SET status = 'error', error_message = :error, updated_at = NOW()
+                        WHERE id = :job_id
+                    """), {"job_id": job_id, "error": str(e)})
+                    await conn.commit()
+            except Exception:
+                pass  # Don't fail on tracking update failure
+        
         return IngestionResult(
             status="error",
             file_path=file_path,
@@ -239,7 +301,26 @@ async def handle_pubsub_event(event: dict) -> dict:
             "error": "Missing bucket or object",
         }
     
-    result = await _ingest_file(bucket, object_name)
+    # Parse repo path - D-01, D-02
+    repo, file_path = _parse_repo_path(object_name)
+    
+    # D-05: Insert ingestion_jobs record at start
+    job_id = None
+    from api.db.session import engine
+    try:
+        if engine:
+            from uuid import uuid4
+            job_id = str(uuid4())
+            async with engine.connect() as conn:
+                await conn.execute(text("""
+                    INSERT INTO ingestion_jobs (id, repo, file_path, status, created_at, updated_at)
+                    VALUES (:job_id, :repo, :file_path, 'pending', NOW(), NOW())
+                """), {"job_id": job_id, "repo": repo, "file_path": file_path})
+                await conn.commit()
+    except Exception as e:
+        logger.warning(f"Failed to create ingestion job record: {e}")
+    
+    result = await _ingest_file(bucket, object_name, job_id=job_id)
     
     return {
         "status": result.status,
