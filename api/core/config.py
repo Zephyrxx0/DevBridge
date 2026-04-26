@@ -49,6 +49,7 @@ class Settings(BaseSettings):
 
     supabase_connection_string: str = Field(default="", validation_alias="SUPABASE_CONNECTION_STRING")
     google_cloud_project: str | None = Field(default=None, validation_alias="GOOGLE_CLOUD_PROJECT")
+    github_webhook_secret: str | None = Field(default=None, validation_alias="GITHUB_WEBHOOK_SECRET")
     env: str = Field(default="development", validation_alias="ENV")
 
     def __init__(self, **values):
