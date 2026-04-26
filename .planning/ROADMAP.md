@@ -62,8 +62,8 @@
 
 **Plans:** 3 plans
 
-- [ ] 13-01-PLAN.md — E2E Test Infrastructure
-- [ ] 13-02-PLAN.md — Runtime Config Unification
+- [x] 13-01-PLAN.md — E2E Test Infrastructure
+- [x] 13-02-PLAN.md — Runtime Config Unification
 - [ ] 13-03-PLAN.md — Milestone Audit Verification
 
 ## Milestone 2: Team Intelligence (v0.2)
