@@ -47,9 +47,14 @@
 ### Gap Closure (Post v0.1 Audit)
 
 - [ ] **Phase 12: Milestone Gap Wiring - Ingestion + Search**
-  - [ ] Wire runtime ingestion trigger path (`ingest -> chunk -> persist`).
-  - [ ] Connect orchestrator `code_search` to vector similarity search.
-  - [ ] Close MR-01 and FR-AI-02 wiring blockers from `v0.1-v0.1-MILESTONE-AUDIT.md`.
+  - [x] Wire runtime ingestion trigger path (`ingest -> chunk -> persist`).
+  - [x] Connect orchestrator `code_search` to vector similarity search.
+  - [x] Close MR-01 and FR-AI-02 wiring blockers from `v0.1-v0.1-MILESTONE-AUDIT.md`.
+
+**Plans:** 1 plan
+
+- [ ] 12-01-PLAN.md — Tracking schema, trigger logic, and agent citations
+
 - [ ] **Phase 13: Milestone Gap Hardening - E2E + Runtime Config**
   - [ ] Add milestone E2E test: ingest sample -> index write -> chat search hit.
   - [ ] Align cloud project env usage (`GOOGLE_CLOUD_PROJECT` vs `GCP_PROJECT_ID`).
