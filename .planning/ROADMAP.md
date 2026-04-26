@@ -32,7 +32,7 @@
 
 - [x] 04-01-PLAN.md — GCS bucket and Pub/Sub topic configuration
 - [x] 04-02-PLAN.md — Pub/Sub triggered Cloud Run Job for ingestion
-- [x] **Phase 5: Vector Indexing & Hybrid Search** (completed 2026-04-25)
+- [x] **Phase 5: Vector Index & Hybrid Search** (completed 2026-04-25)
   - [x] Plan 01: Create indexing primitives (SQL & Vector store).
   - [x] Plan 02: Wire runtime ingestion-to-search flow.
 - [x] **Phase 6: Basic Chat Interface & SSE** (completed 2026-04-25)
@@ -64,6 +64,11 @@
   - [ ] Plan 02: Retrieval integration + feedback loop
 - [ ] **Phase 9: Collaborative Agents (Debug & PR Review)**
 
+**Plans:** 3 plans
+- [x] 09-01-PLAN.md — Agent Personas (PR Reviewer & Debugger)
+- [x] 09-02-PLAN.md — GitHub Webhooks & Background Dispatch
+- [x] 09-03-PLAN.md — Configuration & Manual Trigger API
+
 ### Phase 7: History & Intent Ingestion
 
 **Goal:** Ingest GitHub PR and commit history to provide context for "why" code changed.
@@ -81,11 +86,35 @@
 2. Annotations included in retrieval context.
 3. Feedback loop for agent response quality.
 
+### Phase 10: Performance & Optimization
+
+**Goal:** Optimize query latency and ingestion throughput for production-ready performance.
+
+**Success Criteria:**
+1. LLM response time reduced through caching or parallel tool calls.
+2. Ingestion pipeline handles large batches without GCS/PubSub timeouts.
+3. Database query plans optimized for large-scale chunk retrieval.
+
 ## Milestone 3: Scale & Polish (v1.0)
 *Goal: Production-ready performance and UX.*
 
-- [ ] **Phase 10: Performance & Optimization**
+- [x] **Phase 10: Performance & Optimization**
+ (completed 2026-04-26)
 - [ ] **Phase 11: Security Audit & E2E Testing**
+
+### Phase 11: Security Audit & E2E Testing
+
+**Goal:** Conduct security audit (App + Infra) and implement E2E tests using Playwright.
+
+**Success Criteria:**
+1. Security vulnerabilities identified and documented.
+2. Automated security scanners integrated into build process.
+3. Full ingestion loop verified end-to-end via Playwright.
+
+**Plans:** 2 plans
+
+- [ ] 11-01-PLAN.md — Security Audit & Automated Scanning
+- [ ] 11-02-PLAN.md — E2E Testing Framework & Ingestion Loop
 
 ---
 *Last updated: 2026-04-26*
