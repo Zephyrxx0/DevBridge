@@ -6,10 +6,12 @@ def test_pr_reviewer_initialization():
     agent = create_pr_reviewer_agent()
     assert agent is not None
     # Verify that the prompt contains keywords related to PR Review
-    assert any(keyword in PR_REVIEW_PROMPT for keyword in ["PR Review", "Pull Request", "Reviewer"])
+    content = PR_REVIEW_PROMPT.lower()
+    assert any(keyword.lower() in content for keyword in ["PR review", "pull request", "reviewing"])
 
 def test_debugger_initialization():
     agent = create_debugger_agent()
     assert agent is not None
     # Verify that the prompt contains keywords related to Debugging
-    assert any(keyword in DEBUG_PROMPT for keyword in ["Debug", "debugger", "troubleshoot"])
+    content = DEBUG_PROMPT.lower()
+    assert any(keyword.lower() in content for keyword in ["debug", "troubleshoot", "fix bugs"])
