@@ -1,0 +1,16 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "fefe5ac5f28b",
+  "session_id": "0fa1ff83-99d0-4050-b14a-1bf817f7919a",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-26T11:55:14.8360809Z",
+  "branch": "phase-11-security-e2e-testing",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Gemini CLI",
+  "model": "gemini-3-flash-preview",
+  "turn_id": "a50c553b91a7",
+  "session_metrics": {
+    "turn_count": 1
+  }
+}
