@@ -1,0 +1,16 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "b3ede78ffdad",
+  "strategy": "manual-commit",
+  "branch": "phase-11-security-e2e-testing",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/b3/ede78ffdad/0/metadata.json",
+      "transcript": "/b3/ede78ffdad/0/full.jsonl",
+      "content_hash": "/b3/ede78ffdad/0/content_hash.txt",
+      "prompt": "/b3/ede78ffdad/0/prompt.txt"
+    }
+  ]
+}
