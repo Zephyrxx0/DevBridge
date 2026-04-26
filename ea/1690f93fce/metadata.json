@@ -3,7 +3,7 @@
   "checkpoint_id": "ea1690f93fce",
   "strategy": "manual-commit",
   "branch": "phase-11-security-e2e-testing",
-  "checkpoints_count": 0,
+  "checkpoints_count": 4,
   "files_touched": [
     ".planning/ROADMAP.md"
   ],
@@ -13,6 +13,12 @@
       "transcript": "/ea/1690f93fce/0/full.jsonl",
       "content_hash": "/ea/1690f93fce/0/content_hash.txt",
       "prompt": "/ea/1690f93fce/0/prompt.txt"
+    },
+    {
+      "metadata": "/ea/1690f93fce/1/metadata.json",
+      "transcript": "/ea/1690f93fce/1/full.jsonl",
+      "content_hash": "/ea/1690f93fce/1/content_hash.txt",
+      "prompt": "/ea/1690f93fce/1/prompt.txt"
     }
   ]
 }
