@@ -1,0 +1,1 @@
+/gsd-execute-phase phase-14, use 21st dev for components, and use this one :  https://21st.dev/community/components/shadway/hero-dithering-card/default for the hero page
