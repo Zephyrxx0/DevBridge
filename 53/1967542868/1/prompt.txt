@@ -1,0 +1,1 @@
+Okay chat works now, I had a quick question , Can I use gemma4 instead of vertexai to cut costs from GCP?
