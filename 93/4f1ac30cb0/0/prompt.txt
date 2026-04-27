@@ -1,0 +1,1 @@
+/gsd-execute-phase use @.planning\phases\15-update-the-design-of-the-webui-accordingly\15-UI-SPEC.md and mainly @DESIGN.md for website design. Also use skills for more sophisticated help

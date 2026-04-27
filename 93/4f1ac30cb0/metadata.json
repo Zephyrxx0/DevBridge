@@ -1,0 +1,28 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "934f1ac30cb0",
+  "strategy": "manual-commit",
+  "branch": "polish/webui",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/src/components/ui/avatar.tsx",
+    "web/src/components/ui/button.tsx",
+    "web/src/components/ui/card.tsx",
+    "web/src/components/ui/input.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/93/4f1ac30cb0/0/metadata.json",
+      "transcript": "/93/4f1ac30cb0/0/full.jsonl",
+      "content_hash": "/93/4f1ac30cb0/0/content_hash.txt",
+      "prompt": "/93/4f1ac30cb0/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
