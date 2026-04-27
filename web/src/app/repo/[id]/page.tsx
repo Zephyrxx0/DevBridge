@@ -1,18 +1,27 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { ArrowUp, ChevronDown, ChevronRight, Clock3, Code2, GitBranch, StickyNote } from "lucide-react";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronLeft, Send, Code2, GitBranch, Clock, FileText, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+type SourceReference = {
+  file_path: string;
+  function_name?: string;
+  start_line: number;
+  end_line: number;
+  similarity?: number;
+};
 
 interface Message {
   role: "user" | "assistant";
   content: string;
-  sources?: Array<{ file_path: string; function_name?: string; start_line: number; end_line: number; similarity?: number }>;
+  sources?: SourceReference[];
 }
 
 interface RepoMetadata {
@@ -24,60 +33,63 @@ interface RepoMetadata {
   prCount?: number;
 }
 
-const NavItems = [
-  { label: "Chat", href: "", icon: Sparkles },
-  { label: "Files", href: "/files", icon: FileText },
-  { label: "Map", href: "/map", icon: Code2 },
-  { label: "Search", href: "/search", icon: Sparkles },
-  { label: "PRs", href: "/pr", icon: GitBranch },
-  { label: "Annotations", href: "/annotations", icon: FileText },
-  { label: "Settings", href: "/settings", icon: Code2 },
-];
+const INITIAL_ASSISTANT_MESSAGE: Message = {
+  role: "assistant",
+  content:
+    "Hello. I am DevBridge Orchestrator. Ask about architecture, trace data flow, or inspect code intent with cited sources.",
+};
 
-export default function RepoWorkspace() {
-  const params = useParams();
-  const repoId = params.id as string;
-  
+export default function RepoWorkspacePage() {
+  const params = useParams<{ id: string }>();
+  const repoId = String(params.id ?? "");
+
   const [repo, setRepo] = useState<RepoMetadata | null>(null);
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Hello! I'm DevBridge Orchestrator. Ask me anything about this codebase. I can search semantically, answer architecture questions, or help you understand specific code paths." }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([INITIAL_ASSISTANT_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [selectedSource, setSelectedSource] = useState<Message["sources"]?.[0] | null>(null);
+  const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
+  const [selectedSource, setSelectedSource] = useState<SourceReference | null>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (!repoId) return;
+
+    const fetchRepoMetadata = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const response = await fetch(`${apiUrl}/repo/${repoId}`);
+        if (response.ok) {
+          setRepo((await response.json()) as RepoMetadata);
+        }
+      } catch {
+        setRepo(null);
+      }
+    };
+
+    void fetchRepoMetadata();
+  }, [repoId]);
 
   useEffect(() => {
-    if (!mounted) return;
-    fetchRepoMetadata();
-  }, [mounted, repoId]);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  const fetchRepoMetadata = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      const response = await fetch(`${apiUrl}/repo/${repoId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setRepo(data);
+  const toggleSourceSection = (messageIndex: number) => {
+    setExpandedSources((prev) => {
+      const next = new Set(prev);
+      if (next.has(messageIndex)) {
+        next.delete(messageIndex);
+      } else {
+        next.add(messageIndex);
       }
-    } catch (err) {
-      console.error("Error fetching repo metadata:", err);
-    }
+      return next;
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
@@ -86,7 +98,7 @@ export default function RepoWorkspace() {
     setIsLoading(true);
 
     let accumulatedContent = "";
-    let accumulatedSources: Message["sources"] = [];
+    let accumulatedSources: SourceReference[] = [];
     let firstChunkReceived = false;
 
     try {
@@ -94,7 +106,11 @@ export default function RepoWorkspace() {
       const response = await fetch(`${apiUrl}/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: userMessage, repo_id: repoId, history: messages }),
+        body: JSON.stringify({
+          query: userMessage,
+          repo_id: repoId,
+          history: messages,
+        }),
       });
 
       if (!response.ok) {
@@ -117,39 +133,43 @@ export default function RepoWorkspace() {
         const chunk = decoder.decode(value, { stream: true });
         const events = chunk.split("\n\n");
 
-        for (const event of events) {
-          if (!event.startsWith("data: ")) continue;
-          
+        for (const eventChunk of events) {
+          if (!eventChunk.startsWith("data: ")) continue;
+
           try {
-            const data = JSON.parse(event.slice(6));
-            
+            const data = JSON.parse(eventChunk.slice(6)) as {
+              type: string;
+              content?: string;
+              sources?: SourceReference[];
+              message?: string;
+            };
+
             if (data.type === "chunk" && data.content) {
               if (!firstChunkReceived) {
                 firstChunkReceived = true;
                 setIsLoading(false);
               }
-              
+
               accumulatedContent += data.content;
-              
               setMessages((prev) => {
-                const newMessages = [...prev];
-                newMessages[newMessages.length - 1] = {
+                const next = [...prev];
+                next[next.length - 1] = {
                   role: "assistant",
                   content: accumulatedContent,
-                  sources: accumulatedSources.length > 0 ? accumulatedSources : undefined
+                  sources: accumulatedSources.length > 0 ? accumulatedSources : undefined,
                 };
-                return newMessages;
+                return next;
               });
             } else if (data.type === "sources" && data.sources) {
               accumulatedSources = data.sources;
               setMessages((prev) => {
-                const newMessages = [...prev];
-                newMessages[newMessages.length - 1] = {
+                const next = [...prev];
+                next[next.length - 1] = {
                   role: "assistant",
                   content: accumulatedContent,
-                  sources: accumulatedSources
+                  sources: accumulatedSources,
                 };
-                return newMessages;
+                return next;
               });
             } else if (data.type === "done") {
               setIsLoading(false);
@@ -157,7 +177,7 @@ export default function RepoWorkspace() {
               throw new Error(data.message || "Streaming error occurred");
             }
           } catch {
-            // Skip malformed JSON
+            // Ignore malformed stream events and continue.
           }
         }
       }
@@ -165,243 +185,196 @@ export default function RepoWorkspace() {
       if (!firstChunkReceived) {
         setIsLoading(false);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: `Error: ${errorMessage}` }
-      ]);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      setMessages((prev) => {
+        const next = [...prev];
+        const tail = next[next.length - 1];
+        if (tail?.role === "assistant" && tail.content === "") {
+          next.pop();
+        }
+        next.push({ role: "assistant", content: `Error: ${errorMessage}` });
+        return next;
+      });
       setIsLoading(false);
     }
   };
 
-  if (!mounted) return null;
-
   return (
-    <div className="flex h-screen bg-background text-foreground">
-      {/* Sidebar Navigation */}
-      <aside className="w-60 border-r border-border/40 bg-background/50 flex flex-col">
-        {/* Logo */}
-        <div className="px-4 py-6 border-b border-border/40">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary shadow-md">
-              <span className="text-base font-bold text-primary-foreground">DB</span>
-            </div>
-            <div>
-              <p className="text-sm font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
-                DevBridge
-              </p>
-              {repo && <p className="text-xs text-muted-foreground truncate">{repo.name}</p>}
-            </div>
-          </Link>
-        </div>
+    <section className="flex min-h-0 flex-1 gap-[var(--space-lg)] p-[var(--space-lg)]">
+      <div className="flex min-h-0 flex-[3] flex-col">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1">
+          <div className="space-y-[var(--space-md)]">
+            {messages.map((message, index) => {
+              const isUser = message.role === "user";
+              const hasSources = !isUser && Boolean(message.sources?.length);
+              const isSourceOpen = expandedSources.has(index);
 
-        {/* Navigation */}
-        <nav className="flex-1 px-2 py-4 space-y-1">
-          {NavItems.map((item) => {
-            const Icon = item.icon;
-            const href = `/repo/${repoId}${item.href}`;
-            const isActive = item.href === "";
-            
-            return (
-              <Link key={item.label} href={href}>
-                <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary/10 border-l-2 border-primary text-primary"
-                    : "text-muted-foreground hover:bg-muted/50"
-                }`}>
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </button>
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Status Bar */}
-        <div className="px-4 py-4 border-t border-border/40">
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            System Online
-          </div>
-          {repo?.lastIndexed && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Last indexed: {new Date(repo.lastIndexed).toLocaleDateString()}
-            </p>
-          )}
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="border-b border-border/40 bg-background/50 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <ChevronLeft className="w-4 h-4" />
-                  Back
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-lg font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
-                  {repo?.name || "Repository"}
-                </h1>
-                <p className="text-sm text-muted-foreground">Chat • Files • Map • Search</p>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Content Area - Split Layout */}
-        <div className="flex-1 overflow-hidden flex gap-6 p-6">
-          {/* Chat Panel (60%) */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Messages */}
-            <div 
-              ref={scrollRef}
-              className="flex-1 overflow-y-auto mb-4 space-y-4"
-            >
-              {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-200`}>
-                  <div className="flex gap-3 max-w-[80%]">
-                    {m.role === "assistant" && (
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">DB</AvatarFallback>
-                      </Avatar>
-                    )}
-                    
-                    <div>
-                      <Card className={`px-4 py-3 shadow-sm ${
-                        m.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-card border border-border/50 text-card-foreground"
-                      }`}>
-                        <p className="text-sm leading-relaxed">{m.content}</p>
-                      </Card>
-                      
-                      {/* Sources */}
-                      {m.role === "assistant" && m.sources && m.sources.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          <p className="text-xs font-semibold text-muted-foreground">Sources:</p>
-                          {m.sources.map((src, j) => (
-                            <button
-                              key={j}
-                              onClick={() => setSelectedSource(src)}
-                              className="block text-xs text-primary hover:underline text-left truncate max-w-sm"
-                            >
-                              {src.file_path}:{src.start_line}-{src.end_line}
-                              {src.function_name && ` • ${src.function_name}`}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {m.role === "user" && (
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">U</AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
-                </div>
-              ))}
-              
-              {isLoading && (
-                <div className="flex justify-start animate-in fade-in duration-200">
-                  <div className="flex gap-3">
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">DB</AvatarFallback>
+              return (
+                <div key={`${message.role}-${index}`} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+                  <div className={cn("flex max-w-[80%] gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
+                    <Avatar className="mt-1 shrink-0">
+                      <AvatarFallback className={cn(isUser ? "bg-[var(--surface-3)]" : "bg-[var(--brand-muted)] text-[var(--brand)]") }>
+                        {isUser ? "U" : "DB"}
+                      </AvatarFallback>
                     </Avatar>
-                    <Card className="px-4 py-3 bg-card border border-border/50">
-                      <div className="flex gap-1.5">
-                        <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
-                        <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
-                        <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
+
+                    <div className="min-w-0">
+                      <div
+                        className={cn(
+                          "rounded-xl border px-[var(--space-lg)] py-[var(--space-md)] text-[var(--text-body)] leading-[1.65]",
+                          isUser
+                            ? "border-[var(--border)] bg-[var(--surface-3)] text-[var(--foreground)]"
+                            : "border-[var(--brand-muted)] bg-[var(--surface-1)] text-[var(--foreground)]"
+                        )}
+                      >
+                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
                       </div>
-                    </Card>
+
+                      {hasSources ? (
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleSourceSection(index)}
+                            className="inline-flex items-center gap-1 text-(length:--text-xs) font-medium tracking-[0.08em] uppercase text-(--foreground-subtle) hover:text-(--foreground-muted)"
+                          >
+                            {isSourceOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+                            Sources ({message.sources?.length})
+                          </button>
+
+                          {isSourceOpen ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {message.sources?.map((source, sourceIndex) => (
+                                <button
+                                  type="button"
+                                  key={`${source.file_path}-${sourceIndex}`}
+                                  onClick={() => setSelectedSource(source)}
+                                  className="rounded-md border border-border bg-(--surface-2) px-2 py-1 font-mono text-(length:--text-xs) text-(--foreground-muted) transition-colors hover:border-(--brand-muted) hover:text-(--brand)"
+                                >
+                                  {source.file_path}:{source.start_line}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
 
-            {/* Input */}
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <Input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={isLoading}
-                placeholder="Ask about the codebase..."
-                className="flex-1 bg-background border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all placeholder:text-muted-foreground"
-              />
-              <Button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                size="icon"
-                className="h-10 w-10 rounded-lg bg-primary hover:bg-primary/90 transition-colors"
-              >
-                <Send className="w-4 h-4 text-primary-foreground" />
-              </Button>
-            </form>
+            {isLoading ? (
+              <div className="flex justify-start">
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarFallback className="bg-[var(--brand-muted)] text-[var(--brand)]">DB</AvatarFallback>
+                  </Avatar>
+                  <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-1)] px-[var(--space-lg)] py-[var(--space-md)]">
+                    <div className="flex gap-1.5">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:0ms]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:150ms]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:300ms]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
+        </div>
 
-          {/* Code Viewer Panel (40%) */}
-          <div className="w-2/5 flex flex-col overflow-hidden">
-            {selectedSource ? (
-              <Card className="flex-1 flex flex-col overflow-hidden">
-                <CardHeader className="border-b border-border/40">
+        <form onSubmit={handleSubmit} className="mt-[var(--space-md)] border-t border-[var(--border)] pt-[var(--space-md)]">
+          <div className="flex items-center gap-[var(--space-sm)] rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-sm)]">
+            <Input
+              type="text"
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              disabled={isLoading}
+              placeholder="Ask about your code..."
+              className="h-11 border-transparent bg-transparent focus-visible:border-transparent focus-visible:ring-0"
+            />
+            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+              <ArrowUp className="size-4" />
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      <aside className="hidden min-h-0 flex-[2] md:block">
+        <Card className="flex h-full min-h-0 flex-col">
+          {selectedSource ? (
+            <>
+              <CardHeader className="border-b border-[var(--border)]">
+                <p className="text-(length:--text-xs) font-medium uppercase tracking-[0.08em] text-(--foreground-subtle)">
+                  Cited Source
+                </p>
+                <CardTitle className="font-mono text-[var(--text-sm)]">{selectedSource.file_path}</CardTitle>
+                <p className="text-(length:--text-xs) text-(--foreground-muted)">
+                  L{selectedSource.start_line}-L{selectedSource.end_line}
+                  {selectedSource.function_name ? ` • ${selectedSource.function_name}` : ""}
+                  {typeof selectedSource.similarity === "number"
+                    ? ` • ${Math.round(selectedSource.similarity * 100)}% match`
+                    : ""}
+                </p>
+              </CardHeader>
+              <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
+                <pre className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-(--surface-3) p-(--space-md) font-mono text-(length:--text-code) text-(--foreground-muted)">
+                  <code>// File preview panel placeholder. Monaco integration lives in files view.</code>
+                </pre>
+                <div>
+                  <p className="text-(length:--text-xs) font-medium uppercase tracking-[0.08em] text-(--foreground-subtle)">
+                    Annotation Context
+                  </p>
+                  <p className="pt-1 text-(length:--text-sm) text-(--foreground-muted)">
+                    Annotation chips and discussion thread appear here for the selected source.
+                  </p>
+                </div>
+              </CardContent>
+            </>
+          ) : (
+            <>
+              <CardHeader>
+                <CardTitle>Repository Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                  <Code2 className="h-4 w-4 text-[var(--foreground-muted)]" />
                   <div>
-                    <p className="text-xs text-muted-foreground font-medium">Cited Source</p>
-                    <CardTitle className="text-sm mt-1">{selectedSource.file_path}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Lines {selectedSource.start_line}–{selectedSource.end_line}
-                      {selectedSource.function_name && ` • ${selectedSource.function_name}`}
-                      {selectedSource.similarity && ` • {Math.round(selectedSource.similarity * 100)}%`}
+                    <p className="text-(length:--text-xs) text-(--foreground-subtle)">Files</p>
+                    <p className="text-[var(--text-h3)] font-semibold">{repo?.fileCount ?? 0}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                  <StickyNote className="h-4 w-4 text-[var(--foreground-muted)]" />
+                  <div>
+                    <p className="text-(length:--text-xs) text-(--foreground-subtle)">Annotations</p>
+                    <p className="text-[var(--text-h3)] font-semibold">{repo?.annotationCount ?? 0}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                  <GitBranch className="h-4 w-4 text-[var(--foreground-muted)]" />
+                  <div>
+                    <p className="text-(length:--text-xs) text-(--foreground-subtle)">PRs</p>
+                    <p className="text-[var(--text-h3)] font-semibold">{repo?.prCount ?? 0}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                  <Clock3 className="h-4 w-4 text-[var(--foreground-muted)]" />
+                  <div>
+                    <p className="text-(length:--text-xs) text-(--foreground-subtle)">Last Indexed</p>
+                    <p className="text-(length:--text-sm) text-(--foreground-muted)">
+                      {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "Never"}
                     </p>
                   </div>
-                </CardHeader>
-                <CardContent className="flex-1 overflow-y-auto p-4">
-                  <pre className="text-xs font-mono text-muted-foreground">
-                    <code>// Full code viewer coming in phase 14-02</code>
-                  </pre>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Repository Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Code2 className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Files</p>
-                      <p className="text-lg font-semibold">{repo?.fileCount || 0}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <GitBranch className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Annotations</p>
-                      <p className="text-lg font-semibold">{repo?.annotationCount || 0}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Last Indexed</p>
-                      <p className="text-sm font-medium">{repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "Never"}</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground pt-4">Click a source citation to preview the file here.</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+                </div>
+                <p className="pt-2 text-(length:--text-xs) text-(--foreground-subtle)">
+                  Click a source citation from chat to inspect it in this panel.
+                </p>
+              </CardContent>
+            </>
+          )}
+        </Card>
+      </aside>
+    </section>
   );
 }
