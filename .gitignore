@@ -70,3 +70,4 @@ supabase/migrations/20260426132703_remote_schema.sql
 .gitignore
 DESIGN.md
 DEVBRIDGE_IMPLEMENTATION_SPEC.md
+devbridge_audit.md
