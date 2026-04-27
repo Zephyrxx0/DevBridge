@@ -4,3 +4,7 @@
   - Error: `Type 'number' must have a '[Symbol.iterator]()' method` at `useState<Message["sources"]?.[0] | null>(null)`.
   - Scope: pre-existing, unrelated to files changed in 15-01 (`layout.tsx`, `globals.css`).
   - Action: deferred to later plan that edits repo workspace page.
+
+- 2026-04-27: Resolved during plan 15-04.
+  - Replaced problematic source-selection state typing with explicit `SourceReference` type.
+  - Build verification now passes end-to-end in `web/`.

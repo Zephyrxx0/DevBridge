@@ -46,7 +46,8 @@
 
 ### Gap Closure (Post v0.1 Audit)
 
-- [x] **Phase 12: Milestone Gap Wiring - Ingestion + Search** (completed 2026-04-26)
+- [x] **Phase 12: Milestone Gap Wiring - Ingestion + Search**
+ (completed 2026-04-26)
   - [x] Wire runtime ingestion trigger path (`ingest -> chunk -> persist`).
   - [x] Connect orchestrator `code_search` to vector similarity search.
   - [x] Close MR-01 and FR-AI-02 wiring blockers from `v0.1-v0.1-MILESTONE-AUDIT.md`.
@@ -146,7 +147,7 @@ Plans:
 
 **Goal:** Update the webUI design to match DESIGN.md specs - precision-luxe dark aesthetic, high-visibility areas first
 **Depends on**: Phase 14
-**Plans:** 1/4 plans executed
+**Plans:** 4/4 plans executed
 
 Plans:
 - [x] 15-01-PLAN.md — Design foundation (typography, color/spacing tokens)
@@ -156,4 +157,4 @@ Plans:
 
 ---
 
-*Last updated: 2026-04-26*
+*Last updated: 2026-04-27*
