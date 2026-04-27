@@ -47,35 +47,46 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ─────────────────────────────────────────────
+   PALETTE — Orange Flame (#EC4E02) + Near-Black
+   Derived from hero dithering card art direction
+   ───────────────────────────────────────────── */
+
 :root {
-  /* Surface */
-  --background: oklch(0.08 0.004 240);
-  --surface-1: oklch(0.11 0.006 240);
-  --surface-2: oklch(0.14 0.008 240);
-  --surface-3: oklch(0.18 0.008 240);
+  /* Surface — near-black base */
+  --background: oklch(0.08 0.005 45);
+  --surface-1: oklch(0.11 0.007 45);
+  --surface-2: oklch(0.14 0.009 45);
+  --surface-3: oklch(0.18 0.009 45);
 
   /* Border */
-  --border: oklch(1 0 0 / 0.08);
-  --border-strong: oklch(1 0 0 / 0.14);
+  --border: oklch(1 0 0 / 0.07);
+  --border-strong: oklch(1 0 0 / 0.13);
 
   /* Foreground */
-  --foreground: oklch(0.97 0 0);
-  --foreground-muted: oklch(0.6 0.008 240);
-  --foreground-subtle: oklch(0.38 0.008 240);
+  --foreground: oklch(0.96 0.005 60);
+  --foreground-muted: oklch(0.6 0.012 45);
+  --foreground-subtle: oklch(0.38 0.01 45);
 
-  /* Brand — Electric Indigo */
-  --brand: oklch(0.62 0.24 264);
-  --brand-hover: oklch(0.68 0.24 264);
-  --brand-muted: oklch(0.62 0.24 264 / 0.15);
-  --brand-glow: oklch(0.62 0.24 264 / 0.25);
+  /* Brand — Orange Flame */
+  --brand: oklch(0.62 0.2 38);
+  --brand-hover: oklch(0.68 0.2 38);
+  --brand-muted: oklch(0.62 0.2 38 / 0.15);
+  --brand-glow: oklch(0.62 0.2 38 / 0.22);
 
-  /* Accent */
-  --accent-emerald: oklch(0.74 0.18 160);
-  --accent-emerald-muted: oklch(0.74 0.18 160 / 0.12);
-  --accent-amber: oklch(0.82 0.18 80);
-  --accent-amber-muted: oklch(0.82 0.18 80 / 0.12);
-  --accent-rose: oklch(0.7 0.22 15);
-  --accent-rose-muted: oklch(0.7 0.22 15 / 0.12);
+  /* Accent — warm variants derived from orange */
+  --accent-ember: oklch(0.72 0.16 50);
+  --accent-ember-muted: oklch(0.72 0.16 50 / 0.12);
+  --accent-warm: oklch(0.82 0.12 70);
+  --accent-warm-muted: oklch(0.82 0.12 70 / 0.12);
+  --accent-rose: oklch(0.6 0.18 20);
+  --accent-rose-muted: oklch(0.6 0.18 20 / 0.12);
+
+  /* Legacy aliases for components using old names */
+  --accent-emerald: var(--accent-ember);
+  --accent-emerald-muted: var(--accent-ember-muted);
+  --accent-amber: var(--accent-warm);
+  --accent-amber-muted: var(--accent-warm-muted);
 
   /* Typography scale */
   --text-hero: clamp(3rem, 6vw, 5.5rem);
@@ -88,7 +99,7 @@
   --text-xs: 0.6875rem;
   --text-code: 0.8125rem;
 
-  /* Spacing scale */
+  /* Spacing */
   --space-xs: 0.5rem;
   --space-sm: 0.75rem;
   --space-md: 1rem;
@@ -98,11 +109,11 @@
   --space-3xl: 6rem;
   --space-4xl: 9rem;
 
-  /* Gradient tokens */
-  --gradient-brand: linear-gradient(135deg, oklch(0.62 0.24 264), oklch(0.72 0.2 295));
+  /* Gradient tokens — warm orange direction */
+  --gradient-brand: linear-gradient(135deg, oklch(0.58 0.2 30), oklch(0.65 0.18 50));
   --gradient-surface: linear-gradient(180deg, var(--surface-1) 0%, var(--background) 100%);
   --gradient-glow-brand: radial-gradient(ellipse 60% 40% at 50% 0%, var(--brand-glow), transparent 70%);
-  --gradient-glow-subtle: radial-gradient(ellipse 80% 50% at 50% -20%, oklch(1 0 0 / 0.04), transparent 70%);
+  --gradient-glow-subtle: radial-gradient(ellipse 80% 50% at 50% -20%, oklch(1 0 0 / 0.03), transparent 70%);
 
   /* Semantic aliases (shadcn) */
   --card: var(--surface-1);
@@ -123,7 +134,7 @@
   --radius: 0.5rem;
 
   /* Sidebar */
-  --sidebar: oklch(0.065 0.004 240);
+  --sidebar: oklch(0.065 0.005 45);
   --sidebar-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-primary: var(--brand);
@@ -132,25 +143,157 @@
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-ring: var(--brand);
 
-  /* Optional chart scale for existing components */
-  --chart-1: oklch(0.68 0.14 264);
-  --chart-2: oklch(0.74 0.18 160);
-  --chart-3: oklch(0.82 0.18 80);
-  --chart-4: oklch(0.7 0.22 15);
-  --chart-5: oklch(0.6 0.06 240);
+  /* Chart — warm monochrome */
+  --chart-1: oklch(0.62 0.2 38);
+  --chart-2: oklch(0.72 0.16 50);
+  --chart-3: oklch(0.82 0.12 70);
+  --chart-4: oklch(0.6 0.18 20);
+  --chart-5: oklch(0.5 0.06 45);
 }
 
 .light {
-  --background: oklch(0.98 0.002 240);
+  --background: oklch(0.975 0.003 60);
   --surface-1: oklch(1 0 0);
-  --surface-2: oklch(0.96 0.003 240);
-  --surface-3: oklch(0.92 0.004 240);
-  --border: oklch(0 0 0 / 0.08);
-  --border-strong: oklch(0 0 0 / 0.14);
-  --foreground: oklch(0.1 0.004 240);
-  --foreground-muted: oklch(0.45 0.008 240);
-  --foreground-subtle: oklch(0.65 0.008 240);
-  --sidebar: oklch(0.96 0.003 240);
+  --surface-2: oklch(0.96 0.004 60);
+  --surface-3: oklch(0.92 0.006 50);
+  --border: oklch(0 0 0 / 0.07);
+  --border-strong: oklch(0 0 0 / 0.13);
+  --foreground: oklch(0.1 0.006 45);
+  --foreground-muted: oklch(0.45 0.012 45);
+  --foreground-subtle: oklch(0.65 0.012 45);
+  --sidebar: oklch(0.96 0.004 60);
+}
+
+/* ── Keyframe Animations ── */
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+@keyframes bounce-dot {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--brand-muted), 0 0 40px var(--brand-glow); }
+  50%      { box-shadow: 0 0 0 1px var(--brand-muted), 0 0 80px var(--brand-glow); }
+}
+
+@keyframes dither-blur-in {
+  from { filter: blur(0px); opacity: 0.45; }
+  to { filter: blur(1.6px); opacity: 0.28; }
+}
+
+@keyframes dither-blur-out {
+  from { filter: blur(1.6px); opacity: 0.28; }
+  to { filter: blur(0px); opacity: 0.45; }
+}
+
+/* ── Animation Utilities ── */
+
+.animate-fade-up {
+  animation: fade-up 400ms ease-out both;
+}
+
+.animate-fade-in {
+  animation: fade-in 300ms ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 500ms ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 300ms ease-out both;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s infinite;
+}
+
+.animate-bounce-dot {
+  animation: bounce-dot 1.4s infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.dither-transition .dither-bg {
+  transition: filter 600ms ease, opacity 600ms ease;
+}
+
+.dither-bg {
+  filter: blur(0px);
+  opacity: 0.35;
+}
+
+.dark .dither-bg {
+  opacity: 0.15;
+}
+
+.dither-blur .dither-bg {
+  filter: blur(12px);
+  opacity: 0.15;
+}
+
+.dark .dither-blur .dither-bg {
+  opacity: 0.08;
+}
+
+/* Stagger delays */
+.delay-0   { animation-delay: 0ms; }
+.delay-1   { animation-delay: 80ms; }
+.delay-2   { animation-delay: 160ms; }
+.delay-3   { animation-delay: 240ms; }
+.delay-4   { animation-delay: 320ms; }
+.delay-5   { animation-delay: 400ms; }
+.delay-6   { animation-delay: 480ms; }
+.delay-7   { animation-delay: 560ms; }
+
+/* ── Reduced Motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @layer base {
@@ -159,6 +302,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    isolation: isolate;
   }
   html {
     @apply font-sans;

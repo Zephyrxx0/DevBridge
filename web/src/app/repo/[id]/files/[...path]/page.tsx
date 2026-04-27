@@ -26,12 +26,12 @@ interface FileContent {
 }
 
 const TagColors: { [key: string]: string } = {
-  warning: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  architecture: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
-  gotcha: "bg-purple-500/10 text-purple-700 dark:text-purple-400",
-  todo: "bg-slate-500/10 text-slate-700 dark:text-slate-400",
-  context: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
-  deprecated: "bg-red-500/10 text-red-700 dark:text-red-400",
+  warning: "bg-[var(--accent-warm-muted)] text-[var(--accent-warm)]",
+  architecture: "bg-[var(--brand-muted)] text-[var(--brand)]",
+  gotcha: "bg-[var(--accent-ember-muted)] text-[var(--accent-ember)]",
+  todo: "bg-[var(--surface-3)] text-[var(--foreground-muted)]",
+  context: "bg-[var(--brand-muted)] text-[var(--brand)]",
+  deprecated: "bg-[var(--accent-rose-muted)] text-[var(--accent-rose)]",
 };
 
 const TagIcons: { [key: string]: string } = {

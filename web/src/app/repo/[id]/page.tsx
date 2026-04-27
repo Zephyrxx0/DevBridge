@@ -213,7 +213,7 @@ export default function RepoWorkspacePage() {
                 <div key={`${message.role}-${index}`} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
                   <div className={cn("flex max-w-[80%] gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
                     <Avatar className="mt-1 shrink-0">
-                      <AvatarFallback className={cn(isUser ? "bg-[var(--surface-3)]" : "bg-[var(--brand-muted)] text-[var(--brand)]") }>
+                      <AvatarFallback className={cn(isUser ? "bg-[var(--surface-3)]" : "bg-[var(--brand-muted)] text-[var(--brand)]")}>
                         {isUser ? "U" : "DB"}
                       </AvatarFallback>
                     </Avatar>
@@ -317,8 +317,8 @@ export default function RepoWorkspacePage() {
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-4 p-[var(--space-lg)]">
               <pre className="min-h-0 flex-1 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--surface-3)] p-[var(--space-md)] font-mono text-[var(--text-code)] text-[var(--foreground-muted)]">
-                  <code>// File preview panel placeholder. Monaco integration lives in files view.</code>
-                </pre>
+                <code>// File preview panel placeholder. Monaco integration lives in files view.</code>
+              </pre>
               <div>
                 <p className="text-[var(--text-xs)] font-medium uppercase tracking-[0.08em] text-[var(--foreground-subtle)]">
                   Annotation Context
@@ -359,8 +359,8 @@ export default function RepoWorkspacePage() {
                 <div>
                   <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Last Indexed</p>
                   <p className="text-[var(--text-sm)] text-[var(--foreground-muted)]">
-                      {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "Never"}
-                    </p>
+                    {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "Never"}
+                  </p>
                 </div>
               </div>
               <p className="pt-2 text-[var(--text-xs)] text-[var(--foreground-subtle)]">

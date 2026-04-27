@@ -60,15 +60,15 @@ export default function PRPage() {
   };
 
   const getStatusColor = (status: string) => {
-    if (status === "open") return "bg-green-500/10 text-green-700 dark:text-green-400";
-    if (status === "merged") return "bg-purple-500/10 text-purple-700 dark:text-purple-400";
-    return "bg-slate-500/10 text-slate-700 dark:text-slate-400";
+    if (status === "open") return "bg-[var(--accent-ember-muted)] text-[var(--accent-ember)]";
+    if (status === "merged") return "bg-[var(--brand-muted)] text-[var(--brand)]";
+    return "bg-[var(--surface-3)] text-[var(--foreground-muted)]";
   };
 
   const getSeverityColor = (severity: string) => {
-    if (severity === "critical") return "bg-red-500/10 text-red-700 dark:text-red-400";
-    if (severity === "warning") return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400";
-    return "bg-blue-500/10 text-blue-700 dark:text-blue-400";
+    if (severity === "critical") return "bg-[var(--accent-rose-muted)] text-[var(--accent-rose)]";
+    if (severity === "warning") return "bg-[var(--accent-warm-muted)] text-[var(--accent-warm)]";
+    return "bg-[var(--brand-muted)] text-[var(--brand)]";
   };
 
   const filteredPRs = prs
@@ -228,13 +228,13 @@ export default function PRPage() {
                       </div>
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-1">ADDITIONS</p>
-                        <p className="text-lg font-bold text-green-600">
+                        <p className="text-lg font-bold text-[var(--accent-ember)]">
                           +{pr.additions || 0}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-1">DELETIONS</p>
-                        <p className="text-lg font-bold text-red-600">
+                        <p className="text-lg font-bold text-[var(--accent-rose)]">
                           -{pr.deletions || 0}
                         </p>
                       </div>

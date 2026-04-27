@@ -1,136 +1,142 @@
+/* eslint-disable react/no-unescaped-entities */
 import Link from "next/link";
-import { GitBranch, SearchCode, StickyNote, Workflow } from "lucide-react";
+import {
+  ArrowRight,
+  Bookmark,
+  Code2,
+  MessageSquareText,
+  Sparkles,
+  Target,
+} from "lucide-react";
 
-import { Navbar } from "@/components/navbar";
+import { FloatingHeader } from "@/components/floating-header";
+import { HeroDitheringCard } from "@/components/hero-dithering-card";
+import { DitheringBackground } from "@/components/dithering-background";
+import { BackgroundEffects } from "@/components/background-effects";
+import { Footer } from "@/components/footer";
+import { CodebaseGraph } from "@/components/codebase-graph";
 import { Button } from "@/components/ui/button";
-import { DitheringCard } from "@/components/ui/dithering-card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { SectionReveal } from "@/components/ui/section-reveal";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 
-function HeroSection() {
+/* ── Shared Section Heading ── */
+
+function SectionHeading({
+  eyebrow,
+  title,
+  body,
+}: {
+  eyebrow?: string;
+  title: string;
+  body?: string;
+}) {
   return (
-    <section className="px-[1.25rem] py-0 md:px-[2.5rem]">
-      <DitheringCard
-        className="min-h-[calc(100dvh-64px)]"
-        contentClassName="flex min-h-[calc(100dvh-64px)] items-center"
-      >
-        <div className="mx-auto w-full max-w-[1200px] px-[1.25rem] py-[var(--space-3xl)] md:px-[2.5rem]">
-          <div className="max-w-[760px] space-y-[var(--space-lg)]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--accent-emerald)]/35 bg-[var(--accent-emerald-muted)] px-3 py-1.5">
-              <span className="inline-block h-2 w-2 animate-[pulse-dot_2s_infinite] rounded-full bg-[var(--accent-emerald)]" />
-              <span className="text-[var(--text-sm)] font-medium text-[var(--foreground)]">Agent System Online</span>
-            </div>
-
-            <h1
-              className="text-[var(--text-hero)] font-extrabold leading-[1.1] text-[var(--foreground)]"
-              style={{ fontFamily: "var(--font-heading)", letterSpacing: "-0.03em" }}
-            >
-              Your codebase,
-              <br />
-              finally understood.
-            </h1>
-
-            <p className="max-w-[64ch] text-[var(--text-body-lg)] font-normal leading-[1.65] text-[var(--foreground-muted)]">
-              DevBridge connects a multi-agent AI layer to your real code, PR history, and team knowledge.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link href="/dashboard">
-                <Button
-                  size="lg"
-                  className="h-11 rounded-lg border border-transparent px-6 text-[var(--text-sm)] font-semibold"
-                >
-                  Get Started &rarr;
-                </Button>
-              </Link>
-              <Link href="https://github.com" target="_blank" rel="noreferrer">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="h-11 rounded-lg border border-[var(--border)] px-6 text-[var(--text-sm)] font-medium text-[var(--foreground)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]"
-                >
-                  View on GitHub &#8599;
-                </Button>
-              </Link>
-            </div>
-
-            <div className="pt-[var(--space-md)]">
-              <div className="h-px w-full max-w-[560px] bg-[var(--border)]" />
-              <p
-                className="pt-3 text-[var(--text-xs)] font-medium uppercase text-[var(--foreground-subtle)]"
-                style={{ letterSpacing: "0.1em" }}
-              >
-                0 hallucinations &middot; cited sources &middot; persistent team memory
-              </p>
-            </div>
-          </div>
-        </div>
-      </DitheringCard>
-    </section>
+    <div className="mx-auto w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
+      <div className="max-w-[760px]">
+        {eyebrow && (
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--foreground-subtle)]">{eyebrow}</p>
+        )}
+        <h2
+          className="pt-3 text-balance font-heading text-[clamp(1.8rem,2.8vw,2.6rem)] font-medium leading-[1.1] tracking-tight text-foreground"
+        >
+          {title}
+        </h2>
+        {body && <p className="pt-3 text-[var(--text-body-lg)] leading-[1.7] text-muted-foreground">{body}</p>}
+      </div>
+    </div>
   );
 }
 
-function HowItWorksSection() {
+/* ── Trust Strip ── */
+
+function TrustStrip() {
+  const stats = [
+    { value: 12, suffix: "+", label: "Repos indexed", icon: <Code2 className="size-4" /> },
+    { value: 340, suffix: "+", label: "Questions answered", icon: <MessageSquareText className="size-4" /> },
+    { value: 98, suffix: "%", label: "Citations linked", icon: <Target className="size-4" /> },
+  ];
+
+  return (
+    <SectionReveal animation="fade-up">
+      <section className="px-[1.25rem] py-10 md:px-[2.5rem]">
+        <div className="mx-auto w-full max-w-[1200px]">
+          <div className="rounded-2xl border border-border bg-[color-mix(in_oklab,var(--surface-1)_85%,transparent)] backdrop-blur-md p-6 md:p-8 shadow-sm">
+            <div className="grid gap-6 sm:grid-cols-3">
+              {stats.map((stat) => (
+                <div key={stat.label} className="flex items-center gap-4">
+                  <div className="grid size-10 shrink-0 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--brand)]">
+                    {stat.icon}
+                  </div>
+                  <div>
+                    <p className="font-heading text-2xl font-medium tracking-tight text-foreground">
+                      <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                    </p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    </SectionReveal>
+  );
+}
+
+/* ── How It Works ── */
+
+function HowItWorks() {
   const steps = [
     {
-      step: "①",
-      title: "Ingest",
-      body: "Your repo is indexed by file, function, and PR.",
+      title: "Connect your repo",
+      body: "Point DevBridge at GitHub and start indexing files, symbols, and history.",
+      icon: <Code2 className="size-4" />,
     },
     {
-      step: "②",
-      title: "Ask",
-      body: "Ask in plain English. The agent decides how to retrieve.",
+      title: "Ask in natural language",
+      body: "Get grounded answers with citations tied to files, line ranges, and PRs.",
+      icon: <MessageSquareText className="size-4" />,
     },
     {
-      step: "③",
-      title: "Understand",
-      body: "Get grounded answers with exact file paths, line numbers, and team annotations cited.",
+      title: "Explore the knowledge map",
+      body: "See hotspots, annotations, and file relationships at a glance.",
+      icon: <Sparkles className="size-4" />,
     },
   ];
 
   return (
-    <section id="how-it-works" className="px-[1.25rem] py-[var(--space-4xl)] md:px-[2.5rem]">
-      <div className="mx-auto w-full max-w-[1200px]">
-        <div className="mb-[var(--space-xl)] max-w-[700px]">
-          <h2
-            className="text-[var(--text-h1)] font-bold leading-[1.1] text-[var(--foreground)]"
-            style={{ fontFamily: "var(--font-heading)", letterSpacing: "-0.02em" }}
-          >
-            How it works
-          </h2>
-          <p className="pt-3 text-[var(--text-body)] text-[var(--foreground-muted)]">
-            Precision retrieval pipeline, tuned for real engineering questions.
-          </p>
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:gap-6">
-          {steps.map((step, index) => (
-            <div key={step.title} className="contents">
-              <article className="relative rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-xl)] transition-[border-color,transform,box-shadow] duration-150 hover:translate-y-[-1px] hover:border-[var(--border-strong)] hover:shadow-[0_0_0_1px_var(--border-strong)]">
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute left-4 top-2 text-[var(--text-hero)] font-extrabold leading-none text-[var(--brand-muted)]"
-                  style={{ fontFamily: "var(--font-heading)" }}
-                >
-                  {step.step}
-                </span>
-                <div className="pt-8">
-                  <h3
-                    className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]"
-                    style={{ fontFamily: "var(--font-heading)" }}
-                  >
-                    {step.title}
-                  </h3>
-                  <p className="pt-3 text-[var(--text-body)] leading-[1.65] text-[var(--foreground-muted)]">
-                    {step.body}
-                  </p>
+    <section className="py-[var(--space-4xl)]">
+      <SectionReveal>
+        <SectionHeading
+          eyebrow="How it works"
+          title="Onboard faster with grounded context."
+          body="Connect a repo, ask questions, and navigate the codebase with visual cues and citations."
+        />
+      </SectionReveal>
+      <div className="mx-auto mt-10 w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
+        <div className="grid gap-4 md:grid-cols-3">
+          {steps.map((s, idx) => (
+            <SectionReveal key={s.title} animation="fade-up" delay={idx * 120}>
+              <Card className="group relative overflow-hidden">
+                <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  <div className="absolute inset-0 bg-[var(--brand-glow)] opacity-10" />
                 </div>
-              </article>
-              {index < steps.length - 1 ? (
-                <div className="hidden items-center justify-center text-[var(--foreground-subtle)] lg:flex">
-                  <span className="text-xl">&rarr;</span>
-                </div>
-              ) : null}
-            </div>
+                <CardHeader className="p-6">
+                  <div className="inline-flex items-center gap-2">
+                    <div className="grid size-9 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--brand)]">
+                      {s.icon}
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--foreground-subtle)]">
+                      Step {idx + 1}
+                    </p>
+                  </div>
+                  <CardTitle className="pt-3">{s.title}</CardTitle>
+                  <CardDescription>{s.body}</CardDescription>
+                </CardHeader>
+              </Card>
+            </SectionReveal>
           ))}
         </div>
       </div>
@@ -138,57 +144,58 @@ function HowItWorksSection() {
   );
 }
 
-function FeaturesSection() {
+/* ── Feature Grid ── */
+
+function FeatureGrid() {
   const features = [
     {
-      icon: <SearchCode className="h-5 w-5" />,
-      title: "Find code by what it does",
-      body: "Not just keywords. Embed and retrieve by intent.",
+      icon: <Code2 className="size-5" />,
+      title: "Repo workspace",
+      body: "Chat + code viewer + citations in a single flow for rapid onboarding.",
     },
     {
-      icon: <GitBranch className="h-5 w-5" />,
-      title: "Know why, not just what",
-      body: "Every PR's title, description, and diff is searchable.",
+      icon: <Sparkles className="size-5" />,
+      title: "Knowledge map",
+      body: "Visualize hotspots, annotation density, and file relationships.",
     },
     {
-      icon: <StickyNote className="h-5 w-5" />,
-      title: "Capture what code can't say",
-      body: "Warnings, gotchas, architectural context live alongside the code.",
+      icon: <Bookmark className="size-5" />,
+      title: "Human annotations",
+      body: "Capture tribal knowledge and keep context attached to the source.",
     },
     {
-      icon: <Workflow className="h-5 w-5" />,
-      title: "Answers that reason, not guess",
-      body: "A multi-step ReAct loop picks the right tools for each query.",
+      icon: <Target className="size-5" />,
+      title: "Grounded answers",
+      body: "Every response links to file paths and line ranges for trust.",
     },
   ];
 
   return (
-    <section id="features" className="px-[1.25rem] py-[var(--space-4xl)] md:px-[2.5rem]">
-      <div className="mx-auto w-full max-w-[1200px]">
-        <div className="mb-[var(--space-xl)] max-w-[700px]">
-          <h2
-            className="text-[var(--text-h1)] font-bold leading-[1.1] text-[var(--foreground)]"
-            style={{ fontFamily: "var(--font-heading)", letterSpacing: "-0.02em" }}
-          >
-            Feature grid
-          </h2>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {features.map((feature) => (
-            <article
-              key={feature.title}
-              className="rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-xl)] transition-all duration-200 ease-out hover:translate-y-[-2px] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]"
-            >
-              <div className="text-[var(--brand)]">{feature.icon}</div>
-              <h3
-                className="pt-3 text-[var(--text-h3)] font-semibold text-[var(--foreground)]"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                {feature.title}
-              </h3>
-              <p className="pt-3 text-[var(--text-body)] leading-[1.65] text-[var(--foreground-muted)]">{feature.body}</p>
-            </article>
+    <section className="py-[var(--space-4xl)]">
+      <SectionReveal>
+        <SectionHeading
+          eyebrow="Features"
+          title="Built for onboarding developers."
+          body="Everything centers on fast understanding of real repositories with evidence."
+        />
+      </SectionReveal>
+      <div className="mx-auto mt-10 w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
+        <div className="grid gap-4 md:grid-cols-2">
+          {features.map((f, idx) => (
+            <SectionReveal key={f.title} animation="fade-up" delay={idx * 100}>
+              <Card className="group relative overflow-hidden">
+                <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  <div className="absolute inset-0 bg-[var(--brand-glow)] opacity-10" />
+                </div>
+                <CardHeader className="p-6">
+                  <div className="grid size-10 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--brand)]">
+                    {f.icon}
+                  </div>
+                  <CardTitle className="pt-3">{f.title}</CardTitle>
+                  <CardDescription>{f.body}</CardDescription>
+                </CardHeader>
+              </Card>
+            </SectionReveal>
           ))}
         </div>
       </div>
@@ -196,80 +203,148 @@ function FeaturesSection() {
   );
 }
 
-function TerminalDemo() {
+/* ── Codebase Graph Section ── */
+
+function CodebaseGraphSection() {
   return (
-    <section className="px-[1.25rem] py-[var(--space-4xl)] md:px-[2.5rem]">
-      <div className="mx-auto w-full max-w-[1200px]">
-        <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[oklch(0.055_0.004_240)]">
-          <div className="flex items-center gap-2 border-b border-[var(--border)] px-4 py-3">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#ffbd2e]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#28ca42]" />
+    <section className="py-[var(--space-4xl)]">
+      <SectionReveal>
+        <SectionHeading
+          eyebrow="Repo graph"
+          title="See how files connect across the codebase."
+          body="A live map highlights relationships between files, hotspots, and annotated context—like an Obsidian vault for your repo."
+        />
+      </SectionReveal>
+      <div className="mx-auto mt-10 w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
+        <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
+          <Card className="relative overflow-hidden">
+            <CardHeader className="p-6">
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="size-4" />
+                Knowledge graph preview
+              </CardTitle>
+              <CardDescription>Nodes represent files and modules. Edges show references, citations, and shared annotations.</CardDescription>
+            </CardHeader>
+            <CardContent className="px-6 pb-6 pt-2">
+              <CodebaseGraph />
+            </CardContent>
+          </Card>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="p-6">
+                <CardTitle>Map signals</CardTitle>
+                <CardDescription>Track the most referenced, annotated, and recently changed files.</CardDescription>
+              </CardHeader>
+              <CardContent className="px-6 pb-6 pt-0 space-y-3">
+                <div className="flex items-center justify-between rounded-xl border border-border bg-[var(--surface-2)] p-3">
+                  <p className="text-sm font-medium">Hotspot clusters</p>
+                  <Badge variant="neutral">12</Badge>
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-border bg-[var(--surface-2)] p-3">
+                  <p className="text-sm font-medium">Annotated files</p>
+                  <Badge variant="neutral">46</Badge>
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-border bg-[var(--surface-2)] p-3">
+                  <p className="text-sm font-medium">PR-linked nodes</p>
+                  <Badge variant="neutral">18</Badge>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="p-6">
+                <CardTitle>Explore the map</CardTitle>
+                <CardDescription>Jump into the workspace map view for real data once a repo is connected.</CardDescription>
+              </CardHeader>
+              <CardContent className="px-6 pb-6 pt-0">
+                <Link href="/repo/sample/map">
+                  <Button variant="outline" className="w-full">
+                    Open repo map
+                    <ArrowRight className="size-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </div>
-          <pre
-            className="overflow-x-auto p-6 text-[var(--text-code)] leading-[1.7] text-[var(--foreground)]"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            <code>{`> user: Why does checkout timeout after deploy?
-
-assistant:
-Found likely regression in billing client retry policy.
-
-Sources:
-- web/src/lib/billing/client.ts:118
-- web/src/app/api/checkout/route.ts:42
-- docs/incident/2026-04-12-postmortem.md:17
-
-Reasoning:
-Recent PR removed exponential backoff when 429 returned.
-Reintroduce jitter + cap to restore stable checkout latency.`}</code>
-          </pre>
         </div>
       </div>
     </section>
   );
 }
 
-function Footer() {
+/* ── Final CTA ── */
+
+function FinalCTA() {
   return (
-    <footer className="border-t border-[var(--border)] bg-[var(--sidebar)] px-[1.25rem] py-[var(--space-2xl)] md:px-[2.5rem]">
-      <div className="mx-auto w-full max-w-[1200px] space-y-6">
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]" style={{ fontFamily: "var(--font-heading)" }}>
-              DevBridge
-            </p>
-            <p className="text-[var(--text-sm)] text-[var(--foreground-muted)]">Context-grounded AI for engineering teams.</p>
-          </div>
-          <div className="flex gap-4 text-[var(--text-sm)] text-[var(--foreground-muted)]">
-            <Link href="#features" className="transition-colors hover:text-[var(--foreground)]">
-              Features
-            </Link>
-            <Link href="#how-it-works" className="transition-colors hover:text-[var(--foreground)]">
-              How it works
-            </Link>
-            <Link href="#" className="transition-colors hover:text-[var(--foreground)]">
-              Docs
-            </Link>
+    <SectionReveal animation="slide-up">
+      <section className="px-[1.25rem] pb-[var(--space-4xl)] md:px-[2.5rem]">
+        <div className="mx-auto w-full max-w-[1200px]">
+          <div className="relative overflow-hidden rounded-3xl border border-border bg-[color-mix(in_oklab,var(--surface-2)_60%,transparent)] p-8 md:p-12">
+            <div className="pointer-events-none absolute inset-0 bg-[var(--brand-glow)] opacity-[0.03]" />
+            <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto]">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--foreground-subtle)]">Start onboarding</p>
+                <h3 className="pt-3 font-heading text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+                  Turn your repo into a living knowledge base.
+                </h3>
+                <p className="pt-3 text-[var(--text-body-lg)] leading-[1.7] text-muted-foreground">
+                  Connect a repository, explore the map, and help every new engineer ramp faster.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link href="/repo/sample">
+                  <Button size="lg" className="w-full rounded-full sm:w-auto">
+                    Connect repo
+                    <ArrowRight className="size-4" />
+                  </Button>
+                </Link>
+                <Link href="/repo/sample/map">
+                  <Button size="lg" variant="outline" className="w-full rounded-full sm:w-auto">
+                    View repo map
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex flex-col justify-between gap-2 border-t border-[var(--border)] pt-4 text-[var(--text-xs)] text-[var(--foreground-subtle)] md:flex-row">
-          <p>&copy; {new Date().getFullYear()} DevBridge</p>
-          <p>Built for Google Solutions Hackathon</p>
-        </div>
-      </div>
-    </footer>
+      </section>
+    </SectionReveal>
   );
 }
+
+/* ── Landing Page ── */
 
 export default function HomePage() {
   return (
-    <main className="bg-[var(--background)] text-[var(--foreground)]">
-      <Navbar />
-      <HeroSection />
-      <HowItWorksSection />
-      <FeaturesSection />
-      <TerminalDemo />
+    <main className="min-h-dvh text-[var(--foreground)]">
+      <BackgroundEffects />
+      <DitheringBackground />
+      <div className="relative pt-6">
+        <FloatingHeader />
+      </div>
+      <HeroDitheringCard />
+
+      <TrustStrip />
+
+      <div className="mx-auto w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
+        <div className="h-px w-full bg-border" />
+      </div>
+
+      <HowItWorks />
+
+      <div className="mx-auto w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
+        <div className="h-px w-full bg-border" />
+      </div>
+
+      <FeatureGrid />
+
+      <div className="mx-auto w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
+        <div className="h-px w-full bg-border" />
+      </div>
+
+      <CodebaseGraphSection />
+
+      <FinalCTA />
+
       <Footer />
     </main>
   );
