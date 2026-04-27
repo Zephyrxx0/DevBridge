@@ -1,254 +1,276 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
+import { GitBranch, SearchCode, StickyNote, Workflow } from "lucide-react";
+
+import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ArrowRight, Code2, GitBranch, Sparkles, CheckCircle } from "lucide-react";
+import { DitheringCard } from "@/components/ui/dithering-card";
 
-interface Repository {
-  id: string;
-  name: string;
-  lastIndexed?: string;
-  fileCount?: number;
-  annotationCount?: number;
-  status?: "indexed" | "indexing" | "pending";
-}
-
-export default function Home() {
-  const [repos, setRepos] = useState<Repository[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    fetchRepos();
-  }, [mounted]);
-
-  const fetchRepos = async () => {
-    try {
-      setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      const response = await fetch(`${apiUrl}/repo/`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setRepos(Array.isArray(data) ? data : []);
-      } else if (response.status === 404) {
-        setRepos([]);
-      } else {
-        setRepos([]);
-      }
-    } catch (err) {
-      console.error("Error fetching repos:", err);
-      setRepos([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (!mounted) return null;
-
-  const getStatusBadge = (status?: string) => {
-    const baseClass = "inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium";
-    if (status === "indexed") {
-      return <span className={`${baseClass} bg-emerald-500/10 text-emerald-700 dark:text-emerald-400`}><CheckCircle className="w-3 h-3" /> Indexed</span>;
-    }
-    if (status === "indexing") {
-      return <span className={`${baseClass} bg-amber-500/10 text-amber-700 dark:text-amber-400`}><div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Indexing</span>;
-    }
-    return <span className={`${baseClass} bg-slate-500/10 text-slate-700 dark:text-slate-400`}>Pending</span>;
-  };
-
+function HeroSection() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary shadow-md">
-              <span className="text-lg font-bold text-primary-foreground">DB</span>
+    <section className="px-[1.25rem] py-0 md:px-[2.5rem]">
+      <DitheringCard
+        className="min-h-[calc(100dvh-64px)]"
+        contentClassName="flex min-h-[calc(100dvh-64px)] items-center"
+      >
+        <div className="mx-auto w-full max-w-[1200px] px-[1.25rem] py-[var(--space-3xl)] md:px-[2.5rem]">
+          <div className="max-w-[760px] space-y-[var(--space-lg)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--accent-emerald)]/35 bg-[var(--accent-emerald-muted)] px-3 py-1.5">
+              <span className="inline-block h-2 w-2 animate-[pulse-dot_2s_infinite] rounded-full bg-[var(--accent-emerald)]" />
+              <span className="text-[var(--text-sm)] font-medium text-[var(--foreground)]">Agent System Online</span>
             </div>
-            <div>
-              <h1 className="text-xl font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
-                DevBridge
-              </h1>
-              <p className="text-xs text-muted-foreground font-medium">Orchestrator</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Online</span>
-            </div>
-          </div>
-        </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-16">
-        {/* Hero Section with Dithering Pattern */}
-        <div className="mb-20 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/5 via-background to-primary/5 border border-border/40 shadow-lg p-12">
-            {/* Subtle dithering effect background */}
-            <div className="absolute inset-0 opacity-30 dark:opacity-20" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='0.5' fill='%23343434'/%3E%3Ccircle cx='3' cy='3' r='0.5' fill='%23343434'/%3E%3C/svg%3E")`,
-              backgroundSize: "8px 8px"
-            }}></div>
-            
-            <div className="relative z-10 text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">AI-Powered Code Intelligence</span>
-              </div>
+            <h1
+              className="text-[var(--text-hero)] font-extrabold leading-[1.1] text-[var(--foreground)]"
+              style={{ fontFamily: "var(--font-heading)", letterSpacing: "-0.03em" }}
+            >
+              Your codebase,
+              <br />
+              finally understood.
+            </h1>
 
-              <h2 className="text-5xl font-bold mb-4" style={{ fontFamily: "var(--font-heading)" }}>
-                Grounded AI Answers
-                <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
-                  From Your Codebase
-                </span>
-              </h2>
-              
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-                DevBridge connects your code to intelligent agents that understand context, history, and architecture. Search semantically, get cited sources, and collaborate with your team.
-              </p>
+            <p className="max-w-[64ch] text-[var(--text-body-lg)] font-normal leading-[1.65] text-[var(--foreground-muted)]">
+              DevBridge connects a multi-agent AI layer to your real code, PR history, and team knowledge.
+            </p>
 
-              {repos.length > 0 && (
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 mb-8">
-                  <CheckCircle className="w-4 h-4" />
-                  {repos.length} {repos.length === 1 ? "repository" : "repositories"} ready
-                </div>
-              )}
-
-              <Link href={repos.length > 0 ? `/repo/${repos[0].id}` : "#repos"}>
-                <Button size="lg" className="gap-2 text-base h-12 px-8">
-                  {repos.length > 0 ? "Open Dashboard" : "Get Started"}
-                  <ArrowRight className="w-4 h-4" />
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Link href="/dashboard">
+                <Button
+                  size="lg"
+                  className="h-11 rounded-lg border border-transparent px-6 text-[var(--text-sm)] font-semibold"
+                >
+                  Get Started &rarr;
+                </Button>
+              </Link>
+              <Link href="https://github.com" target="_blank" rel="noreferrer">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="h-11 rounded-lg border border-[var(--border)] px-6 text-[var(--text-sm)] font-medium text-[var(--foreground)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]"
+                >
+                  View on GitHub &#8599;
                 </Button>
               </Link>
             </div>
+
+            <div className="pt-[var(--space-md)]">
+              <div className="h-px w-full max-w-[560px] bg-[var(--border)]" />
+              <p
+                className="pt-3 text-[var(--text-xs)] font-medium uppercase text-[var(--foreground-subtle)]"
+                style={{ letterSpacing: "0.1em" }}
+              >
+                0 hallucinations &middot; cited sources &middot; persistent team memory
+              </p>
+            </div>
           </div>
         </div>
+      </DitheringCard>
+    </section>
+  );
+}
 
-        {/* Repositories Section */}
-        <div id="repos" className="mb-20 animate-in fade-in slide-in-from-bottom-4 duration-300 delay-100">
-          <div className="mb-8">
-            <h3 className="text-2xl font-semibold mb-2" style={{ fontFamily: "var(--font-heading)" }}>
-              Select a Repository
-            </h3>
-            <p className="text-muted-foreground">
-              {loading 
-                ? "Loading repositories..." 
-                : repos.length === 0 
-                  ? "Connect your first repository to get started"
-                  : `${repos.length} ${repos.length === 1 ? "repository" : "repositories"} available`
-              }
+function HowItWorksSection() {
+  const steps = [
+    {
+      step: "①",
+      title: "Ingest",
+      body: "Your repo is indexed by file, function, and PR.",
+    },
+    {
+      step: "②",
+      title: "Ask",
+      body: "Ask in plain English. The agent decides how to retrieve.",
+    },
+    {
+      step: "③",
+      title: "Understand",
+      body: "Get grounded answers with exact file paths, line numbers, and team annotations cited.",
+    },
+  ];
+
+  return (
+    <section id="how-it-works" className="px-[1.25rem] py-[var(--space-4xl)] md:px-[2.5rem]">
+      <div className="mx-auto w-full max-w-[1200px]">
+        <div className="mb-[var(--space-xl)] max-w-[700px]">
+          <h2
+            className="text-[var(--text-h1)] font-bold leading-[1.1] text-[var(--foreground)]"
+            style={{ fontFamily: "var(--font-heading)", letterSpacing: "-0.02em" }}
+          >
+            How it works
+          </h2>
+          <p className="pt-3 text-[var(--text-body)] text-[var(--foreground-muted)]">
+            Precision retrieval pipeline, tuned for real engineering questions.
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:gap-6">
+          {steps.map((step, index) => (
+            <div key={step.title} className="contents">
+              <article className="relative rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-xl)] transition-[border-color,transform,box-shadow] duration-150 hover:translate-y-[-1px] hover:border-[var(--border-strong)] hover:shadow-[0_0_0_1px_var(--border-strong)]">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute left-4 top-2 text-[var(--text-hero)] font-extrabold leading-none text-[var(--brand-muted)]"
+                  style={{ fontFamily: "var(--font-heading)" }}
+                >
+                  {step.step}
+                </span>
+                <div className="pt-8">
+                  <h3
+                    className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    {step.title}
+                  </h3>
+                  <p className="pt-3 text-[var(--text-body)] leading-[1.65] text-[var(--foreground-muted)]">
+                    {step.body}
+                  </p>
+                </div>
+              </article>
+              {index < steps.length - 1 ? (
+                <div className="hidden items-center justify-center text-[var(--foreground-subtle)] lg:flex">
+                  <span className="text-xl">&rarr;</span>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FeaturesSection() {
+  const features = [
+    {
+      icon: <SearchCode className="h-5 w-5" />,
+      title: "Find code by what it does",
+      body: "Not just keywords. Embed and retrieve by intent.",
+    },
+    {
+      icon: <GitBranch className="h-5 w-5" />,
+      title: "Know why, not just what",
+      body: "Every PR's title, description, and diff is searchable.",
+    },
+    {
+      icon: <StickyNote className="h-5 w-5" />,
+      title: "Capture what code can't say",
+      body: "Warnings, gotchas, architectural context live alongside the code.",
+    },
+    {
+      icon: <Workflow className="h-5 w-5" />,
+      title: "Answers that reason, not guess",
+      body: "A multi-step ReAct loop picks the right tools for each query.",
+    },
+  ];
+
+  return (
+    <section id="features" className="px-[1.25rem] py-[var(--space-4xl)] md:px-[2.5rem]">
+      <div className="mx-auto w-full max-w-[1200px]">
+        <div className="mb-[var(--space-xl)] max-w-[700px]">
+          <h2
+            className="text-[var(--text-h1)] font-bold leading-[1.1] text-[var(--foreground)]"
+            style={{ fontFamily: "var(--font-heading)", letterSpacing: "-0.02em" }}
+          >
+            Feature grid
+          </h2>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {features.map((feature) => (
+            <article
+              key={feature.title}
+              className="rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-xl)] transition-all duration-200 ease-out hover:translate-y-[-2px] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]"
+            >
+              <div className="text-[var(--brand)]">{feature.icon}</div>
+              <h3
+                className="pt-3 text-[var(--text-h3)] font-semibold text-[var(--foreground)]"
+                style={{ fontFamily: "var(--font-heading)" }}
+              >
+                {feature.title}
+              </h3>
+              <p className="pt-3 text-[var(--text-body)] leading-[1.65] text-[var(--foreground-muted)]">{feature.body}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TerminalDemo() {
+  return (
+    <section className="px-[1.25rem] py-[var(--space-4xl)] md:px-[2.5rem]">
+      <div className="mx-auto w-full max-w-[1200px]">
+        <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[oklch(0.055_0.004_240)]">
+          <div className="flex items-center gap-2 border-b border-[var(--border)] px-4 py-3">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#ffbd2e]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#28ca42]" />
+          </div>
+          <pre
+            className="overflow-x-auto p-6 text-[var(--text-code)] leading-[1.7] text-[var(--foreground)]"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            <code>{`> user: Why does checkout timeout after deploy?
+
+assistant:
+Found likely regression in billing client retry policy.
+
+Sources:
+- web/src/lib/billing/client.ts:118
+- web/src/app/api/checkout/route.ts:42
+- docs/incident/2026-04-12-postmortem.md:17
+
+Reasoning:
+Recent PR removed exponential backoff when 429 returned.
+Reintroduce jitter + cap to restore stable checkout latency.`}</code>
+          </pre>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-[var(--border)] bg-[var(--sidebar)] px-[1.25rem] py-[var(--space-2xl)] md:px-[2.5rem]">
+      <div className="mx-auto w-full max-w-[1200px] space-y-6">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]" style={{ fontFamily: "var(--font-heading)" }}>
+              DevBridge
             </p>
+            <p className="text-[var(--text-sm)] text-[var(--foreground-muted)]">Context-grounded AI for engineering teams.</p>
           </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-48 rounded-xl bg-muted/50 animate-pulse" />
-              ))}
-            </div>
-          ) : repos.length === 0 ? (
-            <Card className="border-dashed border-2">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Code2 className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
-                <h4 className="text-lg font-semibold mb-2">No repositories connected</h4>
-                <p className="text-sm text-muted-foreground text-center max-w-sm">
-                  Connect a GitHub repository to enable code search, analysis, and collaboration.
-                </p>
-                <Button className="mt-6" variant="outline">
-                  Connect Repository
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {repos.map((repo) => (
-                <Link key={repo.id} href={`/repo/${repo.id}`}>
-                  <Card className="h-full hover:shadow-lg hover:border-primary/50 transition-all duration-200 cursor-pointer group">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-xl group-hover:text-primary transition-colors">{repo.name}</CardTitle>
-                          {repo.lastIndexed && (
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Last indexed: {new Date(repo.lastIndexed).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                        {getStatusBadge(repo.status)}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-4 pt-2">
-                        <div className="flex items-center gap-2">
-                          <Code2 className="w-4 h-4 text-muted-foreground" />
-                          <div>
-                            <p className="text-xs text-muted-foreground">Files</p>
-                            <p className="text-lg font-semibold">{repo.fileCount || 0}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <GitBranch className="w-4 h-4 text-muted-foreground" />
-                          <div>
-                            <p className="text-xs text-muted-foreground">Annotations</p>
-                            <p className="text-lg font-semibold">{repo.annotationCount || 0}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent Activity Section */}
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 delay-200">
-          <div className="mb-8">
-            <h3 className="text-2xl font-semibold mb-2" style={{ fontFamily: "var(--font-heading)" }}>
-              Recent Activity
-            </h3>
-            <p className="text-muted-foreground">
-              Latest Q&A, indexing jobs, and PR analyses
-            </p>
+          <div className="flex gap-4 text-[var(--text-sm)] text-[var(--foreground-muted)]">
+            <Link href="#features" className="transition-colors hover:text-[var(--foreground)]">
+              Features
+            </Link>
+            <Link href="#how-it-works" className="transition-colors hover:text-[var(--foreground)]">
+              How it works
+            </Link>
+            <Link href="#" className="transition-colors hover:text-[var(--foreground)]">
+              Docs
+            </Link>
           </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 gap-4">
-              {[1, 2].map((i) => (
-                <div key={i} className="h-20 rounded-lg bg-muted/50 animate-pulse" />
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <p className="text-muted-foreground">
-                  No recent activity yet. Start exploring your codebase to see activity here.
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border/40 bg-background/50 mt-20">
-        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between text-sm text-muted-foreground">
-          <p>DevBridge Orchestrator v0.1</p>
-          <p>© 2026 Code Intelligence Platform</p>
+        <div className="flex flex-col justify-between gap-2 border-t border-[var(--border)] pt-4 text-[var(--text-xs)] text-[var(--foreground-subtle)] md:flex-row">
+          <p>&copy; {new Date().getFullYear()} DevBridge</p>
+          <p>Built for Google Solutions Hackathon</p>
         </div>
-      </footer>
-    </div>
+      </div>
+    </footer>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <main className="bg-[var(--background)] text-[var(--foreground)]">
+      <Navbar />
+      <HeroSection />
+      <HowItWorksSection />
+      <FeaturesSection />
+      <TerminalDemo />
+      <Footer />
+    </main>
   );
 }
