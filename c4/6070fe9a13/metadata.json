@@ -1,0 +1,21 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "c46070fe9a13",
+  "strategy": "manual-commit",
+  "branch": "gsd/phase-13-e2e-runtime-config",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/core/secrets.py",
+    "tests/test_pr_config.py",
+    "web/package.json",
+    "web/tests/ingestion_loop.spec.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c4/6070fe9a13/0/metadata.json",
+      "transcript": "/c4/6070fe9a13/0/full.jsonl",
+      "content_hash": "/c4/6070fe9a13/0/content_hash.txt",
+      "prompt": "/c4/6070fe9a13/0/prompt.txt"
+    }
+  ]
+}

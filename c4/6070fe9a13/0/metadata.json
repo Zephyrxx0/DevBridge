@@ -1,0 +1,30 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "c46070fe9a13",
+  "session_id": "0fa1ff83-99d0-4050-b14a-1bf817f7919a",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-27T06:58:28.8177586Z",
+  "branch": "gsd/phase-13-e2e-runtime-config",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/core/secrets.py",
+    "tests/test_pr_config.py",
+    "web/package.json",
+    "web/tests/ingestion_loop.spec.ts"
+  ],
+  "agent": "Gemini CLI",
+  "model": "gemini-3-flash-preview",
+  "turn_id": "fd2d58935a87",
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-27T06:58:28.1654631Z",
+    "agent_lines": 0,
+    "human_added": 4165,
+    "human_modified": 233,
+    "human_removed": 0,
+    "total_committed": 4398,
+    "agent_percentage": 0
+  }
+}
