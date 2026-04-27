@@ -1,0 +1,32 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "79250cd38690",
+  "session_id": "8a2de8ef-da3e-4f87-813e-1861674043af",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-27T15:58:34.742393Z",
+  "branch": "polish/webui",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/src/app/repo/[id]/layout.tsx",
+    "web/src/app/repo/[id]/page.tsx"
+  ],
+  "agent": "Claude Code",
+  "model": "gpt-5.3-codex",
+  "turn_id": "8cba03df57e3",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-27T15:58:34.6220411Z",
+    "agent_lines": 1,
+    "human_added": 0,
+    "human_modified": 541,
+    "human_removed": 0,
+    "total_committed": 542,
+    "agent_percentage": 0.18450184501845018
+  }
+}

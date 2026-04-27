@@ -1,0 +1,26 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "79250cd38690",
+  "strategy": "manual-commit",
+  "branch": "polish/webui",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/src/app/repo/[id]/layout.tsx",
+    "web/src/app/repo/[id]/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/79/250cd38690/0/metadata.json",
+      "transcript": "/79/250cd38690/0/full.jsonl",
+      "content_hash": "/79/250cd38690/0/content_hash.txt",
+      "prompt": "/79/250cd38690/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
