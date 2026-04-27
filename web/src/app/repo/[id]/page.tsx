@@ -6,7 +6,6 @@ import { ArrowUp, ChevronDown, ChevronRight, Clock3, Code2, GitBranch, StickyNot
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -301,79 +300,75 @@ export default function RepoWorkspacePage() {
       </div>
 
       <aside className="hidden min-h-0 flex-[2] md:block">
-        <Card className="flex h-full min-h-0 flex-col">
-          {selectedSource ? (
-            <>
-              <CardHeader className="border-b border-[var(--border)]">
-                <p className="text-(length:--text-xs) font-medium uppercase tracking-[0.08em] text-(--foreground-subtle)">
-                  Cited Source
-                </p>
-                <CardTitle className="font-mono text-[var(--text-sm)]">{selectedSource.file_path}</CardTitle>
-                <p className="text-(length:--text-xs) text-(--foreground-muted)">
-                  L{selectedSource.start_line}-L{selectedSource.end_line}
-                  {selectedSource.function_name ? ` • ${selectedSource.function_name}` : ""}
-                  {typeof selectedSource.similarity === "number"
-                    ? ` • ${Math.round(selectedSource.similarity * 100)}% match`
-                    : ""}
-                </p>
-              </CardHeader>
-              <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
-                <pre className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-(--surface-3) p-(--space-md) font-mono text-(length:--text-code) text-(--foreground-muted)">
+        {selectedSource ? (
+          <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-1)]">
+            <div className="border-b border-[var(--border)] px-[var(--space-lg)] py-[var(--space-md)]">
+              <p className="text-[var(--text-xs)] font-medium uppercase tracking-[0.08em] text-[var(--foreground-subtle)]">
+                Cited Source
+              </p>
+              <p className="font-mono text-[var(--text-sm)] text-[var(--foreground)]">{selectedSource.file_path}</p>
+              <p className="text-[var(--text-xs)] text-[var(--foreground-muted)]">
+                L{selectedSource.start_line}-L{selectedSource.end_line}
+                {selectedSource.function_name ? ` • ${selectedSource.function_name}` : ""}
+                {typeof selectedSource.similarity === "number"
+                  ? ` • ${Math.round(selectedSource.similarity * 100)}% match`
+                  : ""}
+              </p>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col gap-4 p-[var(--space-lg)]">
+              <pre className="min-h-0 flex-1 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--surface-3)] p-[var(--space-md)] font-mono text-[var(--text-code)] text-[var(--foreground-muted)]">
                   <code>// File preview panel placeholder. Monaco integration lives in files view.</code>
                 </pre>
+              <div>
+                <p className="text-[var(--text-xs)] font-medium uppercase tracking-[0.08em] text-[var(--foreground-subtle)]">
+                  Annotation Context
+                </p>
+                <p className="pt-1 text-[var(--text-sm)] text-[var(--foreground-muted)]">
+                  Annotation chips and discussion thread appear here for the selected source.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-lg)]">
+            <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]">Repository Summary</p>
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                <Code2 className="h-4 w-4 text-[var(--foreground-muted)]" />
                 <div>
-                  <p className="text-(length:--text-xs) font-medium uppercase tracking-[0.08em] text-(--foreground-subtle)">
-                    Annotation Context
-                  </p>
-                  <p className="pt-1 text-(length:--text-sm) text-(--foreground-muted)">
-                    Annotation chips and discussion thread appear here for the selected source.
-                  </p>
+                  <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Files</p>
+                  <p className="text-[var(--text-h3)] font-semibold">{repo?.fileCount ?? 0}</p>
                 </div>
-              </CardContent>
-            </>
-          ) : (
-            <>
-              <CardHeader>
-                <CardTitle>Repository Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
-                  <Code2 className="h-4 w-4 text-[var(--foreground-muted)]" />
-                  <div>
-                    <p className="text-(length:--text-xs) text-(--foreground-subtle)">Files</p>
-                    <p className="text-[var(--text-h3)] font-semibold">{repo?.fileCount ?? 0}</p>
-                  </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                <StickyNote className="h-4 w-4 text-[var(--foreground-muted)]" />
+                <div>
+                  <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Annotations</p>
+                  <p className="text-[var(--text-h3)] font-semibold">{repo?.annotationCount ?? 0}</p>
                 </div>
-                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
-                  <StickyNote className="h-4 w-4 text-[var(--foreground-muted)]" />
-                  <div>
-                    <p className="text-(length:--text-xs) text-(--foreground-subtle)">Annotations</p>
-                    <p className="text-[var(--text-h3)] font-semibold">{repo?.annotationCount ?? 0}</p>
-                  </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                <GitBranch className="h-4 w-4 text-[var(--foreground-muted)]" />
+                <div>
+                  <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">PRs</p>
+                  <p className="text-[var(--text-h3)] font-semibold">{repo?.prCount ?? 0}</p>
                 </div>
-                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
-                  <GitBranch className="h-4 w-4 text-[var(--foreground-muted)]" />
-                  <div>
-                    <p className="text-(length:--text-xs) text-(--foreground-subtle)">PRs</p>
-                    <p className="text-[var(--text-h3)] font-semibold">{repo?.prCount ?? 0}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
-                  <Clock3 className="h-4 w-4 text-[var(--foreground-muted)]" />
-                  <div>
-                    <p className="text-(length:--text-xs) text-(--foreground-subtle)">Last Indexed</p>
-                    <p className="text-(length:--text-sm) text-(--foreground-muted)">
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                <Clock3 className="h-4 w-4 text-[var(--foreground-muted)]" />
+                <div>
+                  <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Last Indexed</p>
+                  <p className="text-[var(--text-sm)] text-[var(--foreground-muted)]">
                       {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "Never"}
                     </p>
-                  </div>
                 </div>
-                <p className="pt-2 text-(length:--text-xs) text-(--foreground-subtle)">
-                  Click a source citation from chat to inspect it in this panel.
-                </p>
-              </CardContent>
-            </>
-          )}
-        </Card>
+              </div>
+              <p className="pt-2 text-[var(--text-xs)] text-[var(--foreground-subtle)]">
+                Click a source citation from chat to inspect it in this panel.
+              </p>
+            </div>
+          </div>
+        )}
       </aside>
     </section>
   );
