@@ -1,0 +1,102 @@
+/gsd-execute-phase use @.planning\phases\15-update-the-design-of-the-webui-accordingly\15-UI-SPEC.md and mainly @DESIGN.md for website design. Also use skills for more sophisticated help
+
+---
+
+Continue: "Continue to iterate?"
+
+---
+
+Conduct a 6-pillar visual audit for Phase 15 (update-the-design-of-the-webui-accordingly) and create the report file at `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-UI-REVIEW.md`.
+
+Audit baseline and context files to read:
+- `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-01-SUMMARY.md`
+- `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-02-SUMMARY.md`
+- `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-03-SUMMARY.md`
+- `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-04-SUMMARY.md`
+- `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-01-PLAN.md`
+- `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-02-PLAN.md`
+- `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-03-PLAN.md`
+- `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-04-PLAN.md`
+- `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-UI-SPEC.md`
+- `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-CONTEXT.md`
+- `DESIGN.md`
+
+Implementation files to review:
+- `web/src/app/page.tsx`
+- `web/src/components/navbar.tsx`
+- `web/src/components/ui/dithering-card.tsx`
+- `web/src/components/ui/button.tsx`
+- `web/src/components/ui/card.tsx`
+- `web/src/components/ui/input.tsx`
+- `web/src/components/ui/avatar.tsx`
+- `web/src/app/repo/[id]/layout.tsx`
+- `web/src/app/repo/[id]/page.tsx`
+
+Scoring rubric:
+- Pillars: Copywriting, Visuals, Color, Typography, Spacing, Experience Design
+- Score each pillar 1-4 (integer)
+- Include total score /24
+- Provide prioritized findings with severity and concrete fixes
+- Flag any requirement mismatches against UI-SPEC or DESIGN.md
+
+Output requirements:
+1) Write full report to `.planning/phases/15-update-the-design-of-the-webui-accordingly/15-UI-REVIEW.md`.
+2) In your response back to orchestrator, include:
+   - Marker `## UI REVIEW COMPLETE`
+   - Pillar score table
+   - Overall score
+   - Top 3 fixes
+   - Confirmation file was written.
+
+---
+
+continue
+
+---
+
+Conduct a retroactive 6-pillar visual audit for Phase 15: update-the-design-of-the-webui-accordingly.
+
+Objective:
+- Produce a scored UI audit (1-4 per pillar) and actionable findings.
+- Use Phase 15 implementation artifacts as source of truth.
+- Create/update: d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-UI-REVIEW.md
+
+Files to read:
+- d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-01-SUMMARY.md
+- d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-02-SUMMARY.md
+- d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-03-SUMMARY.md
+- d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-04-SUMMARY.md
+- d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-01-PLAN.md
+- d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-02-PLAN.md
+- d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-03-PLAN.md
+- d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-04-PLAN.md
+- d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-UI-SPEC.md
+- d:\Codes\Personal\DevBridge\.planning\phases\15-update-the-design-of-the-webui-accordingly\15-CONTEXT.md
+- d:\Codes\Personal\DevBridge\DESIGN.md
+
+Scoring pillars:
+1) Copywriting
+2) Visuals
+3) Color
+4) Typography
+5) Spacing
+6) Experience Design
+
+Required output format:
+- Heading with phase and date
+- Overall score /24
+- Table with each pillar score (/4)
+- Findings by pillar with severity (high/med/low), evidence, and fix recommendation
+- Top 3 fixes summary
+- `needs_human_review` flags where applicable
+- Final verdict PASS/FLAG/BLOCK with rationale
+
+If artifacts already satisfy a pillar, state PASS evidence clearly. If incomplete implementations are intentional, note that and score accordingly.
+
+---
+
+/gsd-validate-phase 15
+
+---
+
+Try Again
