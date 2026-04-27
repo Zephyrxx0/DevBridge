@@ -142,6 +142,18 @@ Plans:
 - [ ] 14-03-PLAN.md — Repo map + Search page
 - [ ] 14-04-PLAN.md — PR dashboard + Annotation center
 
+### Phase 15: update the design of the webUI accordingly
+
+**Goal:** Update the webUI design to match DESIGN.md specs - precision-luxe dark aesthetic, high-visibility areas first
+**Depends on**: Phase 14
+**Plans:** 1/4 plans executed
+
+Plans:
+- [x] 15-01-PLAN.md — Design foundation (typography, color/spacing tokens)
+- [x] 15-02-PLAN.md — High-visibility components (hero, navbar, landing)
+- [x] 15-03-PLAN.md — Base UI component updates (Card, Button, Input, Avatar)
+- [x] 15-04-PLAN.md — Chat interface and repo workspace shell
+
 ---
 
 *Last updated: 2026-04-26*

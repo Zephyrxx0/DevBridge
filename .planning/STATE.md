@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: Audit)
-status: Milestone complete
-stopped_at: Completed Phase 13-03 (all 3 plans done)
-last_updated: "2026-04-26T16:38:51.652Z"
+status: Ready to execute
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-04-27T15:31:52.962Z"
 progress:
   total_phases: 1
   completed_phases: 1
@@ -18,11 +18,12 @@ progress:
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
+Phase: 15 (update-the-design-of-the-webui-accordingly) — EXECUTING
+Plan: 2 of 4
 
 ## Roadmap Evolution
 
+- Phase 15 added: update the design of the webUI accordingly
 - Phase 13 added: Milestone Gap Hardening - E2E + Runtime Config
 - Phase 13 completed: All 3 plans done, verified
 - Phase 14 added: Design website pages from spec
@@ -33,7 +34,7 @@ Plan: Not started
 
 ## Session
 
-- **Stopped at:** Completed Phase 13-03 (all 3 plans done)
+- **Stopped at:** Completed 15-01-PLAN.md
 - **Resume file:** None
 
 ## Decisions
@@ -56,3 +57,5 @@ Plan: Not started
 - [Phase 13]: GCP_PROJECT_ID deprecated with runtime warning
 - [Phase 13]: E2E test repo fallback to local DevBridge project (non-existent google/e2e-test-repo)
 - [Phase 13]: MR-01 verified, MR-02 verified, FR-AI-02 partial, Runtime config verified in REQUIREMENTS.md
+- [Phase 15]: Attach three font CSS variables on html root; keep body class minimal.
+- [Phase 15]: Map new DESIGN.md palette through shadcn semantic aliases to avoid UI API churn.
