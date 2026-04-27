@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 from typing import Optional
 from urllib.parse import parse_qsl, quote, unquote, urlencode, urlsplit, urlunsplit
 
@@ -8,8 +9,64 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 engine: Optional[AsyncEngine] = None
 
 
+def _conninfo_to_url(connection_string: str) -> str:
+    raw_conninfo, _, raw_query = connection_string.partition("?")
+    fields: dict[str, str] = {}
+    for token in shlex.split(raw_conninfo):
+        if "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        fields[key.strip().lower()] = value.strip()
+
+    host = fields.get("host", "")
+    dbname = fields.get("dbname") or fields.get("database") or ""
+    if not host or not dbname:
+        raise ValueError("conninfo string must include host and dbname/database")
+
+    user = fields.get("user", "")
+    password = fields.get("password", "")
+    port = fields.get("port", "")
+
+    safe_user = quote(user, safe="") if user else ""
+    safe_password = quote(password, safe="") if password else ""
+    auth = ""
+    if safe_user:
+        auth = safe_user
+        if password:
+            auth = f"{auth}:{safe_password}"
+        auth = f"{auth}@"
+
+    hostport = f"{host}:{port}" if port else host
+    query = dict(parse_qsl(raw_query, keep_blank_values=True))
+
+    # Keep extra conninfo fields (except URL core parts) as query args.
+    reserved = {"host", "port", "user", "password", "dbname", "database"}
+    for key, value in fields.items():
+        if key not in reserved:
+            query.setdefault(key, value)
+
+    query.setdefault("sslmode", "require")
+    return urlunsplit(
+        (
+            "postgresql+psycopg",
+            f"{auth}{hostport}",
+            f"/{quote(dbname, safe='')}",
+            urlencode(query),
+            "",
+        )
+    )
+
+
 def _normalize_connection_string(connection_string: str) -> str:
     normalized = connection_string.strip()
+
+    # Support libpq conninfo format ("key=value key=value") often returned by
+    # secret stores for Postgres credentials.
+    if "://" not in normalized and "=" in normalized:
+        return _conninfo_to_url(normalized)
+
+    if normalized.startswith("postgres://"):
+        normalized = normalized.replace("postgres://", "postgresql+psycopg://", 1)
     if normalized.startswith("postgresql://"):
         normalized = normalized.replace("postgresql://", "postgresql+psycopg://", 1)
 

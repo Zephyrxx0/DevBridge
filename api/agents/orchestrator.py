@@ -3,21 +3,22 @@ import logging
 import json
 import asyncio
 from uuid import UUID
-from langchain_google_vertexai import ChatVertexAI
+
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.language_models.chat_models import BaseChatModel
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.tools import tool
 
 from api.db.models import Annotation
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 def _is_why_intent(message: str) -> bool:
-    """Heuristic intent detector for change-rationale questions."""
     normalized = (message or "").strip().lower()
     if not normalized:
         return False
@@ -37,24 +38,17 @@ def _extract_annotation_tags(query: str) -> list[str]:
 
 @tool
 async def code_search(query: str, include_history: bool = False):
-    """Search for code snippets and implementation logic in the codebase.
-    Use this tool to understand 'Why' something was implemented by looking at context.
-    """
+    """Search for code snippets and implementation logic in the codebase."""
     from api.db.vector_store import vector_db
-    import json
-    
-    # Ensure vector store is initialized
+
     if not vector_db._vectorstore:
         vector_db.initialize()
 
     try:
-        # Wrap vector search in 10s timeout per D-02
         results = await asyncio.wait_for(vector_db.hybrid_search(query, k=5), timeout=10.0)
-        
         if not results:
             return f"No matches found for '{query}'. Try a different query or broader terms."
-            
-        # Parallelize history lookup if requested
+
         history_results = [{} for _ in results]
         if include_history:
             history_tasks = []
@@ -66,12 +60,11 @@ async def code_search(query: str, include_history: bool = False):
                         end_line=res.get("end_line"),
                     )
                 )
-            
+
             try:
-                # Use a shared timeout for all history fetches
                 raw_history_results = await asyncio.wait_for(
                     asyncio.gather(*history_tasks, return_exceptions=True),
-                    timeout=5.0
+                    timeout=5.0,
                 )
                 for i, hist in enumerate(raw_history_results):
                     if not isinstance(hist, Exception):
@@ -84,31 +77,33 @@ async def code_search(query: str, include_history: bool = False):
         citations = []
         for i, res in enumerate(results):
             history = history_results[i]
-            citations.append({
-                "file": res.get("file_path"),
-                "lines": f"{res.get('start_line')}-{res.get('end_line')}",
-                "snippet": res.get("snippet", "")[:300] + "..." if len(res.get("snippet", "")) > 300 else res.get("snippet", ""),
-                "history": {
-                    "commit_sha": history.get("commit_sha"),
-                    "pr_number": history.get("pr_number"),
-                } if include_history and history else None,
-            })
-            
+            citations.append(
+                {
+                    "file": res.get("file_path"),
+                    "lines": f"{res.get('start_line')}-{res.get('end_line')}",
+                    "snippet": res.get("snippet", "")[:300] + "..."
+                    if len(res.get("snippet", "")) > 300
+                    else res.get("snippet", ""),
+                    "history": {
+                        "commit_sha": history.get("commit_sha"),
+                        "pr_number": history.get("pr_number"),
+                    }
+                    if include_history and history
+                    else None,
+                }
+            )
+
         summary = f"Found {len(results)} relevant code snippets."
-        
-        # T-05-05: Information Disclosure - return bounded snippets and citation metadata only
-        output = f"{summary}\n\nCitations:\n{json.dumps(citations, indent=2)}"
-        return output
+        return f"{summary}\n\nCitations:\n{json.dumps(citations, indent=2)}"
     except Exception as e:
         logger.error(f"Error in code_search: {e}")
-        return f"An error occurred during search. Please try again later."
+        return "An error occurred during search. Please try again later."
 
 
 @tool
 async def search_pr_history(query: str = "", file_path: str = "", k: int = 5):
     """Search pull-request history by semantic intent or file path."""
     from api.db.vector_store import vector_db
-    import json
 
     if not vector_db._vectorstore:
         vector_db.initialize()
@@ -120,7 +115,7 @@ async def search_pr_history(query: str = "", file_path: str = "", k: int = 5):
                 file_path=file_path or None,
                 k=k,
             ),
-            timeout=10.0
+            timeout=10.0,
         )
         if not results:
             return "No pull request history matched the query."
@@ -137,12 +132,11 @@ async def search_pr_history(query: str = "", file_path: str = "", k: int = 5):
 async def get_pr_detail(repo: str, pr_number: int):
     """Get full pull-request detail including description and summary."""
     from api.db.vector_store import vector_db
-    import json
 
     try:
         detail = await asyncio.wait_for(
             vector_db.get_pr_detail(repo=repo, number=pr_number),
-            timeout=10.0
+            timeout=10.0,
         )
         if not detail:
             return f"No pull request detail found for {repo}#{pr_number}."
@@ -156,37 +150,41 @@ async def get_pr_detail(repo: str, pr_number: int):
 
 
 def get_llm():
-    """Lazy LLM initialization with mock fallback.
-
-    Checks for Gemini API credentials and returns appropriate LLM:
-    - If google_cloud_project is set in settings: real ChatVertexAI
-    - Otherwise: mock LLM that returns placeholder responses
-    """
+    """Lazy LLM initialization with mock fallback."""
     from api.core.config import settings
+
     model_name = os.environ.get("VERTEX_AI_MODEL", "gemini-1.5-flash")
     gcp_project_id = settings.google_cloud_project
     gcp_location = os.environ.get("GCP_LOCATION", "us-central1")
 
     if gcp_project_id:
-        logger.info(f"GOOGLE_CLOUD_PROJECT found ({gcp_project_id}), initializing ChatVertexAI")
-        return ChatVertexAI(
-            model_name=model_name,
+        logger.info(f"GOOGLE_CLOUD_PROJECT found ({gcp_project_id}), initializing ChatGoogleGenerativeAI")
+        return ChatGoogleGenerativeAI(
+            model=model_name,
             project=gcp_project_id,
-            location=gcp_location
+            location=gcp_location,
+            vertexai=True,
         )
 
-    # No credentials available - return mock LLM.
     logger.warning(
-        "No GCP_PROJECT_ID found, using mock LLM fallback. Set GCP_PROJECT_ID to enable AI responses."
+        "No GOOGLE_CLOUD_PROJECT found, using mock LLM fallback. Set GOOGLE_CLOUD_PROJECT to enable AI responses."
     )
 
-    class MockLLM:
-        """Mock LLM that returns placeholder responses when Gemini API is not configured."""
+    class MockLLM(BaseChatModel):
+        model_name: str = "mock-gemini-unavailable"
 
-        def __init__(self):
-            self.model_name = "mock-gemini-unavailable"
+        @property
+        def _llm_type(self) -> str:
+            return "mock-gemini-unavailable"
 
-        def invoke(self, messages):
+        @property
+        def _identifying_params(self) -> dict[str, str]:
+            return {"model_name": self.model_name}
+
+        def bind_tools(self, tools, **kwargs):
+            return self
+
+        def _generate(self, messages, stop=None, run_manager=None, **kwargs):
             msg_content = ""
             if messages and len(messages) > 0:
                 last_msg = messages[-1]
@@ -195,43 +193,23 @@ def get_llm():
                 elif isinstance(last_msg, dict):
                     msg_content = last_msg.get("content", "")
 
-            return AIMessage(
-                content=f"[Mock] Vertex AI not configured. Set GCP_PROJECT_ID and authenticate with ADC to enable AI responses.\n\nYour message was: {msg_content}"
+            response = AIMessage(
+                content=(
+                    "[Mock] Vertex AI not configured. Set GOOGLE_CLOUD_PROJECT and authenticate with ADC to enable AI responses.\n\n"
+                    f"Your message was: {msg_content}"
+                )
             )
+            return ChatResult(generations=[ChatGeneration(message=response)])
 
-        async def ainvoke(self, messages):
-            return self.invoke(messages)
-
-        def stream(self, messages):
-            response = self.invoke(messages)
-            # Simple streaming simulation - yield character by character
-            content = response.content
-            for char in content:
-                yield AIMessage(content=char)
-                import time
-
-                time.sleep(0.01)
-
-        async def astream(self, messages):
-            response = await self.ainvoke(messages)
-            content = response.content
-            for char in content:
-                yield AIMessage(content=char)
-                import asyncio
-
-                await asyncio.sleep(0.01)
+        async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+            return self._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
 
     return MockLLM()
 
 
-# Define tools
 tools = [code_search, search_pr_history, get_pr_detail]
-
-# Create the ReAct Graph - LLM is initialized lazily via get_llm()
 checkpointer = MemorySaver()
 
-# D-06: System prompt requiring citations for any information retrieved via code_search
-# This ensures transparency and traceability per Phase 12 requirements
 SYSTEM_PROMPT = """You are DevBridge, a team-aware knowledge system for codebases.
 
 When you answer questions about code, you MUST include citations for any information 
@@ -244,15 +222,6 @@ Format your response with:
 For "why" questions, use the PR/Commit history context provided to explain the rationale 
 behind code changes.
 """
-
-
-def state_modifier(messages):
-    """Add system prompt to messages for citation enforcement."""
-    from langchain_core.messages import HumanMessage, SystemMessage
-    
-    # Convert any existing messages to proper format and prepend system prompt
-    system_msg = SystemMessage(content=SYSTEM_PROMPT)
-    return [system_msg] + messages
 
 
 class Orchestrator:
@@ -270,10 +239,10 @@ class Orchestrator:
     def graph(self):
         if self._graph is None:
             self._graph = create_react_agent(
-                self.llm, 
-                tools=tools, 
+                self.llm,
+                tools=tools,
                 checkpointer=checkpointer,
-                state_modifier=state_modifier  # D-06: Citation enforcement
+                prompt=SYSTEM_PROMPT,
             )
         return self._graph
 
@@ -284,11 +253,9 @@ class Orchestrator:
         code_results: list[dict],
         tags: list[str] | None = None,
     ) -> str:
-        """Compose context with code snippets followed by relevant annotations."""
         context_parts: list[str] = []
         requested_tags = tags if tags is not None else _extract_annotation_tags(query)
 
-        # Task 1: Parallelize annotation retrieval across chunks
         annotation_tasks = []
         for chunk in code_results:
             file_path = chunk.get("file_path") or "unknown"
@@ -301,11 +268,10 @@ class Orchestrator:
                 )
             )
 
-        # Run all annotation fetches in parallel with a shared timeout
         try:
             annotations_list = await asyncio.wait_for(
                 asyncio.gather(*annotation_tasks, return_exceptions=True),
-                timeout=10.0
+                timeout=10.0,
             )
         except asyncio.TimeoutError:
             logger.warning("Parallel annotation retrieval timed out")
@@ -321,7 +287,6 @@ class Orchestrator:
             context_parts.append(header)
             context_parts.append(snippet)
 
-            # Extract result from gather list
             annotations = annotations_list[i] if i < len(annotations_list) else []
             if isinstance(annotations, Exception):
                 logger.warning(f"Annotation retrieval failed for {file_path}: {annotations}")
@@ -334,12 +299,10 @@ class Orchestrator:
         return "\n\n".join(context_parts)
 
     async def _build_history_context(self, message: str) -> tuple[str, str]:
-        """Fetch lightweight PR history context for intent grounding."""
         try:
-            # Task 2: Implement Tool Timeouts (D-02)
             raw_history = await asyncio.wait_for(
                 search_pr_history.ainvoke({"query": message, "k": 3}),
-                timeout=10.0
+                timeout=10.0,
             )
         except (Exception, asyncio.TimeoutError) as e:
             logger.warning(f"History search failed or timed out: {e}")
@@ -362,10 +325,9 @@ class Orchestrator:
         citation = f"- {repo}#{number}"
         detail_summary = ""
         try:
-            # Task 2: Implement Tool Timeouts (D-02)
             raw_detail = await asyncio.wait_for(
                 get_pr_detail.ainvoke({"repo": repo, "pr_number": int(number)}),
-                timeout=10.0
+                timeout=10.0,
             )
             parsed_detail = json.loads(raw_detail) if isinstance(raw_detail, str) else {}
             if isinstance(parsed_detail, dict):
@@ -396,7 +358,6 @@ class Orchestrator:
         config = {"configurable": {"thread_id": thread_id}}
         input_data = {"messages": [HumanMessage(content=prompt)]}
 
-        # Run the graph asynchronously
         result = await self.graph.ainvoke(input_data, config=config)
         response = result["messages"][-1].content
         if citation and "Citations:" not in response:
@@ -405,9 +366,7 @@ class Orchestrator:
         return response
 
 
-# Verify module imports successfully without crashing
 def _health_check():
-    """Run at module load to verify LLM is accessible."""
     try:
         orchestrator = Orchestrator()
         llm = orchestrator.llm
@@ -418,7 +377,6 @@ def _health_check():
         return False
 
 
-# Run health check at module import time (but don't crash - log warning if mock is used)
 try:
     _health_check()
 except Exception as e:

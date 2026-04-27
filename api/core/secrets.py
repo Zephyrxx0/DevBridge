@@ -1,4 +1,7 @@
 from functools import lru_cache
+import os
+
+from google.cloud import secretmanager
 
 from api.core.config import settings
 
@@ -27,3 +30,20 @@ secrets = SecretManager()
 
 def get_secret_manager() -> SecretManager:
     return secrets
+
+
+async def get_github_token() -> str:
+    """Resolve GitHub token using Secret Manager first, then environment fallback."""
+    project_id = settings.google_cloud_project
+    if project_id:
+        try:
+            client = secretmanager.SecretManagerServiceClient()
+            name = f"projects/{project_id}/secrets/GITHUB_TOKEN/versions/latest"
+            response = client.access_secret_version(request={"name": name})
+            token = response.payload.data.decode("utf-8").strip()
+            if token:
+                return token
+        except Exception:
+            pass
+
+    return (os.getenv("GITHUB_TOKEN") or "").strip()

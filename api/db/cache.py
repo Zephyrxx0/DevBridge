@@ -48,6 +48,23 @@ class PostgresCacheBackend(Backend):
                 "expires_at": expires_at
             })
 
+    async def get_with_ttl(self, key: str) -> Tuple[Optional[str], Optional[int]]:
+        engine = get_engine()
+        if not engine:
+            return None, None
+
+        async with engine.connect() as conn:
+            query = text("""
+                SELECT value, expires_at FROM cache_entries 
+                WHERE key = :key AND expires_at > :now
+            """)
+            result = await conn.execute(query, {"key": key, "now": datetime.now(timezone.utc)})
+            row = result.fetchone()
+            if row:
+                ttl = (row[1] - datetime.now(timezone.utc)).total_seconds()
+                return row[0], int(ttl) if ttl > 0 else None
+        return None, None
+
     async def clear(self, namespace: Optional[str] = None, key: Optional[str] = None) -> int:
         engine = get_engine()
         if not engine:

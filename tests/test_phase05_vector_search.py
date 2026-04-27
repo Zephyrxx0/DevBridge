@@ -98,8 +98,10 @@ async def test_embedding_upsert_path():
         
         assert "UPDATE code_chunks" in sql_query
         assert "SET embedding = :embedding" in sql_query
-        assert params["chunk_id"] == "chunk-123"
-        assert params["embedding"] == [0.1] * 768
+        assert isinstance(params, list)
+        assert len(params) == 1
+        assert params[0]["chunk_id"] == "chunk-123"
+        assert params[0]["embedding"] == [0.1] * 768
 
 @pytest.mark.asyncio
 async def test_embedding_queue_contract():
@@ -204,8 +206,7 @@ async def test_code_search_output_schema():
 
 def test_project_env_key_alignment():
     """
-    Verify canonical env key (GOOGLE_CLOUD_PROJECT) usage, 
-    legacy fallback (GCP_PROJECT_ID), and production mode rejection.
+    Verify canonical env key (GOOGLE_CLOUD_PROJECT) usage and production mode rejection.
     """
     from api.core.config import Settings
     import os
@@ -213,25 +214,25 @@ def test_project_env_key_alignment():
 
     # 1. Canonical usage
     with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "canonical-project", "ENV": "development"}, clear=True):
-        s = Settings()
+        s = Settings(_env_file=None)
         assert s.google_cloud_project == "canonical-project"
 
-    # 2. Legacy fallback
+    # 2. Legacy env var is ignored
     with patch.dict(os.environ, {"GCP_PROJECT_ID": "legacy-project", "ENV": "development"}, clear=True):
-        s = Settings()
-        assert s.google_cloud_project == "legacy-project"
+        s = Settings(_env_file=None)
+        assert s.google_cloud_project is None
 
     # 3. Production mode rejection
     with patch.dict(os.environ, {"ENV": "production"}, clear=True):
         with pytest.raises(ValueError, match="GOOGLE_CLOUD_PROJECT must be set in production mode"):
-            Settings()
+            Settings(_env_file=None)
 
-    # 4. Canonical takes precedence over legacy
+    # 4. Canonical still works when legacy env var is present
     with patch.dict(os.environ, {
         "GOOGLE_CLOUD_PROJECT": "canonical-project",
         "GCP_PROJECT_ID": "legacy-project",
         "ENV": "development"
     }, clear=True):
-        s = Settings()
+        s = Settings(_env_file=None)
         assert s.google_cloud_project == "canonical-project"
 

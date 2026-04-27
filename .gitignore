@@ -7,6 +7,7 @@
 .github/
 .agent/
 .agents/
+memories/
 
 #Tools
 .planning/
@@ -27,7 +28,7 @@ graphify-out/
 node_modules/
 .npm/
 .pnpm-store/
-__pycache__/
+*__pycache__/
 
 #Files
 GEMINI.md
@@ -36,6 +37,7 @@ CLAUDE.md
 *.txt
 *.log
 *.csv
+DEVBRIDGE_SPEC.md
 
 #Critical
 .env
@@ -51,3 +53,20 @@ credentials.json
 # Generated
 skills-lock.json
 web/src/app/docs/
+.pytest_cache/
+.ruff_cache/
+
+SETUP.md
+supabase/.temp/cli-latest
+supabase/.temp/gotrue-version
+supabase/.temp/pooler-url
+supabase/.temp/postgres-version
+supabase/.temp/project-ref
+supabase/.temp/rest-version
+supabase/.temp/storage-migration
+supabase/.temp/storage-version
+supabase/migrations/20260426132703_remote_schema.sql
+08-UAT.md
+.gitignore
+DESIGN.md
+DEVBRIDGE_IMPLEMENTATION_SPEC.md

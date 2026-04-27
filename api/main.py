@@ -116,6 +116,21 @@ async def chat_stream(request: ChatRequest):
         # Generator that yields SSE events for streaming responses
         async def event_generator():
             try:
+                def _extract_chunk_text(content) -> str:
+                    if isinstance(content, str):
+                        return content
+                    if isinstance(content, list):
+                        parts: list[str] = []
+                        for item in content:
+                            if isinstance(item, dict):
+                                text = item.get("text")
+                                if isinstance(text, str):
+                                    parts.append(text)
+                            elif isinstance(item, str):
+                                parts.append(item)
+                        return "".join(parts)
+                    return ""
+
                 # Send optimization metadata first (D-08)
                 metadata = {
                     "type": "metadata",
@@ -124,38 +139,32 @@ async def chat_stream(request: ChatRequest):
                 }
                 yield f"data: {json.dumps(metadata)}\n\n"
 
-                # Get the LLM with streaming support
-                llm = orchestrator.llm
                 from langchain_core.messages import HumanMessage
                 
                 # Create config for checkpointing
                 config = {"configurable": {"thread_id": request.thread_id}}
                 input_data = {"messages": [HumanMessage(content=request.message)]}
-                
-                # Check if LLM supports streaming
-                if hasattr(llm, 'astream'):
-                    # Stream using astream
-                    accumulated_content = ""
-                    async for event in orchestrator.graph.astream(input_data, config=config):
-                        if "messages" in event:
-                            last_msg = event["messages"][-1]
-                            if hasattr(last_msg, "content"):
-                                new_content = last_msg.content
-                                # Get only the new portion since last chunk
-                                if new_content and len(new_content) > len(accumulated_content):
-                                    chunk = new_content[len(accumulated_content):]
-                                    accumulated_content = new_content
-                                    if chunk:
-                                        yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
-                                        await asyncio.sleep(0.02)
-                    
-                    # Send done event
-                    yield f"data: {json.dumps({'type': 'done'})}\n\n"
-                else:
-                    # Fallback: non-streaming
+
+                chunk_count = 0
+                async for event in orchestrator.graph.astream(input_data, config=config, stream_mode="messages"):
+                    message_chunk = event[0] if isinstance(event, tuple) and event else None
+                    if message_chunk is None:
+                        continue
+
+                    chunk_text = _extract_chunk_text(getattr(message_chunk, "content", ""))
+                    if chunk_text:
+                        chunk_count += 1
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': chunk_text})}\n\n"
+                        await asyncio.sleep(0.02)
+
+                # Fallback for providers/modes that produce no incremental chunks.
+                if chunk_count == 0:
                     response = await orchestrator.chat(request.message, request.thread_id)
-                    yield f"data: {json.dumps({'type': 'chunk', 'content': response})}\n\n"
-                    yield f"data: {json.dumps({'type': 'done'})}\n\n"
+                    if response:
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': response})}\n\n"
+
+                # Send done event
+                yield f"data: {json.dumps({'type': 'done'})}\n\n"
                     
             except Exception as e:
                 logger.exception("Streaming request failed")
