@@ -3,11 +3,12 @@
   "checkpoint_id": "c46070fe9a13",
   "strategy": "manual-commit",
   "branch": "gsd/phase-13-e2e-runtime-config",
-  "checkpoints_count": 6,
+  "checkpoints_count": 7,
   "files_touched": [
     ".env.example",
     ".gitignore",
     ".planning/STATE.md",
+    "agent_skills.txt",
     "api/agents/orchestrator.py",
     "api/core/secrets.py",
     "api/db/cache.py",
@@ -16,6 +17,8 @@
     "api/routes/annotations.py",
     "api/routes/pr.py",
     "apply_migration.py",
+    "context_window.txt",
+    "init_out.txt",
     "package-lock.json",
     "package.json",
     "pytest.ini",
@@ -24,7 +27,16 @@
     "tests/test_db_session_normalization.py",
     "tests/test_phase05_vector_search.py",
     "tests/test_pr_config.py",
+    "use_worktrees.txt",
+    "uvicorn.log",
+    "web/package-lock.json",
     "web/package.json",
+    "web/src/app/globals.css",
+    "web/src/components/ui/avatar.tsx",
+    "web/src/components/ui/button.tsx",
+    "web/src/components/ui/card.tsx",
+    "web/src/components/ui/dropdown-menu.tsx",
+    "web/src/components/ui/textarea.tsx",
     "web/tests/ingestion_loop.spec.ts"
   ],
   "sessions": [
@@ -57,6 +69,12 @@
       "transcript": "/c4/6070fe9a13/4/full.jsonl",
       "content_hash": "/c4/6070fe9a13/4/content_hash.txt",
       "prompt": "/c4/6070fe9a13/4/prompt.txt"
+    },
+    {
+      "metadata": "/c4/6070fe9a13/5/metadata.json",
+      "transcript": "/c4/6070fe9a13/5/full.jsonl",
+      "content_hash": "/c4/6070fe9a13/5/content_hash.txt",
+      "prompt": "/c4/6070fe9a13/5/prompt.txt"
     }
   ],
   "token_usage": {
