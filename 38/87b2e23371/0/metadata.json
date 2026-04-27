@@ -1,0 +1,34 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "3887b2e23371",
+  "session_id": "f767bb2d-9b63-40d0-8da7-dcda24af25d7",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-27T15:28:57.5923425Z",
+  "branch": "polish/webui",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/src/app/globals.css"
+  ],
+  "agent": "Claude Code",
+  "model": "gpt-5.3-codex",
+  "turn_id": "ac2f95d16eea",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-27T15:28:57.5350836Z",
+    "agent_lines": 0,
+    "human_added": 51,
+    "human_modified": 129,
+    "human_removed": 0,
+    "total_committed": 179,
+    "agent_percentage": 0
+  }
+}
