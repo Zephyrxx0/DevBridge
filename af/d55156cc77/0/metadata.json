@@ -1,0 +1,35 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "afd55156cc77",
+  "session_id": "7ceaeafe-77dd-4e02-9f7b-2b6fb920e361",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-27T21:26:20.2465256Z",
+  "branch": "polish/webui",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "web/package-lock.json",
+    "web/package.json"
+  ],
+  "agent": "Claude Code",
+  "model": "gemini-3.1-pro-preview",
+  "turn_id": "9e18f1edd93b",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-27T21:26:20.1836423Z",
+    "agent_lines": 0,
+    "human_added": 2385,
+    "human_modified": 14298,
+    "human_removed": 0,
+    "total_committed": 2385,
+    "agent_percentage": 0
+  }
+}
