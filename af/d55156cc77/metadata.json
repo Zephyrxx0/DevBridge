@@ -3,10 +3,14 @@
   "checkpoint_id": "afd55156cc77",
   "strategy": "manual-commit",
   "branch": "polish/webui",
-  "checkpoints_count": 2,
+  "checkpoints_count": 3,
   "files_touched": [
+    ".planning/ROADMAP.md",
     "web/package-lock.json",
-    "web/package.json"
+    "web/package.json",
+    "web/src/app/repo/[id]/page.tsx",
+    "web/src/components/ui/button.tsx",
+    "web/src/components/ui/card.tsx"
   ],
   "sessions": [
     {
@@ -14,6 +18,12 @@
       "transcript": "/af/d55156cc77/0/full.jsonl",
       "content_hash": "/af/d55156cc77/0/content_hash.txt",
       "prompt": "/af/d55156cc77/0/prompt.txt"
+    },
+    {
+      "metadata": "/af/d55156cc77/1/metadata.json",
+      "transcript": "/af/d55156cc77/1/full.jsonl",
+      "content_hash": "/af/d55156cc77/1/content_hash.txt",
+      "prompt": "/af/d55156cc77/1/prompt.txt"
     }
   ],
   "token_usage": {
