@@ -1,0 +1,20 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "5462588dd983",
+  "session_id": "8a2de8ef-da3e-4f87-813e-1861674043af",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-27T16:01:04.4172175Z",
+  "branch": "polish/webui",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "gpt-5.3-codex",
+  "turn_id": "838f27f8a919",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
