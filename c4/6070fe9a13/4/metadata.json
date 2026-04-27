@@ -1,0 +1,52 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "c46070fe9a13",
+  "session_id": "e1e72540-bd36-42de-a094-0c0bfcf4ef2d",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-27T06:58:32.36982Z",
+  "branch": "gsd/phase-13-e2e-runtime-config",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".env.example",
+    ".gitignore",
+    "api/agents/orchestrator.py",
+    "api/core/secrets.py",
+    "api/db/cache.py",
+    "api/db/session.py",
+    "api/main.py",
+    "api/routes/annotations.py",
+    "api/routes/pr.py",
+    "apply_migration.py",
+    "package-lock.json",
+    "package.json",
+    "sql/migrations/0014_add_annotations_table.sql",
+    "tests/test_annotations.py",
+    "tests/test_db_session_normalization.py",
+    "tests/test_phase05_vector_search.py",
+    "tests/test_pr_config.py",
+    "web/package.json",
+    "web/tests/ingestion_loop.spec.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "auto",
+  "turn_id": "e441716c0e5f",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-27T06:58:32.3500214Z",
+    "agent_lines": 646,
+    "human_added": 2865,
+    "human_modified": 1818,
+    "human_removed": 0,
+    "total_committed": 5329,
+    "agent_percentage": 12.122349408894726
+  }
+}

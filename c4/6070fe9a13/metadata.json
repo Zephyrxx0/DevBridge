@@ -3,7 +3,7 @@
   "checkpoint_id": "c46070fe9a13",
   "strategy": "manual-commit",
   "branch": "gsd/phase-13-e2e-runtime-config",
-  "checkpoints_count": 5,
+  "checkpoints_count": 6,
   "files_touched": [
     ".env.example",
     ".gitignore",
@@ -51,6 +51,12 @@
       "transcript": "/c4/6070fe9a13/3/full.jsonl",
       "content_hash": "/c4/6070fe9a13/3/content_hash.txt",
       "prompt": "/c4/6070fe9a13/3/prompt.txt"
+    },
+    {
+      "metadata": "/c4/6070fe9a13/4/metadata.json",
+      "transcript": "/c4/6070fe9a13/4/full.jsonl",
+      "content_hash": "/c4/6070fe9a13/4/content_hash.txt",
+      "prompt": "/c4/6070fe9a13/4/prompt.txt"
     }
   ],
   "token_usage": {
