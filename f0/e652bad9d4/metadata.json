@@ -1,0 +1,27 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "f0e652bad9d4",
+  "strategy": "manual-commit",
+  "branch": "polish/webui",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".planning/ROADMAP.md",
+    ".planning/STATE.md",
+    ".planning/phases/15-update-the-design-of-the-webui-accordingly/deferred-items.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f0/e652bad9d4/0/metadata.json",
+      "transcript": "/f0/e652bad9d4/0/full.jsonl",
+      "content_hash": "/f0/e652bad9d4/0/content_hash.txt",
+      "prompt": "/f0/e652bad9d4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
