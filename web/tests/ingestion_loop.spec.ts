@@ -1,8 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
+import * as fs from 'fs';
 import * as path from 'path';
 
 test.describe('Full Ingestion Loop E2E', () => {
+  test.skip(
+    !process.env.SUPABASE_CONNECTION_STRING || !process.env.GCS_BUCKET,
+    'Integration env vars required: SUPABASE_CONNECTION_STRING and GCS_BUCKET',
+  );
+
   const repoName = 'e2e-test-repo';
   const sampleFile = 'sample.py';
   const bucket = process.env.GCS_BUCKET || 'handy-curve-491715-e9-code-snapshots';
@@ -31,9 +37,27 @@ test.describe('Full Ingestion Loop E2E', () => {
     const content = 'def hello_world():\n    return "Hello from E2E test"';
     console.log(`Uploading to gs://${bucket}/${repoName}/${sampleFile}`);
     
-    // Using python one-liner to upload since we have google-cloud-storage installed in .venv
-    const uploadCmd = `python -c "from google.cloud import storage; client = storage.Client(); bucket = client.bucket('${bucket}'); blob = bucket.blob('${repoName}/${sampleFile}'); blob.upload_from_string('''${content}''')"`;
-    execSync(uploadCmd, { stdio: 'inherit' });
+    // Use temp file upload to avoid shell quoting issues.
+    const tempFile = path.join(rootDir, '.bg-shell', `e2e-${Date.now()}-${sampleFile}`);
+    fs.writeFileSync(tempFile, content, 'utf8');
+    try {
+      const pyScript = [
+        'from google.cloud import storage',
+        'import sys',
+        'bucket_name, object_name, local_path = sys.argv[1], sys.argv[2], sys.argv[3]',
+        'client = storage.Client()',
+        'bucket = client.bucket(bucket_name)',
+        'blob = bucket.blob(object_name)',
+        'blob.upload_from_filename(local_path)',
+      ].join('; ');
+      execFileSync(
+        'python',
+        ['-c', pyScript, bucket, `${repoName}/${sampleFile}`, tempFile],
+        { stdio: 'inherit' },
+      );
+    } finally {
+      if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+    }
 
     // Wait for ingestion processing (polling for DB state or just fixed wait for v0.1)
     console.log('Waiting for ingestion worker to process...');
@@ -44,7 +68,7 @@ test.describe('Full Ingestion Loop E2E', () => {
     await page.goto(`/repo/${repoName}`);
     
     // We expect the chat input to be present
-    const chatInput = page.locator('textarea[placeholder*="Ask"]');
+    const chatInput = page.locator('input[placeholder*="Ask"]');
     await expect(chatInput).toBeVisible({ timeout: 10000 });
     
     await chatInput.fill('What does the hello_world function in sample.py return?');
@@ -52,7 +76,7 @@ test.describe('Full Ingestion Loop E2E', () => {
 
     // 3. Assert Response
     // Responses are streamed, so we wait for the content to appear in a bubble
-    const assistantResponse = page.locator('.chat-message-assistant, .bg-card').last();
+    const assistantResponse = page.locator('text=/Hello from E2E test|Error:/').last();
     await expect(assistantResponse).toContainText('Hello from E2E test', { timeout: 45000 });
     await expect(assistantResponse).toContainText(sampleFile);
   });

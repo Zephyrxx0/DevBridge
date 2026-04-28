@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
 export interface RepoMetadata {
@@ -19,19 +19,20 @@ interface RepoContextType {
   repo: RepoMetadata | null;
   loading: boolean;
   error: Error | null;
+  refreshRepo: () => Promise<void>;
 }
 
 const RepoContext = createContext<RepoContextType>({
   repo: null,
   loading: true,
   error: null,
+  refreshRepo: async () => {},
 });
 
 export function RepoProvider({ children, repoId }: { children: React.ReactNode; repoId: string }) {
   const [repo, setRepo] = useState<RepoMetadata | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const supabase = useMemo(() => createClient(), []);
 
   const isUuid = (value: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -49,51 +50,53 @@ export function RepoProvider({ children, repoId }: { children: React.ReactNode; 
     return new Error(fallback);
   };
 
-  useEffect(() => {
-    async function fetchRepo() {
-      if (!repoId) return;
+  const fetchRepo = useCallback(async () => {
+    if (!repoId) return;
 
-      if (!isUuid(repoId)) {
-        setRepo({
-          id: repoId,
-          user_id: "demo",
-          name: repoId === "demo" ? "Demo Repository" : repoId,
-          url: "",
-          created_at: new Date().toISOString(),
-        });
-        setError(null);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-        const { data, error } = await supabase
-          .from("repositories")
-          .select("*")
-          .eq("id", repoId)
-          .single();
-
-        if (error) {
-          throw toError(error, "Failed to fetch repository");
-        }
-
-        setRepo(data as RepoMetadata);
-      } catch (err) {
-        const normalizedError = toError(err, "Failed to fetch repository");
-        console.error("Error fetching repo:", normalizedError.message);
-        setError(normalizedError);
-      } finally {
-        setLoading(false);
-      }
+    if (!isUuid(repoId)) {
+      setRepo({
+        id: repoId,
+        user_id: "demo",
+        name: repoId === "demo" ? "Demo Repository" : repoId,
+        url: "",
+        created_at: new Date().toISOString(),
+      });
+      setError(null);
+      setLoading(false);
+      return;
     }
 
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`/api/backend/repo/${repoId}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch repository");
+      }
+      const data = await res.json();
+
+      setRepo({
+        ...data,
+        url: data.github_url || "",
+        lastIndexed: data.last_indexed,
+        fileCount: data.file_count,
+        annotationCount: data.annotation_count,
+      } as RepoMetadata);
+    } catch (err) {
+      const normalizedError = toError(err, "Failed to fetch repository");
+      console.error("Error fetching repo:", normalizedError.message);
+      setError(normalizedError);
+    } finally {
+      setLoading(false);
+    }
+  }, [repoId]);
+
+  useEffect(() => {
     fetchRepo();
-  }, [repoId, supabase]);
+  }, [fetchRepo]);
 
   return (
-    <RepoContext.Provider value={{ repo, loading, error }}>
+    <RepoContext.Provider value={{ repo, loading, error, refreshRepo: fetchRepo }}>
       {children}
     </RepoContext.Provider>
   );

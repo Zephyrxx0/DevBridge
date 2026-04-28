@@ -41,7 +41,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: 'python -m api.main',
+      command: 'python -m api.run_server',
       url: 'http://localhost:8000',
       reuseExistingServer: !process.env.CI,
       cwd: '../',

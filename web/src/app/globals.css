@@ -297,6 +297,31 @@
   }
 }
 
+.db-highlight-line {
+  background: color-mix(in oklab, var(--brand) 16%, transparent);
+}
+
+.db-highlight-gutter {
+  border-left: 2px solid var(--brand);
+}
+
+.db-annotation-line {
+  background: color-mix(in oklab, var(--accent-warm) 10%, transparent);
+}
+
+.db-annotation-gutter {
+  border-left: 2px solid color-mix(in oklab, var(--accent-warm) 70%, white);
+}
+
+.db-annotation-glyph {
+  background: var(--accent-warm);
+  border-radius: 9999px;
+  width: 8px !important;
+  height: 8px !important;
+  margin-left: 6px;
+  margin-top: 5px;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   BookOpen,
-  FolderCode,
   GitPullRequest,
   Landmark,
+  Loader2,
   MessageCircle,
   Moon,
   Network,
@@ -16,6 +16,9 @@ import {
   Settings2,
   StickyNote,
   Sun,
+  Database,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,7 +27,6 @@ import { RepoProvider, useRepo } from "@/contexts/repo-context";
 
 const NAV_ITEMS = [
   { label: "Chat", hrefSuffix: "", icon: MessageCircle },
-  { label: "Files", hrefSuffix: "/files", icon: FolderCode },
   { label: "Map", hrefSuffix: "/map", icon: Network },
   { label: "Search", hrefSuffix: "/search", icon: Search },
   { label: "PRs", hrefSuffix: "/pr", icon: GitPullRequest },
@@ -33,10 +35,27 @@ const NAV_ITEMS = [
   { label: "Settings", hrefSuffix: "/settings", icon: Settings2 },
 ];
 
+type IngestionJob = {
+  id: string;
+  status: string;
+  file_path: string | null;
+  chunk_count: number;
+  error_message: string | null;
+  updated_at: string;
+};
+
 function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: React.ReactNode, isRootWorkspace: boolean, basePath: string }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { repo, loading } = useRepo();
+  const { repo, loading, refreshRepo } = useRepo();
+
+  const [indexingState, setIndexingState] = useState<"idle" | "running" | "success" | "error">("idle");
+  const [indexingProgress, setIndexingProgress] = useState("");
+  const [indexingError, setIndexingError] = useState("");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const dismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const apiUrl = "/api/backend";
 
   useEffect(() => {
     const repoId = basePath.split("/").at(-1);
@@ -56,6 +75,92 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
     localStorage.setItem(metaKey, JSON.stringify(meta));
   }, [basePath, repo]);
 
+  // Check for active indexing jobs on mount
+  useEffect(() => {
+    const repoId = basePath.split("/").at(-1) ?? "";
+    if (!repoId) return;
+
+    async function checkActiveJobs() {
+      try {
+        const res = await fetch(`${apiUrl}/repo/${repoId}/ingestion/jobs?limit=1`);
+        if (!res.ok) return;
+        const jobs = (await res.json()) as IngestionJob[];
+        if (jobs.length > 0 && (jobs[0].status === "pending" || jobs[0].status === "processing")) {
+          setIndexingState("running");
+          setIndexingProgress(jobs[0].file_path || "Starting...");
+          startPolling(repoId as string);
+        }
+      } catch {
+        // silent
+      }
+    }
+    checkActiveJobs();
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      if (dismissRef.current) clearTimeout(dismissRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [basePath]);
+
+  const startPolling = useCallback((repoId: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`${apiUrl}/repo/${repoId}/ingestion/jobs?limit=1`);
+        if (!res.ok) return;
+        const jobs = (await res.json()) as IngestionJob[];
+        if (jobs.length === 0) return;
+
+        const job = jobs[0];
+        if (job.status === "processing" || job.status === "pending") {
+          setIndexingProgress(job.file_path || "Processing...");
+        } else if (job.status === "success") {
+          setIndexingState("success");
+          setIndexingProgress(`Done — ${job.chunk_count} files indexed`);
+          if (pollRef.current) clearInterval(pollRef.current);
+          dismissRef.current = setTimeout(() => setIndexingState("idle"), 5000);
+          
+          refreshRepo();
+        } else if (job.status === "error") {
+          setIndexingState("error");
+          setIndexingError(job.error_message || "Indexing failed");
+          setIndexingProgress("");
+          if (pollRef.current) clearInterval(pollRef.current);
+          dismissRef.current = setTimeout(() => setIndexingState("idle"), 8000);
+        }
+      } catch {
+        // silent
+      }
+    }, 2500);
+  }, [apiUrl]);
+
+  const triggerIndex = useCallback(async () => {
+    const repoId = basePath.split("/").at(-1);
+    if (!repoId) return;
+
+    setIndexingState("running");
+    setIndexingProgress("Starting...");
+    setIndexingError("");
+
+    try {
+      const res = await fetch(`${apiUrl}/repo/${repoId}/trigger-index`, { method: "POST" });
+      if (!res.ok) {
+        const detail = await res.text();
+        setIndexingState("error");
+        setIndexingError(detail || "Failed to start indexing");
+        dismissRef.current = setTimeout(() => setIndexingState("idle"), 8000);
+        return;
+      }
+      startPolling(repoId);
+    } catch {
+      setIndexingState("error");
+      setIndexingError("Network error triggering indexing");
+      dismissRef.current = setTimeout(() => setIndexingState("idle"), 8000);
+    }
+  }, [apiUrl, basePath, startPolling]);
+
   if (!isRootWorkspace) {
     return <>{children}</>;
   }
@@ -74,17 +179,6 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
               </p>
             </div>
           </Link>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Toggle theme"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="absolute right-4 top-6 h-9 w-9 border border-[var(--border)] text-[var(--foreground-muted)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)]"
-          >
-            <Sun className="hidden size-4 dark:block" />
-            <Moon className="block size-4 dark:hidden" />
-          </Button>
         </div>
 
         <nav className="flex-1 px-2 py-4">
@@ -115,6 +209,46 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
           <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">
             Last indexed: {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "never"}
           </p>
+
+          {indexingState === "running" ? (
+            <div className="rounded-lg border border-[var(--brand-muted)] bg-[var(--brand-muted)] p-3">
+              <div className="flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin text-[var(--brand)]" />
+                <p className="text-xs font-medium text-[var(--brand)]">Indexing...</p>
+              </div>
+              <p className="mt-1 text-[10px] text-[var(--brand)] opacity-80">{indexingProgress}</p>
+              <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--surface-3)]">
+                <div className="h-full animate-pulse rounded-full bg-[var(--brand)]" style={{ width: "60%" }} />
+              </div>
+            </div>
+          ) : indexingState === "success" ? (
+            <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="size-4 text-green-500" />
+                <p className="text-xs font-medium text-green-500">Indexed!</p>
+              </div>
+              <p className="mt-1 text-[10px] text-green-500/80">{indexingProgress}</p>
+            </div>
+          ) : indexingState === "error" ? (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="size-4 text-red-400" />
+                <p className="text-xs font-medium text-red-400">Failed</p>
+              </div>
+              <p className="mt-1 text-[10px] text-red-400/80">{indexingError}</p>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={triggerIndex}
+            >
+              <Database className="size-4 mr-2" />
+              Index Repository
+            </Button>
+          )}
         </div>
       </aside>
 

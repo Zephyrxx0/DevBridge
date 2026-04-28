@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Editor, { OnMount } from "@monaco-editor/react";
+import { ChevronLeft, ThumbsUp } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ChevronLeft, ExternalLink, ThumbsUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Annotation {
   id: string;
@@ -25,23 +26,27 @@ interface FileContent {
   annotations: Annotation[];
 }
 
-const TagColors: { [key: string]: string } = {
-  warning: "bg-[var(--accent-warm-muted)] text-[var(--accent-warm)]",
-  architecture: "bg-[var(--brand-muted)] text-[var(--brand)]",
-  gotcha: "bg-[var(--accent-ember-muted)] text-[var(--accent-ember)]",
-  todo: "bg-[var(--surface-3)] text-[var(--foreground-muted)]",
-  context: "bg-[var(--brand-muted)] text-[var(--brand)]",
-  deprecated: "bg-[var(--accent-rose-muted)] text-[var(--accent-rose)]",
+const languageMap: Record<string, string> = {
+  ts: "typescript",
+  tsx: "typescript",
+  js: "javascript",
+  jsx: "javascript",
+  py: "python",
+  go: "go",
+  rs: "rust",
+  java: "java",
+  css: "css",
+  html: "html",
+  json: "json",
+  md: "markdown",
+  sql: "sql",
+  sh: "shell",
 };
 
-const TagIcons: { [key: string]: string } = {
-  warning: "⚠️",
-  architecture: "🏗️",
-  gotcha: "💡",
-  todo: "📋",
-  context: "📝",
-  deprecated: "⚰️",
-};
+function detectLanguage(filePath: string, fallback: string): string {
+  const ext = filePath.split(".").pop()?.toLowerCase() || "";
+  return languageMap[ext] || fallback || "plaintext";
+}
 
 export default function CodeViewerPage() {
   const params = useParams();
@@ -49,220 +54,162 @@ export default function CodeViewerPage() {
   const repoId = params.id as string;
   const pathArray = (params.path as string[]) || [];
   const filePath = pathArray.join("/");
-  const lineParam = searchParams.get("line");
-  const annParam = searchParams.get("ann");
+  const lineParam = Number(searchParams.get("line") || 0);
 
   const [fileContent, setFileContent] = useState<FileContent | null>(null);
   const [loading, setLoading] = useState(true);
-  const [highlightedLine] = useState<number | null>(lineParam ? parseInt(lineParam) : null);
-  const [, setExpandedAnnotation] = useState<string | null>(annParam || null);
-  const [mounted, setMounted] = useState(false);
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+  const editorRef = useRef<import("monaco-editor").editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<typeof import("monaco-editor") | null>(null);
+  const decorationsRef = useRef<string[]>([]);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const fetchFileContent = useCallback(async () => {
-    try {
+    async function fetchFileContent() {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      const response = await fetch(`${apiUrl}/repo/${repoId}/files/${filePath}`);
-      if (response.ok) {
-        const data = await response.json();
+      try {
+        const response = await fetch(`${apiUrl}/repo/${repoId}/files/${filePath}`);
+        if (!response.ok) return;
+        const data = (await response.json()) as FileContent;
         setFileContent(data);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching file content:", err);
-    } finally {
-      setLoading(false);
     }
-  }, [repoId, filePath]);
+    fetchFileContent();
+  }, [apiUrl, repoId, filePath]);
+
+  const sortedAnnotations = useMemo(
+    () => (fileContent?.annotations || []).slice().sort((a, b) => a.line - b.line),
+    [fileContent?.annotations],
+  );
+
+  const applyDecorations = useCallback(() => {
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+    if (!editor || !monaco) return;
+
+    const nextDecorations: import("monaco-editor").editor.IModelDeltaDecoration[] = sortedAnnotations.map((ann) => ({
+      range: new monaco.Range(ann.line, 1, ann.line, 1),
+      options: {
+        isWholeLine: true,
+        linesDecorationsClassName: "db-annotation-gutter",
+        className: "db-annotation-line",
+        glyphMarginClassName: "db-annotation-glyph",
+        glyphMarginHoverMessage: { value: ann.comment },
+      },
+    }));
+
+    if (lineParam > 0) {
+      nextDecorations.push({
+        range: new monaco.Range(lineParam, 1, lineParam, 1),
+        options: {
+          isWholeLine: true,
+          className: "db-highlight-line",
+          linesDecorationsClassName: "db-highlight-gutter",
+        },
+      });
+      editor.revealLineInCenter(lineParam);
+      editor.setPosition({ lineNumber: lineParam, column: 1 });
+    }
+
+    decorationsRef.current = editor.deltaDecorations(decorationsRef.current, nextDecorations);
+  }, [lineParam, sortedAnnotations]);
+
+  const handleEditorMount: OnMount = (editor, monaco) => {
+    editorRef.current = editor;
+    monacoRef.current = monaco;
+    applyDecorations();
+  };
 
   useEffect(() => {
-    if (!mounted) return;
-    fetchFileContent();
-  }, [mounted, fetchFileContent]);
+    applyDecorations();
+  }, [applyDecorations]);
 
-  if (!mounted) return null;
-
-  const lines = fileContent?.content.split("\n") || [];
-  const sortedAnnotations = fileContent?.annotations.sort((a, b) => a.line - b.line) || [];
+  const language = detectLanguage(filePath, fileContent?.language || "plaintext");
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between mb-2">
+        <div className="mx-auto max-w-7xl px-6 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href={`/repo/${repoId}/files`}>
-                <Button variant="ghost" size="sm">
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
+                <Button variant="ghost" size="sm"><ChevronLeft className="h-4 w-4" /></Button>
               </Link>
               <div>
                 <p className="text-xs text-muted-foreground">Code Browser</p>
-                <h1 className="text-lg font-semibold font-mono text-sm">{filePath}</h1>
+                <h1 className="font-mono text-sm font-semibold">{filePath}</h1>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="gap-2">
-              <ExternalLink className="w-4 h-4" />
-              Open in Editor
-            </Button>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{fileContent?.line_count || 0} lines</span>
-            <span>•</span>
-            <span>{fileContent?.language}</span>
-            <span>•</span>
-            <span>{sortedAnnotations.length} annotations</span>
+            <p className="text-xs text-muted-foreground">
+              {fileContent?.line_count || 0} lines • {language} • {sortedAnnotations.length} annotations
+            </p>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-6 flex gap-6">
-        {/* Code Viewer */}
-        <div className="flex-1 min-w-0">
-          {loading ? (
-            <div className="h-96 bg-muted/50 rounded-lg animate-pulse" />
-          ) : (
-            <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <div className="font-mono text-sm bg-muted/30">
-                  {lines.map((line, idx) => {
-                    const lineNum = idx + 1;
-                    const isHighlighted = highlightedLine === lineNum;
-                    const lineAnnotations = sortedAnnotations.filter((a) => a.line === lineNum);
-
-                    return (
-                      <div
-                        key={idx}
-                        className={`flex hover:bg-muted/50 transition-colors ${
-                          isHighlighted ? "bg-primary/10 border-l-2 border-primary" : ""
-                        }`}
-                      >
-                        <div className="flex items-start">
-                          {/* Line Number */}
-                          <a
-                            href={`?line=${lineNum}`}
-                            className="select-none inline-flex items-center justify-center w-12 px-2 py-1 text-muted-foreground hover:bg-muted/50 border-r border-border/20 text-xs font-mono sticky left-0 bg-muted/20"
-                          >
-                            {lineNum}
-                          </a>
-
-                          {/* Code */}
-                          <pre className="flex-1 px-4 py-1 overflow-x-auto">
-                            <code>{line || " "}</code>
-                          </pre>
-
-                          {/* Annotation Badges */}
-                          {lineAnnotations.length > 0 && (
-                            <div className="flex items-center gap-1 px-2 py-1 border-l border-border/20">
-                              {lineAnnotations.map((ann) => (
-                                <button
-                                  key={ann.id}
-                                  onClick={() => setExpandedAnnotation(ann.id)}
-                                  className="w-2 h-2 rounded-full bg-primary hover:ring-2 ring-primary/30 transition-all"
-                                  title={ann.comment}
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </Card>
-          )}
+      <main className="mx-auto flex max-w-7xl gap-6 px-6 py-6">
+        <div className="min-w-0 flex-1">
+          <Card className="overflow-hidden">
+            <div className="h-[72vh]">
+              {loading ? (
+                <div className="h-full animate-pulse bg-muted/50" />
+              ) : (
+                <Editor
+                  language={language}
+                  value={fileContent?.content || ""}
+                  onMount={handleEditorMount}
+                  options={{
+                    readOnly: true,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    glyphMargin: true,
+                    lineNumbersMinChars: 4,
+                    wordWrap: "off",
+                    automaticLayout: true,
+                  }}
+                />
+              )}
+            </div>
+          </Card>
         </div>
 
-        {/* Side Panel */}
-        <aside className="w-80 space-y-6">
-          {/* Annotations Section */}
+        <aside className="w-80 space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Annotations</CardTitle>
-              <p className="text-xs text-muted-foreground mt-2">{sortedAnnotations.length} total</p>
             </CardHeader>
-            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+            <CardContent className="max-h-[68vh] space-y-3 overflow-y-auto">
               {sortedAnnotations.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No annotations yet. Add team knowledge to this file.</p>
+                <p className="text-xs text-muted-foreground">No annotations for this file yet.</p>
               ) : (
                 sortedAnnotations.map((ann) => (
-                  <div key={ann.id} className="p-3 border border-border/40 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
-                    onClick={() => setExpandedAnnotation(ann.id)}>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <a href={`?line=${ann.line}`} className="text-xs font-mono text-primary hover:underline">
-                        Line {ann.line}
-                      </a>
+                  <button
+                    key={ann.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAnnotationId(ann.id);
+                      if (editorRef.current) {
+                        editorRef.current.revealLineInCenter(ann.line);
+                        editorRef.current.setPosition({ lineNumber: ann.line, column: 1 });
+                        editorRef.current.focus();
+                      }
+                    }}
+                    className={`w-full rounded-lg border p-3 text-left transition-colors ${selectedAnnotationId === ann.id ? "border-primary bg-primary/10" : "border-border/40 hover:bg-muted/30"}`}
+                  >
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="font-mono text-xs text-primary">Line {ann.line}</span>
                       <span className="text-xs text-muted-foreground">{ann.author}</span>
                     </div>
-                    <p className="text-sm mb-2 line-clamp-2">{ann.comment}</p>
-                    {ann.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {ann.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
-                              TagColors[tag] || "bg-slate-500/10 text-slate-700"
-                            }`}
-                          >
-                            {TagIcons[tag]} {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <button className="inline-flex items-center gap-1 hover:text-primary transition-colors">
-                        <ThumbsUp className="w-3 h-3" />
-                        {ann.upvotes}
-                      </button>
+                    <p className="mb-2 line-clamp-3 text-sm">{ann.comment}</p>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <ThumbsUp className="h-3 w-3" /> {ann.upvotes}
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
-            </CardContent>
-          </Card>
-
-          {/* Add Annotation Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Add Annotation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium">Start Line</label>
-                  <Input type="number" placeholder="Line" className="h-8 mt-1" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium">End Line</label>
-                  <Input type="number" placeholder="Line" className="h-8 mt-1" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium">Comment</label>
-                  <textarea
-                    placeholder="Add team knowledge..."
-                    className="w-full h-16 px-3 py-2 text-xs bg-background border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ring/50 mt-1"
-                  />
-                </div>
-                <Button size="sm" className="w-full">
-                  Add Annotation
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Citations Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Citations</CardTitle>
-              <p className="text-xs text-muted-foreground mt-2">Linked from chat/PR review</p>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">No citations yet</p>
             </CardContent>
           </Card>
         </aside>

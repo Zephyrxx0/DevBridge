@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { BookOpen, ChevronLeft, Link2, Plus, Search } from "lucide-react";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -62,24 +62,41 @@ export default function NotesPage() {
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [linkSuggestions, setLinkSuggestions] = useState<string[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   const saveTimeout = useRef<number | null>(null);
-  const activeNote = useMemo(
-    () => notes.find((item) => item.id === selectedId) ?? notes[0] ?? null,
-    [notes, selectedId]
-  );
+
+  // Track which note ID is currently loaded in the editor — prevents
+  // re-setting content when notes state updates during autosave.
+  const loadedNoteIdRef = useRef<string>("");
+
+  const activeNote = useMemo(() => {
+    if (!selectedId) return notes[0] ?? null;
+    return notes.find((item) => item.id === selectedId) ?? null;
+  }, [notes, selectedId]);
+
+  // Redirect to first note if none selected and notes exist
+  const router = useRouter();
+  useEffect(() => {
+    if (!selectedId && notes.length > 0 && !loading) {
+      router.replace(`/repo/${repoId}/notes?note=${notes[0].id}`);
+    }
+  }, [selectedId, notes, loading, repoId, router]);
+
+  const editorExtensions = useMemo(() => [
+    StarterKit,
+    Markdown,
+    Typography,
+    Placeholder.configure({
+      placeholder: "Start writing a note...",
+    }),
+  ], []);
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Markdown,
-      Typography,
-      Placeholder.configure({
-        placeholder: "Start writing a note...",
-      }),
-    ],
+    extensions: editorExtensions,
     content: "",
     autofocus: true,
     immediatelyRender: false,
+    // Do NOT use editorProps.handleDOMEvents here — Tiptap manages selection internally
   });
 
   useEffect(() => {
@@ -89,6 +106,15 @@ export default function NotesPage() {
     async function loadNotes() {
       setLoading(true);
       setErrorMessage(null);
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      const userId = authData.user?.id ?? "";
+      setCurrentUserId(userId);
+      if (authError || !userId) {
+        setErrorMessage("You must be signed in to create and edit notes.");
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("notes")
         .select("*")
@@ -118,12 +144,22 @@ export default function NotesPage() {
     };
   }, [repoId, supabase]);
 
+  // Only set editor content when the *note ID* changes — NOT when note content
+  // updates from autosave. This is the fix for the erratic cursor / deleted text bug.
   useEffect(() => {
-    if (!editor) return;
-    editor.commands.setContent(activeNote?.content_markdown ?? "");
-  }, [editor, activeNote]);
+    if (!editor || !activeNote) return;
+    if (loadedNoteIdRef.current === activeNote.id) return; 
+
+    loadedNoteIdRef.current = activeNote.id;
+    // Small delay to ensure Tiptap is ready and avoids selection reset if called too fast
+    const timeout = setTimeout(() => {
+      editor.commands.setContent(activeNote.content_markdown ?? "");
+    }, 10);
+    return () => clearTimeout(timeout);
+  }, [editor, activeNote?.id]);
 
   const syncNoteLinks = useCallback(async (sourceId: string, markdown: string) => {
+    if (!currentUserId) return;
     const titles = extractNoteTitles(markdown);
     if (titles.length === 0) return;
 
@@ -144,6 +180,7 @@ export default function NotesPage() {
           .from("notes")
           .insert({
             repo_id: repoId,
+            author_id: currentUserId,
             title,
             content_markdown: "",
           })
@@ -162,29 +199,38 @@ export default function NotesPage() {
       const { data } = await supabase.from("note_links").select("*");
       setNoteLinks((data ?? []) as NoteLink[]);
     }
-  }, [repoId, supabase]);
+  }, [currentUserId, repoId, supabase]);
+
+  // persistNote must use a ref to activeNote so the closure doesn't capture a
+  // stale snapshot — this avoids stale-closure autosave overwriting newer content.
+  const activeNoteRef = useRef<Note | null>(null);
+  activeNoteRef.current = activeNote;
 
   const persistNote = useCallback(async (markdown: string) => {
-    if (!activeNote) return;
+    const note = activeNoteRef.current;
+    if (!note) return;
     setSaving(true);
     const { data, error } = await supabase
       .from("notes")
       .update({ content_markdown: markdown, updated_at: new Date().toISOString() })
-      .eq("id", activeNote.id)
+      .eq("id", note.id)
       .select("*")
       .single();
 
     if (error) {
       setErrorMessage(error.message);
     } else if (data) {
+      // Update notes list WITHOUT changing activeNote identity (id stays same)
+      // This is safe because loadedNoteIdRef prevents re-loading on same ID.
       setNotes((prev) => prev.map((item) => (item.id === data.id ? (data as Note) : item)));
       await syncNoteLinks(data.id, markdown);
     }
     setSaving(false);
-  }, [activeNote, supabase, syncNoteLinks]);
+  }, [supabase, syncNoteLinks]); // note intentionally not in deps — use ref instead
 
   useEffect(() => {
     if (!editor || !activeNote) return;
+
     const handler = () => {
       const markdown =
         ((editor.storage as { markdown?: { getMarkdown?: () => string } }).markdown?.getMarkdown?.() ??
@@ -193,19 +239,26 @@ export default function NotesPage() {
       if (saveTimeout.current) window.clearTimeout(saveTimeout.current);
       saveTimeout.current = window.setTimeout(() => {
         void persistNote(markdown);
-      }, 500);
+      }, 800); // slightly longer debounce — reduces save churn
     };
+
     editor.on("update", handler);
     return () => {
       editor.off("update", handler);
+      if (saveTimeout.current) window.clearTimeout(saveTimeout.current);
     };
-  }, [editor, activeNote, persistNote]);
+  }, [editor, activeNote?.id, persistNote]); // key on id, not whole object
+
 
   const handleCreateNote = async () => {
+    if (!currentUserId) {
+      setErrorMessage("You must be signed in to create and edit notes.");
+      return;
+    }
     const title = `Untitled ${notes.length + 1}`;
     const { data, error } = await supabase
       .from("notes")
-      .insert({ repo_id: repoId, title, content_markdown: "" })
+      .insert({ repo_id: repoId, author_id: currentUserId, title, content_markdown: "" })
       .select("*")
       .single();
 
@@ -216,7 +269,9 @@ export default function NotesPage() {
 
     if (data) {
       setNotes((prev) => [data as Note, ...prev]);
-      editor?.commands.setContent("");
+      // Reset the loadedNoteIdRef so new note content loads fresh
+      loadedNoteIdRef.current = "";
+      router.push(`/repo/${repoId}/notes?note=${data.id}`);
     }
   };
 
@@ -323,8 +378,8 @@ export default function NotesPage() {
               </CardHeader>
               <CardContent className="h-full">
                 {activeNote ? (
-                  <div className="prose prose-invert max-w-none text-[var(--foreground)]">
-                    <EditorContent editor={editor} className="min-h-[420px]" />
+                  <div className="prose-editor prose prose-invert max-w-none text-[var(--foreground)]">
+                    <EditorContent editor={editor} className="min-h-[420px] [&_.tiptap]:focus:outline-none" />
                   </div>
                 ) : (
                   <div className="flex h-[420px] items-center justify-center text-sm text-[var(--foreground-muted)]">

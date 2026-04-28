@@ -63,7 +63,7 @@ export function FloatingHeader() {
 				</Link>
 				<div className="hidden items-center gap-2 xl:flex">
 					<DropdownMenu>
-						<DropdownMenuTrigger render={<Button variant="ghost" size="sm" nativeButton={false} className="gap-1.5 font-medium text-[var(--foreground)] hover:text-[var(--foreground)]" />}>
+					<DropdownMenuTrigger render={<Button variant="ghost" size="sm" nativeButton={true} className="gap-1.5 font-medium text-[var(--foreground)] hover:text-[var(--foreground)]" />}>
 							Features <ChevronDown className="size-3.5" />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="start" className="border-white/10 bg-background/95 backdrop-blur-md">
