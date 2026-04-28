@@ -1,0 +1,42 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "76e18c833f4c",
+  "session_id": "82feb945-de60-4e04-8894-0b9a8b7c7d47",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-28T17:46:25.6025321Z",
+  "branch": "phase-14-audit-closeout",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "sql/migrations/0018_add_questions_table.sql",
+    "sql/migrations/0019_add_orgs_and_users_tables.sql",
+    "sql/migrations/0020_add_rls_policies.sql",
+    "sql/migrations/0021_add_chunk_summary_column.sql",
+    "sql/migrations/0022_add_chat_sessions_tables.sql",
+    "sql/migrations/0023_tune_rls_claims_and_chat_policies.sql",
+    "sql/migrations/0024_apply_rls_if_tables_exist.sql",
+    "sql/migrations/0025_bootstrap_code_intel_tables.sql",
+    "sql/migrations/0026_enable_rls_on_code_intel_tables.sql"
+  ],
+  "agent": "Claude Code",
+  "model": "gemini-3.1-pro-preview",
+  "turn_id": "1291cc79bd67",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-28T17:46:25.3024517Z",
+    "agent_lines": 395,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 395,
+    "agent_percentage": 100
+  }
+}

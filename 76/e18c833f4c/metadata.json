@@ -1,0 +1,33 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "76e18c833f4c",
+  "strategy": "manual-commit",
+  "branch": "phase-14-audit-closeout",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "sql/migrations/0018_add_questions_table.sql",
+    "sql/migrations/0019_add_orgs_and_users_tables.sql",
+    "sql/migrations/0020_add_rls_policies.sql",
+    "sql/migrations/0021_add_chunk_summary_column.sql",
+    "sql/migrations/0022_add_chat_sessions_tables.sql",
+    "sql/migrations/0023_tune_rls_claims_and_chat_policies.sql",
+    "sql/migrations/0024_apply_rls_if_tables_exist.sql",
+    "sql/migrations/0025_bootstrap_code_intel_tables.sql",
+    "sql/migrations/0026_enable_rls_on_code_intel_tables.sql"
+  ],
+  "sessions": [
+    {
+      "metadata": "/76/e18c833f4c/0/metadata.json",
+      "transcript": "/76/e18c833f4c/0/full.jsonl",
+      "content_hash": "/76/e18c833f4c/0/content_hash.txt",
+      "prompt": "/76/e18c833f4c/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
