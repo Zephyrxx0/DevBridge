@@ -10,6 +10,7 @@ export interface RepoMetadata {
   url: string;
   created_at: string;
   lastIndexed?: string;
+  description?: string;
   fileCount?: number;
   annotationCount?: number;
   prCount?: number;
