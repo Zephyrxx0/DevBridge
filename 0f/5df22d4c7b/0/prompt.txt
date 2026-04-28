@@ -1,0 +1,297 @@
+Create a complete redesign of the existing DevBridge web UI into a premium, modern SaaS-quality product website and application interface.
+
+Project Context:
+DevBridge is a platform that connects developers, builders, and technical collaborators for projects, opportunities, and team formation. It should feel like the place where serious builders meet high-quality opportunities.
+
+Design Benchmark References:
+Use the visual sophistication, polish, spacing discipline, typography quality, and interaction smoothness inspired by:
+
+* createanything.com
+* supabase.com
+* void0.com
+
+Goal:
+The current app feels plain and unrefined. Redesign it into something elegant, credible, modern, and conversion-focused while remaining highly usable.
+
+Core Design Direction:
+
+* Minimal but premium aesthetic
+* Strong visual hierarchy
+* Refined typography with excellent spacing
+* Clean dark/light theme support
+* Smooth transitions and subtle motion
+* Sharp but soft-edged UI
+* Professional startup-grade appearance
+* Feels expensive and trustworthy
+* Functional first, but beautiful
+
+Tech Requirements:
+
+* Use React + Next.js + Tailwind CSS
+* Use shadcn/ui components where useful
+* Use 21st.dev inspired sections/components if beneficial
+* Fully responsive
+* Accessible and keyboard friendly
+* Production-ready code quality
+* Reusable component architecture
+
+Color / Style Direction:
+
+* Neutral modern palette with one elegant accent color
+* Subtle gradients only where justified
+* Clean cards with depth through shadow + border layering
+* Soft glassmorphism only if tasteful
+* Crisp icons (Lucide preferred)
+* Consistent radius system
+* Large whitespace usage like premium SaaS sites
+
+Pages / Flows to Design:
+
+1. Landing Page
+
+* Hero section with strong headline:
+  “Build with the right people.”
+* Supporting copy explaining DevBridge in one sentence
+* Clear CTAs:
+
+  * Find Collaborators
+  * Post a Project
+* Trust/social proof strip
+* How it works in 3 steps
+* Featured developers / teams preview
+* Featured projects preview
+* Testimonials
+* Final CTA section
+
+2. Explore Developers
+
+* Search + filters
+* Skill tags
+* Availability status
+* Rich profile cards
+* Save / connect actions
+
+3. Explore Projects
+
+* Premium listing cards
+* Difficulty / commitment / stack indicators
+* Apply / bookmark actions
+
+4. User Dashboard
+
+* Clean sidebar
+* Stats cards
+* Saved projects
+* Messages preview
+* Profile completion progress
+* Recommended matches
+
+5. Profile Page
+
+* Avatar
+* Bio
+* Skills
+* GitHub / portfolio links
+* Reputation indicators
+* Work preference
+* Availability
+* Past projects
+
+UX Requirements:
+
+* Extremely intuitive navigation
+* Clear CTA hierarchy
+* Fast scanning layouts
+* No clutter
+* Great empty states
+* Delightful hover states
+* Smooth loading skeletons
+* Mobile-first thoughtful layouts
+
+Micro Interactions:
+
+* Button hover lift
+* Card glow on hover
+* Smooth fade/slide reveals
+* Animated counters
+* Subtle gradient motion in hero
+* Refined focus states
+
+Typography:
+Use a premium font pairing (Inter / Geist / Satoshi / Plus Jakarta Sans). Strong headings, readable body copy.
+
+Important Constraint:
+Do NOT create a generic template. Make it feel custom designed specifically for DevBridge and for ambitious developers.
+
+Output Required:
+
+* Full page redesign
+* Component structure
+* Tailwind + shadcn implementation
+* Modern layout system
+* Clean production-ready code
+* Dummy content matching the DevBridge brand
+* Beautiful defaults for both dark and light mode
+
+Success Criteria:
+When someone lands on the site, they should immediately think:
+“This looks credible, high-end, modern, and worth joining.”
+
+Design Spec : @file:DESIGN.md  
+Components to use : 
+1. hero : @file:dithering-card.tsx 
+2 . navigation : @file:floating-header.tsx 
+
+use shadcn mcp or 21st.dev mcp (or website for more components).
+
+KEEP THE DESIGN SYSTEM CONSISTENT, there is no need for stray or random colors
+
+---
+
+Create a complete redesign of the existing DevBridge web UI into a premium, modern SaaS-quality product website and application interface.
+
+Project Context:
+DevBridge is a platform that connects developers, builders, and technical collaborators for projects, opportunities, and team formation. It should feel like the place where serious builders meet high-quality opportunities.
+
+Design Benchmark References:
+Use the visual sophistication, polish, spacing discipline, typography quality, and interaction smoothness inspired by:
+
+* createanything.com
+* supabase.com
+* void0.com
+
+Goal:
+The current app feels plain and unrefined. Redesign it into something elegant, credible, modern, and conversion-focused while remaining highly usable.
+
+Core Design Direction:
+
+* Minimal but premium aesthetic
+* Strong visual hierarchy
+* Refined typography with excellent spacing
+* Clean dark/light theme support
+* Smooth transitions and subtle motion
+* Sharp but soft-edged UI
+* Professional startup-grade appearance
+* Feels expensive and trustworthy
+* Functional first, but beautiful
+
+Tech Requirements:
+
+* Use React + Next.js + Tailwind CSS
+* Use shadcn/ui components where useful
+* Use 21st.dev inspired sections/components if beneficial
+* Fully responsive
+* Accessible and keyboard friendly
+* Production-ready code quality
+* Reusable component architecture
+
+Color / Style Direction:
+
+* Neutral modern palette with one elegant accent color
+* Subtle gradients only where justified
+* Clean cards with depth through shadow + border layering
+* Soft glassmorphism only if tasteful
+* Crisp icons (Lucide preferred)
+* Consistent radius system
+* Large whitespace usage like premium SaaS sites
+
+Pages / Flows to Design:
+
+1. Landing Page
+
+* Hero section with strong headline:
+  “Build with the right people.”
+* Supporting copy explaining DevBridge in one sentence
+* Clear CTAs:
+
+  * Find Collaborators
+  * Post a Project
+* Trust/social proof strip
+* How it works in 3 steps
+* Featured developers / teams preview
+* Featured projects preview
+* Testimonials
+* Final CTA section
+
+2. Explore Developers
+
+* Search + filters
+* Skill tags
+* Availability status
+* Rich profile cards
+* Save / connect actions
+
+3. Explore Projects
+
+* Premium listing cards
+* Difficulty / commitment / stack indicators
+* Apply / bookmark actions
+
+4. User Dashboard
+
+* Clean sidebar
+* Stats cards
+* Saved projects
+* Messages preview
+* Profile completion progress
+* Recommended matches
+
+5. Profile Page
+
+* Avatar
+* Bio
+* Skills
+* GitHub / portfolio links
+* Reputation indicators
+* Work preference
+* Availability
+* Past projects
+
+UX Requirements:
+
+* Extremely intuitive navigation
+* Clear CTA hierarchy
+* Fast scanning layouts
+* No clutter
+* Great empty states
+* Delightful hover states
+* Smooth loading skeletons
+* Mobile-first thoughtful layouts
+
+Micro Interactions:
+
+* Button hover lift
+* Card glow on hover
+* Smooth fade/slide reveals
+* Animated counters
+* Subtle gradient motion in hero
+* Refined focus states
+
+Typography:
+Use a premium font pairing (Inter / Geist / Satoshi / Plus Jakarta Sans). Strong headings, readable body copy.
+
+Important Constraint:
+Do NOT create a generic template. Make it feel custom designed specifically for DevBridge and for ambitious developers.
+
+Output Required:
+
+* Full page redesign
+* Component structure
+* Tailwind + shadcn implementation
+* Modern layout system
+* Clean production-ready code
+* Dummy content matching the DevBridge brand
+* Beautiful defaults for both dark and light mode
+
+Success Criteria:
+When someone lands on the site, they should immediately think:
+“This looks credible, high-end, modern, and worth joining.”
+
+Design Spec : @file:DESIGN.md  
+Components to use : 
+1. hero : @file:dithering-card.tsx 
+2 . navigation : @file:floating-header.tsx 
+
+use shadcn mcp or 21st.dev mcp (or website for more components).
+
+KEEP THE DESIGN SYSTEM CONSISTENT, there is no need for stray or random colors
