@@ -90,7 +90,7 @@ export default function RepoWorkspacePage() {
   const repoId = String(params.id ?? "");
 
   const { repo } = useRepo();
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme, theme, setTheme } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
