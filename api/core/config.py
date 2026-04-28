@@ -1,4 +1,5 @@
 import os
+import tempfile
 import warnings
 from typing import Any
 
@@ -35,6 +36,24 @@ def _check_deprecated_project_id() -> None:
 
 _check_deprecated_project_id()
 
+
+def _handle_credentials_json() -> None:
+    """Handle GOOGLE_APPLICATION_CREDENTIALS_JSON by writing to a temp file."""
+    creds_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+    if creds_json and not os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+        try:
+            # Create a named temporary file that won't be deleted immediately
+            # Note: We don't delete it because the SDK might need it later
+            temp_creds = tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode="w")
+            temp_creds.write(creds_json)
+            temp_creds.close()
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_creds.name
+            print(f"[CONFIG] Wrote credentials JSON to {temp_creds.name}")
+        except Exception as e:
+            print(f"[CONFIG] Error writing credentials JSON: {e}")
+
+
+_handle_credentials_json()
 
 # Single source of truth for project ID - prefer GOOGLE_CLOUD_PROJECT over deprecated GCP_PROJECT_ID
 GOOGLE_CLOUD_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT_ID") or None
@@ -84,9 +103,9 @@ class Settings(BaseSettings):
     def __init__(self, **values):
         super().__init__(**values)
 
-        # T-05-04: Reject empty project identity in production mode
-        if self.env.lower() == "production" and not self.google_cloud_project:
-            raise ValueError("GOOGLE_CLOUD_PROJECT must be set in production mode")
+        # Allow running without google_cloud_project if connection string is provided (e.g. Render)
+        if self.env.lower() == "production" and not self.google_cloud_project and not self.supabase_connection_string:
+            raise ValueError("Either GOOGLE_CLOUD_PROJECT or SUPABASE_CONNECTION_STRING must be set in production mode")
 
     @classmethod
     def settings_customise_sources(

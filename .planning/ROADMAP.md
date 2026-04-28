@@ -165,6 +165,11 @@ Plans:
 Plans:
 - [ ] TBD (run /gsd-plan-phase 16 to break down)
 
+- [x] **Phase 17: Vercel Deployment**
+  - [x] Configure environment variables for production.
+  - [x] Run build verification.
+  - [x] Deploy frontend to Vercel.
+
 ---
 
 *Last updated: 2026-04-27*
