@@ -39,6 +39,7 @@ CLAUDE.md
 *.csv
 DEVBRIDGE_SPEC.md
 implementation_plan.md
+docs/
 
 #Critical
 .env
@@ -72,3 +73,7 @@ supabase/migrations/20260426132703_remote_schema.sql
 DESIGN.md
 DEVBRIDGE_IMPLEMENTATION_SPEC.md
 devbridge_audit.md
+
+web/playwright-report/
+web/test-results/
+media/
