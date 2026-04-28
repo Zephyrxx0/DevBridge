@@ -42,7 +42,7 @@ export default function PRPage() {
   const fetchPRs = useCallback(async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/backend";
       const response = await fetch(`${apiUrl}/repo/${repoId}/pr`);
       if (response.ok) {
         setPRs(await response.json());

@@ -64,7 +64,7 @@ export default function AnnotationsPage() {
   const fetchAnnotations = useCallback(async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/backend";
       const response = await fetch(`${apiUrl}/repo/${repoId}/annotations`);
       if (response.ok) {
         setAnnotations(await response.json());

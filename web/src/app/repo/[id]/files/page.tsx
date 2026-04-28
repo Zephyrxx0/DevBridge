@@ -54,7 +54,7 @@ export default function FilesPage() {
   const fetchFileTree = useCallback(async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/backend";
       const response = await fetch(`${apiUrl}/repo/${repoId}/files`);
       if (response.ok) {
         const data = await response.json();
@@ -69,7 +69,7 @@ export default function FilesPage() {
 
   const fetchFileContent = useCallback(async (path: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/backend";
       const response = await fetch(`${apiUrl}/repo/${repoId}/files/${path}`);
       if (response.ok) {
         const data = await response.json();

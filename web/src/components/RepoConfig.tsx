@@ -18,7 +18,7 @@ export function RepoConfig({ repoId }: RepoConfigProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/backend";
 
   useEffect(() => {
     async function fetchConfig() {
