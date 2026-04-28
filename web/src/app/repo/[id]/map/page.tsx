@@ -593,7 +593,6 @@ export default function MapPage() {
                           : "rgba(255,255,255,0.7)";
                       ctx.fillText(label, node.x, node.y + 8);
                     }}
-                    d3AlphaDecay={0.02}
                     d3VelocityDecay={0.3}
                   />
                 </div>
