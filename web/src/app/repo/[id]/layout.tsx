@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useParams, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   BookOpen,
   FolderCode,
   GitPullRequest,
+  Landmark,
   MessageCircle,
   Moon,
   Network,
@@ -32,26 +33,10 @@ const NAV_ITEMS = [
   { label: "Settings", hrefSuffix: "/settings", icon: Settings2 },
 ];
 
-const PAGE_LABELS: Record<string, string> = {
-  "": "Chat",
-  files: "Files",
-  map: "Map",
-  search: "Search",
-  pr: "PRs",
-  annotations: "Annotations",
-  notes: "Notes",
-  settings: "Settings",
-};
-
 function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: React.ReactNode, isRootWorkspace: boolean, basePath: string }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { repo, loading } = useRepo();
-  
-  const currentSection = useMemo(() => {
-    const suffix = pathname.replace(basePath, "").split("/").filter(Boolean)[0] ?? "";
-    return PAGE_LABELS[suffix] ?? "Workspace";
-  }, [pathname, basePath]);
 
   useEffect(() => {
     const repoId = basePath.split("/").at(-1);
@@ -77,25 +62,29 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
 
   return (
     <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <aside className="hidden w-[240px] shrink-0 border-r border-[var(--border)] bg-[var(--sidebar)] md:flex md:flex-col">
-        <div className="border-b border-[var(--border)] px-4 py-6">
+      <aside className="hidden w-[224px] shrink-0 border-r border-[var(--border)] bg-[var(--sidebar)] md:flex md:flex-col">
+        <div className="relative border-b border-[var(--border)] px-4 py-6">
           <Link href="/" className="flex items-center gap-3">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-[0.5rem] text-sm font-bold text-white"
-              style={{ background: "var(--gradient-brand)", fontFamily: "var(--font-heading)" }}
-            >
-              DB
+            <div className="flex h-9 w-9 items-center justify-center rounded-[0.5rem] bg-[var(--brand-muted)] text-[var(--brand)]">
+              <Landmark className="size-4" />
             </div>
             <div className="min-w-0">
               <p className="truncate text-[var(--text-sm)] font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
                 {loading ? "Loading..." : repo?.name || "Repository"}
               </p>
-              <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-[var(--accent-emerald-muted)] px-2 py-0.5 text-[var(--text-xs)] font-medium text-[var(--accent-emerald)]">
-                <span className="h-2 w-2 rounded-full bg-[var(--accent-emerald)]" />
-                Online
-              </span>
             </div>
           </Link>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Toggle theme"
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            className="absolute right-4 top-6 h-9 w-9 border border-[var(--border)] text-[var(--foreground-muted)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)]"
+          >
+            <Sun className="hidden size-4 dark:block" />
+            <Moon className="block size-4 dark:hidden" />
+          </Button>
         </div>
 
         <nav className="flex-1 px-2 py-4">
@@ -123,17 +112,6 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
         </nav>
 
         <div className="space-y-3 border-t border-[var(--border)] px-4 py-4">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Toggle theme"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="h-9 w-9 border border-[var(--border)] text-[var(--foreground-muted)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)]"
-          >
-            <Sun className="hidden size-4 dark:block" />
-            <Moon className="block size-4 dark:hidden" />
-          </Button>
           <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">
             Last indexed: {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "never"}
           </p>
@@ -141,11 +119,6 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_88%,transparent)] px-[var(--space-lg)] py-[var(--space-md)]">
-          <p className="text-[var(--text-xs)] font-medium uppercase text-[var(--foreground-subtle)]" style={{ letterSpacing: "0.08em" }}>
-            DevBridge &gt; {loading ? "..." : repo?.name || "Repository"} &gt; {currentSection}
-          </p>
-        </header>
         <main className="flex min-h-0 flex-1">{children}</main>
       </div>
     </div>

@@ -1,0 +1,173 @@
+:root {
+  --db-bg: #ffffff;
+  --db-surface: #f8f9fa;
+  --db-border: #dee2e6;
+  --db-text: #1a1a1a;
+  --db-text-muted: #5a5a5a;
+  --db-brand: #ec4e02;
+  --db-code-bg: #f1f3f4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--db-bg);
+  color: var(--db-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+body {
+  background: var(--db-bg);
+}
+
+.sidebar {
+  background: var(--db-surface);
+  border-right: 1px solid var(--db-border);
+}
+
+.sidebar-nav ul li a {
+  color: var(--db-text-muted);
+  font-size: 14px;
+}
+
+.sidebar-nav ul li.active > a,
+.sidebar-nav ul li a:hover {
+  color: var(--db-brand);
+}
+
+.content {
+  padding: 24px 40px;
+  max-width: 900px;
+}
+
+.markdown-section {
+  padding: 20px 0;
+  color: var(--db-text);
+}
+
+.markdown-section h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+  letter-spacing: -0.03em;
+}
+
+.markdown-section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 32px 0 12px;
+  border-bottom: 1px solid var(--db-border);
+  padding-bottom: 8px;
+}
+
+.markdown-section h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 24px 0 8px;
+}
+
+.markdown-section p {
+  margin: 0 0 16px;
+  color: var(--db-text-muted);
+}
+
+.markdown-section a {
+  color: var(--db-brand);
+  text-decoration: none;
+}
+
+.markdown-section a:hover {
+  text-decoration: underline;
+}
+
+.markdown-section code {
+  background: var(--db-code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.875em;
+  font-family: "SF Mono", Monaco, Consolas, monospace;
+}
+
+.markdown-section pre {
+  background: var(--db-code-bg);
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.markdown-section pre code {
+  background: none;
+  padding: 0;
+}
+
+.markdown-section ul,
+.markdown-section ol {
+  margin: 0 0 16px;
+  padding-left: 24px;
+  color: var(--db-text-muted);
+}
+
+.markdown-section li {
+  margin-bottom: 4px;
+}
+
+.markdown-section blockquote {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-left: 3px solid var(--db-brand);
+  background: var(--db-code-bg);
+  color: var(--db-text-muted);
+}
+
+.markdown-section table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+
+.markdown-section th,
+.markdown-section td {
+  border: 1px solid var(--db-border);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-section th {
+  background: var(--db-surface);
+  font-weight: 600;
+}
+
+.search .input {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  color: var(--db-text);
+}
+
+.app-nav {
+  display: none;
+}
+
+.github-corner {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content {
+    padding: 16px;
+  }
+  
+  .markdown-section h1 {
+    font-size: 1.5rem;
+  }
+  
+  .markdown-section h2 {
+    font-size: 1.25rem;
+  }
+}

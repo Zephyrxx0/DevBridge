@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Clock3, GitBranch, LayoutGrid, List } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
@@ -15,13 +16,44 @@ type Repo = {
   created_at: string;
 };
 
-type ViewMode = "detailed" | "compact";
+type ViewMode = "grid" | "list";
+
+function getRepoMeta(repo: Repo) {
+  const fallbackOwner = "unknown";
+  const fallbackRepo = repo.name;
+  const cleanUrl = repo.github_url?.trim() ?? "";
+  const path = cleanUrl.replace(/^https?:\/\/github\.com\//i, "").replace(/\/$/, "");
+  const [ownerFromUrl, repoFromUrl] = path.split("/");
+
+  if (ownerFromUrl && repoFromUrl) {
+    return {
+      owner: ownerFromUrl,
+      repoName: repoFromUrl,
+      ownerUrl: `https://github.com/${ownerFromUrl}`,
+    };
+  }
+
+  const [ownerFromName, repoFromName] = repo.name.split("/");
+  if (ownerFromName && repoFromName) {
+    return {
+      owner: ownerFromName,
+      repoName: repoFromName,
+      ownerUrl: `https://github.com/${ownerFromName}`,
+    };
+  }
+
+  return {
+    owner: fallbackOwner,
+    repoName: fallbackRepo,
+    ownerUrl: "https://github.com",
+  };
+}
 
 export default function DashboardPage() {
   const supabase = createClient();
   const [repos, setRepos] = useState<Repo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>("detailed");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   useEffect(() => {
     async function load() {
@@ -48,7 +80,7 @@ export default function DashboardPage() {
   }, [supabase]);
 
   const empty = !loading && repos.length === 0;
-  const title = useMemo(() => (viewMode === "compact" ? "Compact view" : "Detailed view"), [viewMode]);
+  const title = useMemo(() => (viewMode === "list" ? "List view" : "Grid view"), [viewMode]);
 
   return (
     <div className="pb-12">
@@ -63,17 +95,17 @@ export default function DashboardPage() {
             <div className="inline-flex rounded-xl border border-white/10 bg-black/20 p-1">
               <button
                 type="button"
-                onClick={() => setViewMode("detailed")}
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${viewMode === "detailed" ? "bg-white/10 text-white" : "text-[var(--foreground-muted)]"}`}
+                onClick={() => setViewMode("grid")}
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${viewMode === "grid" ? "bg-white/10 text-white" : "text-[var(--foreground-muted)]"}`}
               >
-                <LayoutGrid className="size-4" /> Detailed
+                <LayoutGrid className="size-4" /> Grid
               </button>
               <button
                 type="button"
-                onClick={() => setViewMode("compact")}
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${viewMode === "compact" ? "bg-white/10 text-white" : "text-[var(--foreground-muted)]"}`}
+                onClick={() => setViewMode("list")}
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${viewMode === "list" ? "bg-white/10 text-white" : "text-[var(--foreground-muted)]"}`}
               >
-                <List className="size-4" /> Compact
+                <List className="size-4" /> List
               </button>
             </div>
             <AddRepoModal />
@@ -96,32 +128,93 @@ export default function DashboardPage() {
           </div>
         ) : null}
 
-        {!loading && repos.length > 0 ? (
+        {!loading && repos.length > 0 && viewMode === "grid" ? (
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {repos.map((repo) => (
-              <Card key={repo.id} className="group border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_55%,transparent)] backdrop-blur-xl hover:border-[var(--brand)]/40">
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-3">
-                    <CardTitle className={`${viewMode === "compact" ? "text-xl" : "text-2xl"} truncate`}>{repo.name}</CardTitle>
-                    <GitBranch className="size-4 text-[var(--foreground-subtle)]" />
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-[var(--foreground-muted)]">
-                  <p className="line-clamp-1">{repo.github_url}</p>
-                  {viewMode === "detailed" ? (
-                    <p className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" /> Added {new Date(repo.created_at).toLocaleDateString()}</p>
-                  ) : null}
-                </CardContent>
-                <CardFooter>
-                  <Link href={`/repo/${repo.id}`} className="w-full">
-                    <Button className="w-full justify-between" variant="ghost">
-                      Open Chat
-                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </Card>
-            ))}
+            {repos.map((repo) => {
+              const meta = getRepoMeta(repo);
+              return (
+                <Card key={repo.id} className="group overflow-hidden p-0 bg-[color-mix(in_oklab,var(--surface-1)_55%,transparent)] backdrop-blur-xl">
+                  <CardHeader className="p-0">
+                    <div className="relative h-80 w-full overflow-hidden bg-black/35">
+                      <Image
+                        src={`https://github.com/${meta.owner}.png?size=180`}
+                        alt={`${meta.owner} avatar`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                        className="block h-full w-full object-cover object-center"
+                        loading="lazy"
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-1.5 px-5 pb-5 pt-1.5">
+                    <CardTitle className="text-2xl leading-tight break-words">
+                      <span className="block text-base font-medium text-[var(--foreground-subtle)]">{meta.owner}/</span>
+                      <span className="block font-semibold">{meta.repoName}</span>
+                    </CardTitle>
+                    <div className="space-y-1.5 text-sm text-[var(--foreground-muted)]">
+                      <p className="line-clamp-1">{repo.github_url}</p>
+                      <p className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" /> Last opened {new Date(repo.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="border-t border-white/10 p-0">
+                    <Link href={`/repo/${repo.id}`} className="w-full">
+                      <Button className="h-14 w-full justify-between rounded-none" variant="ghost">
+                        Open Chat
+                        <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {!loading && repos.length > 0 && viewMode === "list" ? (
+          <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_55%,transparent)]">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-black/25 text-[var(--foreground-subtle)]">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Sr. No</th>
+                    <th className="px-4 py-3 font-medium">Repo_Name</th>
+                    <th className="px-4 py-3 font-medium">Owner</th>
+                    <th className="px-4 py-3 font-medium">Last Opened</th>
+                    <th className="px-4 py-3 font-medium">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {repos.map((repo, idx) => {
+                    const meta = getRepoMeta(repo);
+                    return (
+                      <tr key={repo.id} className="border-t border-white/10 text-[var(--foreground-muted)]">
+                        <td className="px-4 py-3">{idx + 1}</td>
+                        <td className="px-4 py-3">
+                          <Link href={`/repo/${repo.id}`} className="font-medium text-[var(--foreground)] hover:text-[var(--brand)]">
+                            {meta.repoName}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3">
+                          <a href={meta.ownerUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-[var(--foreground)]">
+                            <Image
+                              src={`https://github.com/${meta.owner}.png?size=40`}
+                              alt={`${meta.owner} avatar`}
+                              width={20}
+                              height={20}
+                              className="size-5 rounded-full border border-white/20"
+                              loading="lazy"
+                            />
+                            <span>{meta.owner}</span>
+                          </a>
+                        </td>
+                        <td className="px-4 py-3">{new Date(repo.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">-</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : null}
       </section>

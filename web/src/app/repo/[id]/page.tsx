@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowUp, ChevronDown, ChevronRight, Clock3, Code2, Folder, GitBranch, StickyNote } from "lucide-react";
+import { ArrowUp, ChevronDown, ChevronRight, Clock3, Code2, Folder, GitBranch, PanelRightClose, StickyNote } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -56,8 +56,11 @@ export default function RepoWorkspacePage() {
   const [fileTree, setFileTree] = useState<FileNode | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [loadingFiles, setLoadingFiles] = useState(false);
+  const [focusWhileTyping, setFocusWhileTyping] = useState(true);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isTyping = input.trim().length > 0;
+  const hideSidePanel = focusWhileTyping && isTyping;
 
   useEffect(() => {
     if (repo && messages.length === 0) {
@@ -305,8 +308,8 @@ export default function RepoWorkspacePage() {
   };
 
   return (
-    <section className="flex min-h-0 flex-1 gap-[var(--space-lg)] p-[var(--space-lg)]">
-      <div className="flex min-h-0 flex-[3] flex-col">
+    <section className="flex min-h-0 flex-1 gap-0 px-2 py-2">
+      <div className="flex min-h-0 flex-[3.5] flex-col rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_88%,transparent)] p-2.5">
         <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1">
           <div className="space-y-[var(--space-md)]">
             {messages.map((message, index) => {
@@ -316,7 +319,7 @@ export default function RepoWorkspacePage() {
 
               return (
                 <div key={`${message.role}-${index}`} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
-                  <div className={cn("flex max-w-[80%] gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
+                  <div className={cn("flex max-w-[74%] gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}>
                     <Avatar className="mt-1 shrink-0">
                       <AvatarFallback className={cn(isUser ? "bg-[var(--surface-3)]" : "bg-[var(--brand-muted)] text-[var(--brand)]")}>
                         {isUser ? "U" : "DB"}
@@ -326,7 +329,7 @@ export default function RepoWorkspacePage() {
                     <div className="min-w-0">
                       <div
                         className={cn(
-                          "rounded-xl border px-[var(--space-lg)] py-[var(--space-md)] text-[var(--text-body)] leading-[1.65]",
+                           "rounded-xl border px-4 py-3 text-[var(--text-body)] leading-[1.62]",
                           isUser
                             ? "border-[var(--border)] bg-[var(--surface-3)] text-[var(--foreground)]"
                             : "border-[var(--brand-muted)] bg-[var(--surface-1)] text-[var(--foreground)]"
@@ -387,9 +390,25 @@ export default function RepoWorkspacePage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-[var(--space-md)] border-t border-[var(--border)] pt-[var(--space-md)]">
+        <form onSubmit={handleSubmit} className="mt-2.5 border-t border-[var(--border)] pt-2.5">
+          <div className="mb-2 flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => setFocusWhileTyping((prev) => !prev)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors",
+                focusWhileTyping
+                  ? "border-[var(--brand-muted)] bg-[var(--brand-muted)] text-[var(--brand)]"
+                  : "border-[var(--border)] text-[var(--foreground-subtle)] hover:text-[var(--foreground)]"
+              )}
+              title="Temporarily hide side panel while typing"
+            >
+              <PanelRightClose className="size-3.5" />
+              Focus while typing
+            </button>
+          </div>
           <div
-            className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-sm)]"
+            className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_94%,transparent)] p-2"
             onDragOver={(event) => event.preventDefault()}
             onDrop={handleDropSnippet}
           >
@@ -425,7 +444,7 @@ export default function RepoWorkspacePage() {
         </form>
       </div>
 
-      <aside className="hidden min-h-0 flex-[2] md:block">
+      <aside className={cn("hidden min-h-0 flex-[1.7] pl-2.5 md:block", hideSidePanel ? "md:hidden" : "")}>
         {selectedSource ? (
           <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-1)]">
             <div className="border-b border-[var(--border)] px-[var(--space-lg)] py-[var(--space-md)]">
@@ -456,7 +475,7 @@ export default function RepoWorkspacePage() {
             </div>
           </div>
         ) : (
-          <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-lg)]">
+          <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_90%,transparent)] p-4">
             <div className="flex items-center justify-between gap-2">
               <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]">Repository Panel</p>
               <div className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-1">

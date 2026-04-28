@@ -1,26 +1,18 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
+import { cn } from "@/lib/utils";
 
-const playfair = Playfair_Display({
-  variable: "--font-heading",
+const geist = Geist({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-geist",
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-sans",
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -35,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={cn(geist.variable, geistMono.variable)}>
       <head />
       <body className="min-h-full antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>

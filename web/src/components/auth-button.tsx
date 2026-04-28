@@ -5,14 +5,16 @@ import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogIn, LogOut, User as UserIcon, Settings2 } from "lucide-react";
+import { LogIn, LogOut, Moon, Sun, User as UserIcon, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { User } from "@supabase/supabase-js";
+import { useTheme } from "next-themes";
 
-export function AuthButton() {
+export function AuthButton({ showThemeToggle = false }: { showThemeToggle?: boolean }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     async function getUser() {
@@ -38,15 +40,16 @@ export function AuthButton() {
   if (!user) {
     return (
       <div className="flex flex-col items-end gap-1">
-        <Button
-          variant="outline"
-          size="sm"
-          render={<Link href="/signin" />}
-          className="h-9 gap-2 rounded-lg border-white/[0.08] bg-[color-mix(in_oklab,var(--surface-2)_30%,transparent)] px-3.5 hover:bg-white/[0.06]"
-        >
-          <LogIn className="size-4" />
-          <span className="hidden sm:inline">Sign In</span>
-        </Button>
+        <Link href="/signin">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-2 rounded-lg border-white/[0.08] bg-[color-mix(in_oklab,var(--surface-2)_30%,transparent)] px-3.5 hover:bg-white/[0.06]"
+          >
+            <LogIn className="size-4" />
+            <span className="hidden sm:inline">Sign In</span>
+          </Button>
+        </Link>
       </div>
     );
   }
@@ -75,6 +78,15 @@ export function AuthButton() {
           <Settings2 className="mr-2 h-4 w-4" />
           <span>Edit Profile</span>
         </DropdownMenuItem>
+        {showThemeToggle ? (
+          <DropdownMenuItem
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            className="focus:bg-white/5 cursor-pointer"
+          >
+            {theme === "light" ? <Moon className="mr-2 h-4 w-4" /> : <Sun className="mr-2 h-4 w-4" />}
+            <span>{theme === "light" ? "Dark mode" : "Light mode"}</span>
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onClick={signOut} className="focus:bg-red-500/10 cursor-pointer text-red-500">
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>

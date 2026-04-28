@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@paper-design/shaders-react": "^0.0.76",
+    "docsify-cli": "^4.4.4",
     "supabase": "^2.95.3"
   }
 }

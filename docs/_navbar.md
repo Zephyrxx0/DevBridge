@@ -1,0 +1,5 @@
+- [Home](/)
+- [Architecture](architecture.md)
+- [Setup](setup.md)
+- [API](api-reference.md)
+- [Ops](operations.md)
