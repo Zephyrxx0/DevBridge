@@ -21,6 +21,23 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["repo"])
 
 
+async def _resolve_repo(conn: Any, repo_id: str) -> dict[str, Any]:
+    """Resolve repo_id (ID or Name) to repository metadata. Raises 404 if not found."""
+    query = text(
+        """
+        SELECT id, name, github_url
+        FROM repositories
+        WHERE CAST(id AS text) = :rid OR name = :rid
+        LIMIT 1
+        """
+    )
+    res = await conn.execute(query, {"rid": repo_id})
+    row = res.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail=f"Repository '{repo_id}' not found")
+    return dict(row._mapping)
+
+
 def _repo_from_github_url(url: str | None) -> str | None:
     if not url:
         return None
@@ -103,34 +120,37 @@ async def get_repository(repo_id: str):
     if engine is None:
         raise HTTPException(status_code=500, detail="Database engine not initialized")
 
-    query = text(
-        """
-        SELECT r.id, r.name, r.github_url, r.created_at,
-               COALESCE(files.file_count, 0) AS file_count,
-               COALESCE(anns.annotation_count, 0) AS annotation_count,
-               (
-                   SELECT MAX(updated_at)
-                   FROM ingestion_jobs
-                   WHERE repo IN (r.name, CAST(r.id AS text)) AND status = 'success'
-               ) AS last_indexed
-        FROM repositories r
-        LEFT JOIN (
-            SELECT repo, COUNT(DISTINCT file_path) AS file_count
-            FROM code_chunks
-            GROUP BY repo
-        ) files ON files.repo = r.name
-        LEFT JOIN (
-            SELECT repo_id, COUNT(*) AS annotation_count
-            FROM annotations
-            GROUP BY repo_id
-        ) anns ON anns.repo_id = r.id
-        WHERE r.id = CAST(:repo_id AS uuid)
-        LIMIT 1
-        """
-    )
     try:
         async with engine.connect() as conn:
-            result = await conn.execute(query, {"repo_id": repo_id})
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+
+            query = text(
+                """
+                SELECT r.id, r.name, r.github_url, r.created_at,
+                       COALESCE(files.file_count, 0) AS file_count,
+                       COALESCE(anns.annotation_count, 0) AS annotation_count,
+                       (
+                           SELECT MAX(updated_at)
+                           FROM ingestion_jobs
+                           WHERE repo IN (r.name, CAST(r.id AS text)) AND status = 'success'
+                       ) AS last_indexed
+                FROM repositories r
+                LEFT JOIN (
+                    SELECT repo, COUNT(DISTINCT file_path) AS file_count
+                    FROM code_chunks
+                    GROUP BY repo
+                ) files ON files.repo = r.name
+                LEFT JOIN (
+                    SELECT repo_id, COUNT(*) AS annotation_count
+                    FROM annotations
+                    GROUP BY repo_id
+                ) anns ON anns.repo_id = r.id
+                WHERE r.id = :actual_id
+                LIMIT 1
+                """
+            )
+            result = await conn.execute(query, {"actual_id": actual_id})
             row = result.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="Repository not found")
@@ -149,24 +169,18 @@ async def list_repository_branches(repo_id: str):
         raise HTTPException(status_code=500, detail="Database engine not initialized")
     try:
         async with engine.connect() as conn:
-            repo_result = await conn.execute(
-                text("SELECT github_url, name FROM repositories WHERE id = CAST(:repo_id AS uuid) LIMIT 1"),
-                {"repo_id": repo_id},
+            repo = await _resolve_repo(conn, repo_id)
+            repo_slug = _repo_from_github_url(repo.get("github_url")) or repo.get("name")
+            if not repo_slug:
+                raise HTTPException(status_code=422, detail="Cannot derive GitHub slug from repository")
+            token = await get_github_token()
+            payload = await _github_get_json(
+                f"https://api.github.com/repos/{repo_slug}/branches?per_page=100",
+                token,
             )
-            repo_row = repo_result.fetchone()
-        if not repo_row:
-            raise HTTPException(status_code=404, detail="Repository not found")
-        repo_slug = _repo_from_github_url(repo_row._mapping.get("github_url")) or repo_row._mapping.get("name")
-        if not repo_slug:
-            raise HTTPException(status_code=422, detail="Cannot derive GitHub slug from repository")
-        token = await get_github_token()
-        payload = await _github_get_json(
-            f"https://api.github.com/repos/{repo_slug}/branches?per_page=100",
-            token,
-        )
-        if not isinstance(payload, list):
-            raise HTTPException(status_code=502, detail="Unexpected GitHub response")
-        return [{"name": b["name"], "sha": b["commit"]["sha"]} for b in payload if isinstance(b, dict) and "name" in b]
+            if not isinstance(payload, list):
+                raise HTTPException(status_code=502, detail="Unexpected GitHub response")
+            return [{"name": b["name"], "sha": b["commit"]["sha"]} for b in payload if isinstance(b, dict) and "name" in b]
     except HTTPException:
         raise
     except Exception as exc:
@@ -194,7 +208,8 @@ async def list_repository_files(repo_id: str, branch: str | None = None, fresh: 
                     text("""
                         SELECT file_tree
                         FROM repo_file_cache
-                        WHERE repo_id = CAST(:repo_id AS uuid) AND branch = :branch
+                        WHERE repo_id = (SELECT id FROM repositories WHERE CAST(id AS text) = :repo_id OR name = :repo_id LIMIT 1)
+                          AND branch = :branch
                           AND cached_at > now() - INTERVAL '24 hours'
                         LIMIT 1
                     """),
@@ -205,18 +220,23 @@ async def list_repository_files(repo_id: str, branch: str | None = None, fresh: 
 
             root: dict[str, Any] = {"name": "root", "path": "", "type": "directory", "children": {}}
 
+            # Resolve actual repo metadata once
+            repo_meta = await _resolve_repo(conn, repo_id)
+            actual_id = repo_meta["id"]
+            repo_name = repo_meta["name"]
+            repo_url = repo_meta["github_url"]
+
             # ── 2. Default branch: try code_chunks first (fast) ─────────────
             if not branch:
                 rows = (await conn.execute(
                     text("""
                         SELECT cc.file_path
                         FROM code_chunks cc
-                        JOIN repositories r ON (r.name = cc.repo OR CAST(r.id AS text) = cc.repo)
-                        WHERE r.id = CAST(:repo_id AS uuid)
+                        WHERE (cc.repo = :repo_name OR cc.repo = CAST(:actual_id AS text))
                         GROUP BY cc.file_path
                         ORDER BY cc.file_path
                     """),
-                    {"repo_id": repo_id},
+                    {"actual_id": actual_id, "repo_name": repo_name},
                 )).fetchall()
 
                 valid_paths = [
@@ -229,18 +249,11 @@ async def list_repository_files(repo_id: str, branch: str | None = None, fresh: 
                     for file_path in valid_paths:
                         _insert_tree_path(root, file_path)
                     tree = _materialize_tree(root)
-                    await _cache_file_tree(conn, repo_id, branch_key, tree)
+                    await _cache_file_tree(conn, actual_id, branch_key, tree)
                     return tree
 
             # ── 3. GitHub API (always for branch requests, fallback otherwise) ──
-            repo_row = (await conn.execute(
-                text("SELECT github_url, name FROM repositories WHERE id = CAST(:repo_id AS uuid) LIMIT 1"),
-                {"repo_id": repo_id},
-            )).fetchone()
-            if not repo_row:
-                return _materialize_tree(root)
-
-            repo_slug = _repo_from_github_url(repo_row._mapping.get("github_url")) or repo_row._mapping.get("name")
+            repo_slug = _repo_from_github_url(repo_url) or repo_name
             token = await get_github_token()
             if not repo_slug:
                 return _materialize_tree(root)
@@ -285,7 +298,7 @@ async def list_repository_files(repo_id: str, branch: str | None = None, fresh: 
 
             tree = _materialize_tree(root)
             if tree_nodes:
-                await _cache_file_tree(conn, repo_id, branch_key, tree)
+                await _cache_file_tree(conn, actual_id, branch_key, tree)
             return tree
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Repository files unavailable: {exc}")
@@ -299,14 +312,17 @@ async def get_index_status(repo_id: str):
         raise HTTPException(status_code=500, detail="Database engine not initialized")
     try:
         async with engine.connect() as conn:
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+            repo_name = repo["name"]
+
             chunk_row = (await conn.execute(
                 text("""
                     SELECT COUNT(*) as cnt
                     FROM code_chunks cc
-                    JOIN repositories r ON (r.name = cc.repo OR CAST(r.id AS text) = cc.repo)
-                    WHERE r.id = CAST(:repo_id AS uuid)
+                    WHERE (cc.repo = :repo_name OR cc.repo = CAST(:actual_id AS text))
                 """),
-                {"repo_id": repo_id},
+                {"actual_id": actual_id, "repo_name": repo_name},
             )).fetchone()
             chunk_count = chunk_row._mapping["cnt"] if chunk_row else 0
 
@@ -314,13 +330,11 @@ async def get_index_status(repo_id: str):
                 text("""
                     SELECT status, file_path, chunk_count, error_message, updated_at
                     FROM ingestion_jobs
-                    WHERE repo IN (
-                        SELECT name FROM repositories WHERE id = CAST(:repo_id AS uuid)
-                    )
+                    WHERE repo = :repo_name OR repo = CAST(:actual_id AS text)
                     ORDER BY updated_at DESC
                     LIMIT 1
                 """),
-                {"repo_id": repo_id},
+                {"actual_id": actual_id, "repo_name": repo_name},
             )).fetchone()
 
             job = dict(job_row._mapping) if job_row else None
@@ -360,15 +374,17 @@ async def invalidate_file_cache(repo_id: str, branch: str | None = None):
         raise HTTPException(status_code=500, detail="Database engine not initialized")
     try:
         async with engine.begin() as conn:
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
             if branch:
                 await conn.execute(
-                    text("DELETE FROM repo_file_cache WHERE repo_id = CAST(:repo_id AS uuid) AND branch = :branch"),
-                    {"repo_id": repo_id, "branch": branch},
+                    text("DELETE FROM repo_file_cache WHERE repo_id = :actual_id AND branch = :branch"),
+                    {"actual_id": actual_id, "branch": branch},
                 )
             else:
                 await conn.execute(
-                    text("DELETE FROM repo_file_cache WHERE repo_id = CAST(:repo_id AS uuid)"),
-                    {"repo_id": repo_id},
+                    text("DELETE FROM repo_file_cache WHERE repo_id = :actual_id"),
+                    {"actual_id": actual_id},
                 )
         return {"ok": True}
     except Exception as exc:
@@ -385,8 +401,7 @@ async def get_repository_file(repo_id: str, file_path: str, branch: str | None =
         """
         SELECT cc.content, cc.language
         FROM code_chunks cc
-        WHERE (cc.repo = (SELECT name FROM repositories WHERE id = CAST(:repo_id AS uuid))
-               OR cc.repo = CAST(:repo_id AS text))
+        WHERE (cc.repo = :repo_name OR cc.repo = CAST(:actual_id AS text))
           AND cc.file_path = :file_path
         ORDER BY CASE WHEN cc.chunk_type = 'file' THEN 1 ELSE 0 END DESC, cc.start_line ASC
         LIMIT 1
@@ -402,7 +417,7 @@ async def get_repository_file(repo_id: str, file_path: str, branch: str | None =
                upvotes,
                created_at
         FROM annotations
-        WHERE repo_id = CAST(:repo_id AS uuid)
+        WHERE repo_id = :actual_id
           AND file_path = :file_path
         ORDER BY COALESCE(start_line, end_line, 1), created_at DESC
         """
@@ -411,21 +426,19 @@ async def get_repository_file(repo_id: str, file_path: str, branch: str | None =
     repo_slug = None
     try:
         async with engine.connect() as conn:
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+            repo_name = repo["name"]
+            repo_url = repo["github_url"]
+
             # If a specific branch is requested, we skip code_chunks completely
             # since code_chunks only reflects the default indexed branch.
             row = None
             if not branch:
-                content_result = await conn.execute(content_query, {"repo_id": repo_id, "file_path": file_path})
+                content_result = await conn.execute(content_query, {"actual_id": actual_id, "repo_name": repo_name, "file_path": file_path})
                 row = content_result.fetchone()
                 
-            repo_result = await conn.execute(
-                text("SELECT github_url, name FROM repositories WHERE id = CAST(:repo_id AS uuid) LIMIT 1"),
-                {"repo_id": repo_id},
-            )
-            repo_row = repo_result.fetchone()
-            repo_slug = _repo_from_github_url(repo_row._mapping.get("github_url")) if repo_row else None
-            if not repo_slug and repo_row:
-                repo_slug = repo_row._mapping.get("name")
+            repo_slug = _repo_from_github_url(repo_url) or repo_name
 
             if not row:
                 # Fallback: load raw file from GitHub.
@@ -451,7 +464,7 @@ async def get_repository_file(repo_id: str, file_path: str, branch: str | None =
                         raise HTTPException(status_code=404, detail="File not found on GitHub")
                 raise HTTPException(status_code=404, detail="File not found")
             
-            annotation_result = await conn.execute(annotation_query, {"repo_id": repo_id, "file_path": file_path})
+            annotation_result = await conn.execute(annotation_query, {"actual_id": actual_id, "file_path": file_path})
             annotations = [dict(r._mapping) for r in annotation_result.fetchall()]
     except HTTPException:
         raise
@@ -480,15 +493,19 @@ async def list_repository_prs(repo_id: str, limit: int = 25):
         SELECT pr.repo, pr.number, pr.title, pr.summary, pr.author, pr.merged_at, pr.created_at
         FROM pull_requests pr
         JOIN repositories r ON (r.name = pr.repo OR CAST(r.id AS text) = pr.repo)
-        WHERE r.id = CAST(:repo_id AS uuid)
+        WHERE r.id = :actual_id
         ORDER BY pr.merged_at DESC NULLS LAST, pr.created_at DESC
         LIMIT :limit
         """
     )
     try:
         async with engine.connect() as conn:
-            result = await conn.execute(query, {"repo_id": repo_id, "limit": max(1, min(limit, 100))})
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+            result = await conn.execute(query, {"actual_id": actual_id, "limit": max(1, min(limit, 100))})
             return [dict(row._mapping) for row in result.fetchall()]
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Repository PR history unavailable: {exc}")
 
@@ -504,15 +521,19 @@ async def list_ingestion_jobs(repo_id: str, limit: int = 30):
         SELECT ij.id, ij.repo, ij.file_path, ij.status, ij.chunk_count, ij.error_message, ij.created_at, ij.updated_at
         FROM ingestion_jobs ij
         JOIN repositories r ON (r.name = ij.repo OR CAST(r.id AS text) = ij.repo)
-        WHERE r.id = CAST(:repo_id AS uuid)
+        WHERE r.id = :actual_id
         ORDER BY ij.updated_at DESC
         LIMIT :limit
         """
     )
     try:
         async with engine.connect() as conn:
-            result = await conn.execute(query, {"repo_id": repo_id, "limit": max(1, min(limit, 100))})
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+            result = await conn.execute(query, {"actual_id": actual_id, "limit": max(1, min(limit, 100))})
             return [dict(row._mapping) for row in result.fetchall()]
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Ingestion job status unavailable: {exc}")
 
@@ -526,16 +547,12 @@ async def trigger_repository_index(repo_id: str, background_tasks: BackgroundTas
 
     try:
         async with engine.connect() as conn:
-            repo_result = await conn.execute(
-                text("SELECT github_url, name FROM repositories WHERE id = CAST(:repo_id AS uuid) LIMIT 1"),
-                {"repo_id": repo_id},
-            )
-            repo_row = repo_result.fetchone()
-            if not repo_row:
-                raise HTTPException(status_code=404, detail="Repository not found")
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+            repo_name = repo["name"]
+            repo_url = repo["github_url"]
 
-            row_data = repo_row._mapping
-            repo_slug = _repo_from_github_url(row_data.get("github_url")) or row_data.get("name")
+            repo_slug = _repo_from_github_url(repo_url) or repo_name
             if not repo_slug:
                 raise HTTPException(status_code=400, detail="Repository has no GitHub URL configured")
 
@@ -549,7 +566,7 @@ async def trigger_repository_index(repo_id: str, background_tasks: BackgroundTas
             )
             await conn.commit()
 
-            background_tasks.add_task(_run_ingestion, engine, job_id, repo_id, repo_slug)
+            background_tasks.add_task(_run_ingestion, engine, job_id, str(actual_id), repo_slug)
 
             return {
                 "status": "indexing_started",
