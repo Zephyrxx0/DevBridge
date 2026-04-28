@@ -6,7 +6,6 @@ import Link from "next/link";
 import { BookOpen, ChevronLeft, Link2, Plus, Search } from "lucide-react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import LinkExtension from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
 import { Markdown } from "tiptap-markdown";
@@ -74,17 +73,13 @@ export default function NotesPage() {
       StarterKit,
       Markdown,
       Typography,
-      LinkExtension.configure({
-        openOnClick: false,
-        autolink: true,
-        linkOnPaste: true,
-      }),
       Placeholder.configure({
         placeholder: "Start writing a note...",
       }),
     ],
     content: "",
     autofocus: true,
+    immediatelyRender: false,
   });
 
   useEffect(() => {

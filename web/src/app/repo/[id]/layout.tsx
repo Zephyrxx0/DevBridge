@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
@@ -48,12 +48,20 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
   const { theme, setTheme } = useTheme();
   const { repo, loading } = useRepo();
   
-  const isDark = theme !== "light";
-
   const currentSection = useMemo(() => {
     const suffix = pathname.replace(basePath, "").split("/").filter(Boolean)[0] ?? "";
     return PAGE_LABELS[suffix] ?? "Workspace";
   }, [pathname, basePath]);
+
+  useEffect(() => {
+    const repoId = basePath.split("/").at(-1);
+    if (!repoId) return;
+    const key = "devbridge.recentRepos";
+    const existing = JSON.parse(localStorage.getItem(key) ?? "[]") as string[];
+    const next = [repoId, ...existing.filter((id) => id !== repoId)].slice(0, 12);
+    localStorage.setItem(key, JSON.stringify(next));
+    localStorage.setItem("devbridge.lastRepoId", repoId);
+  }, [basePath]);
 
   if (!isRootWorkspace) {
     return <>{children}</>;
@@ -112,10 +120,11 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
             variant="ghost"
             size="icon-sm"
             aria-label="Toggle theme"
-            onClick={() => setTheme(isDark ? "light" : "dark")}
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             className="h-9 w-9 border border-[var(--border)] text-[var(--foreground-muted)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)]"
           >
-            {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            <Sun className="hidden size-4 dark:block" />
+            <Moon className="block size-4 dark:hidden" />
           </Button>
           <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">
             Last indexed: {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "never"}

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { MenuIcon, Moon, Sun } from 'lucide-react';
+import { DollarSign, MenuIcon, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Sheet, SheetContent, SheetFooter } from '@/components/sheet';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -12,30 +12,43 @@ import { AuthButton } from './auth-button';
 export function FloatingHeader() {
 	const [open, setOpen] = React.useState(false);
 	const [mounted, setMounted] = React.useState(false);
+	const [lastRepo, setLastRepo] = React.useState('demo');
 	React.useEffect(() => setMounted(true), []);
+	React.useEffect(() => {
+		const lastRepoId = localStorage.getItem('devbridge.lastRepoId');
+		if (lastRepoId) setLastRepo(lastRepoId);
+	}, []);
 	const { theme, setTheme } = useTheme();
 	const isDark = mounted ? theme !== 'light' : true;
 
 	const links = [
 		{
-			label: 'Workspace',
-			href: '/repo/demo',
+			label: 'Workspaces',
+			href: '/dashboard',
 		},
 		{
 			label: 'Map',
-			href: '/repo/demo/map',
+			href: `/repo/${lastRepo}/map`,
 		},
 		{
 			label: 'Search',
-			href: '/repo/demo/search',
+			href: `/repo/${lastRepo}/search`,
 		},
 		{
 			label: 'Annotations',
-			href: '/repo/demo/annotations',
+			href: `/repo/${lastRepo}/annotations`,
 		},
 		{
 			label: 'PRs',
-			href: '/repo/demo/pr',
+			href: `/repo/${lastRepo}/pr`,
+		},
+		{
+			label: 'Pricing',
+			href: '/pricing',
+		},
+		{
+			label: 'Project GitHub',
+			href: `https://github.com/${lastRepo}`,
 		},
 	];
 
@@ -43,7 +56,7 @@ export function FloatingHeader() {
 		<header
 			className={cn(
 				'sticky top-4 z-50',
-				'mx-auto w-full max-w-5xl rounded-2xl',
+				'mx-auto w-full max-w-6xl rounded-2xl',
 				'border border-white/[0.08]',
 				'bg-[color-mix(in_oklab,var(--surface-1)_25%,transparent)]',
 				'backdrop-blur-[24px] backdrop-saturate-[180%]',
@@ -69,12 +82,16 @@ export function FloatingHeader() {
 						<p className="text-xs text-muted-foreground">Codebase intelligence</p>
 					</div>
 				</Link>
-				<div className="hidden items-center gap-1 lg:flex">
+				<div className="hidden items-center gap-1 xl:flex">
 					{links.map((link) => (
-						<Link key={link.href} className={buttonVariants({ variant: 'ghost', size: 'sm' })} href={link.href}>
+						<Link key={link.href} className={buttonVariants({ variant: 'ghost', size: 'sm' })} href={link.href} target={link.href.startsWith('http') ? '_blank' : undefined} rel={link.href.startsWith('http') ? 'noreferrer' : undefined}>
 							{link.label}
 						</Link>
 					))}
+				</div>
+				<div className="hidden items-center gap-2 rounded-xl border border-white/10 bg-black/15 px-2 py-1 text-xs text-[var(--foreground-muted)] lg:flex">
+					<DollarSign className="size-3" />
+					<span>Pro trial active</span>
 				</div>
 				<div className="flex items-center gap-2">
 					<Button
@@ -91,12 +108,12 @@ export function FloatingHeader() {
 						<AuthButton />
 					</div>
 					<Sheet open={open} onOpenChange={setOpen}>
-						<Button
-							size="icon"
-							variant="outline"
-							onClick={() => setOpen(!open)}
-							className="lg:hidden"
-						>
+					<Button
+						size="icon"
+						variant="outline"
+						onClick={() => setOpen(!open)}
+						className="xl:hidden"
+					>
 							<MenuIcon className="size-4" />
 						</Button>
 					<SheetContent
@@ -105,26 +122,28 @@ export function FloatingHeader() {
 						side="left"
 					>
 							<div className="grid gap-y-2 overflow-y-auto px-4 pt-12 pb-5">
-								{links.map((link) => (
-									<Link
-										key={link.href}
+										{links.map((link) => (
+											<Link
+												key={link.href}
 										className={buttonVariants({
 											variant: 'ghost',
 											className: 'justify-start',
 										})}
-										href={link.href}
-									>
+												href={link.href}
+												target={link.href.startsWith('http') ? '_blank' : undefined}
+												rel={link.href.startsWith('http') ? 'noreferrer' : undefined}
+											>
 										{link.label}
 									</Link>
 								))}
 							</div>
 						<SheetFooter>
-							<Link href="/repo/demo">
+							<Link href="/dashboard">
 								<Button variant="outline" className="w-full">
-									Open repo
+									Open workspaces
 								</Button>
 							</Link>
-							<Link href="/repo/demo/map">
+							<Link href={`/repo/${lastRepo}`}>
 								<Button className="w-full">View repo map</Button>
 							</Link>
 						</SheetFooter>

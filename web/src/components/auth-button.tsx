@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogIn, LogOut, User as UserIcon } from "lucide-react";
+import { LogIn, LogOut, User as UserIcon, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { User } from "@supabase/supabase-js";
 
@@ -29,15 +29,6 @@ export function AuthButton() {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  const signIn = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-  };
-
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -46,10 +37,17 @@ export function AuthButton() {
 
   if (!user) {
     return (
-      <Button variant="outline" size="sm" onClick={signIn} className="h-9 gap-2 rounded-lg px-3.5 border-white/[0.08] bg-[color-mix(in_oklab,var(--surface-2)_30%,transparent)] hover:bg-white/[0.06]">
-        <LogIn className="size-4" />
-        <span className="hidden sm:inline">Sign In</span>
-      </Button>
+      <div className="flex flex-col items-end gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          render={<Link href="/signin" />}
+          className="h-9 gap-2 rounded-lg border-white/[0.08] bg-[color-mix(in_oklab,var(--surface-2)_30%,transparent)] px-3.5 hover:bg-white/[0.06]"
+        >
+          <LogIn className="size-4" />
+          <span className="hidden sm:inline">Sign In</span>
+        </Button>
+      </div>
     );
   }
 
@@ -72,6 +70,10 @@ export function AuthButton() {
         <DropdownMenuItem render={<Link href="/dashboard" />} className="focus:bg-white/5 cursor-pointer">
           <UserIcon className="mr-2 h-4 w-4" />
           <span>Dashboard</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/profile" />} className="focus:bg-white/5 cursor-pointer">
+          <Settings2 className="mr-2 h-4 w-4" />
+          <span>Edit Profile</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={signOut} className="focus:bg-red-500/10 cursor-pointer text-red-500">
           <LogOut className="mr-2 h-4 w-4" />

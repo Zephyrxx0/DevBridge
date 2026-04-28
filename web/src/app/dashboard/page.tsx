@@ -1,85 +1,130 @@
-import { createClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
-import { AddRepoModal } from "@/components/add-repo-modal";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { GitBranch, ArrowRight, Clock } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+"use client";
 
-export const metadata = {
-  title: "Dashboard - DevBridge",
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Clock3, GitBranch, LayoutGrid, List } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { AddRepoModal } from "@/components/add-repo-modal";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+
+type Repo = {
+  id: string;
+  name: string;
+  github_url: string;
+  created_at: string;
 };
 
-export default async function DashboardPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+type ViewMode = "detailed" | "compact";
 
-  if (!user) {
-    redirect("/");
-  }
+export default function DashboardPage() {
+  const supabase = createClient();
+  const [repos, setRepos] = useState<Repo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>("detailed");
 
-  const { data: repos } = await supabase
-    .from("repositories")
-    .select("*")
-    .order("created_at", { ascending: false });
+  useEffect(() => {
+    async function load() {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        window.location.assign("/signin");
+        return;
+      }
+
+      const { data } = await supabase
+        .from("repositories")
+        .select("id,name,github_url,created_at")
+        .order("created_at", { ascending: false });
+
+      const raw = (data ?? []) as Repo[];
+      const recent = JSON.parse(localStorage.getItem("devbridge.recentRepos") ?? "[]") as string[];
+      const byRecent = new Map(recent.map((id, idx) => [id, idx]));
+      raw.sort((a, b) => (byRecent.get(a.id) ?? 9999) - (byRecent.get(b.id) ?? 9999));
+      setRepos(raw);
+      setLoading(false);
+    }
+
+    load();
+  }, [supabase]);
+
+  const empty = !loading && repos.length === 0;
+  const title = useMemo(() => (viewMode === "compact" ? "Compact view" : "Detailed view"), [viewMode]);
 
   return (
-    <div className="flex flex-col gap-8 pb-12">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-4xl font-bold tracking-tight">Your Workspaces</h1>
-          <p className="mt-2 text-muted-foreground">Select a repository to explore, chat, and take notes.</p>
-        </div>
-        <AddRepoModal />
-      </div>
-
-      {!repos || repos.length === 0 ? (
-        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-[color-mix(in_oklab,var(--surface-1)_40%,transparent)] backdrop-blur-sm p-8 text-center">
-          <div className="mb-4 rounded-full bg-white/5 p-4 ring-1 ring-white/10">
-            <GitBranch className="h-4 w-4 mr-1 text-muted-foreground" />
+    <div className="pb-12">
+      <section className="rounded-3xl border border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_45%,transparent)] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.25)] backdrop-blur-2xl md:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-[var(--foreground-subtle)]">Workspace hub</p>
+            <h1 className="font-heading text-5xl font-semibold">Choose a project</h1>
+            <p className="mt-2 text-[var(--foreground-muted)]">Flow: workspace to project to chat. Recent projects appear first.</p>
           </div>
-          <h2 className="font-heading text-2xl font-semibold">No repositories connected</h2>
-          <p className="mt-2 max-w-sm text-balance text-muted-foreground">
-            Connect your first GitHub repository to start mapping the codebase and adding annotations.
-          </p>
-          <div className="mt-6">
+          <div className="flex items-center gap-2">
+            <div className="inline-flex rounded-xl border border-white/10 bg-black/20 p-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("detailed")}
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${viewMode === "detailed" ? "bg-white/10 text-white" : "text-[var(--foreground-muted)]"}`}
+              >
+                <LayoutGrid className="size-4" /> Detailed
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("compact")}
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${viewMode === "compact" ? "bg-white/10 text-white" : "text-[var(--foreground-muted)]"}`}
+              >
+                <List className="size-4" /> Compact
+              </button>
+            </div>
             <AddRepoModal />
           </div>
         </div>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {repos.map((repo) => (
-            <Card key={repo.id} className="group relative flex flex-col hover:border-brand/50">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="rounded-md bg-white/5 p-2 ring-1 ring-white/10">
-                    <GitBranch className="size-5" />
+
+        <p className="mt-4 text-sm text-[var(--foreground-subtle)]">{title}</p>
+
+        {loading ? (
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {[1, 2, 3].map((i) => <div key={i} className="h-44 animate-pulse rounded-2xl bg-white/5" />)}
+          </div>
+        ) : null}
+
+        {empty ? (
+          <div className="mt-8 rounded-2xl border border-dashed border-white/15 bg-black/20 p-10 text-center">
+            <GitBranch className="mx-auto mb-4 size-8 text-[var(--foreground-subtle)]" />
+            <h2 className="font-heading text-2xl">No workspaces connected</h2>
+            <p className="mt-2 text-[var(--foreground-muted)]">Connect a GitHub repository to start chat, notes, and graph workflows.</p>
+          </div>
+        ) : null}
+
+        {!loading && repos.length > 0 ? (
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {repos.map((repo) => (
+              <Card key={repo.id} className="group border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_55%,transparent)] backdrop-blur-xl hover:border-[var(--brand)]/40">
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3">
+                    <CardTitle className={`${viewMode === "compact" ? "text-xl" : "text-2xl"} truncate`}>{repo.name}</CardTitle>
+                    <GitBranch className="size-4 text-[var(--foreground-subtle)]" />
                   </div>
-                  <CardTitle className="truncate text-xl">{repo.name}</CardTitle>
-                </div>
-                <CardDescription className="flex items-center gap-1.5 pt-2">
-                  <Clock className="size-3.5" />
-                  Added {new Date(repo.created_at).toLocaleDateString()}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
-                  Ready to explore
-                </div>
-              </CardContent>
-              <CardFooter className="pt-4 border-t border-border">
-                <Link href={`/repo/${repo.id}`} className="w-full">
-                  <Button variant="ghost" className="w-full justify-between hover:bg-white/5 group-hover:text-brand-glow">
-                    Open Workspace
-                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-[var(--foreground-muted)]">
+                  <p className="line-clamp-1">{repo.github_url}</p>
+                  {viewMode === "detailed" ? (
+                    <p className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" /> Added {new Date(repo.created_at).toLocaleDateString()}</p>
+                  ) : null}
+                </CardContent>
+                <CardFooter>
+                  <Link href={`/repo/${repo.id}`} className="w-full">
+                    <Button className="w-full justify-between" variant="ghost">
+                      Open Chat
+                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : null}
+      </section>
     </div>
   );
 }

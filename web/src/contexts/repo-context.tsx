@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 
 export interface RepoMetadata {
@@ -31,14 +31,44 @@ export function RepoProvider({ children, repoId }: { children: React.ReactNode; 
   const [repo, setRepo] = useState<RepoMetadata | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+
+  const isUuid = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+  const toError = (value: unknown, fallback: string) => {
+    if (value instanceof Error) return value;
+    if (typeof value === "string" && value.trim()) return new Error(value);
+    if (value && typeof value === "object") {
+      const obj = value as Record<string, unknown>;
+      const message = [obj.message, obj.error_description, obj.details, obj.hint]
+        .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+        .join(" | ");
+      if (message) return new Error(message);
+    }
+    return new Error(fallback);
+  };
 
   useEffect(() => {
     async function fetchRepo() {
       if (!repoId) return;
 
+      if (!isUuid(repoId)) {
+        setRepo({
+          id: repoId,
+          user_id: "demo",
+          name: repoId === "demo" ? "Demo Repository" : repoId,
+          url: "",
+          created_at: new Date().toISOString(),
+        });
+        setError(null);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
+        setError(null);
         const { data, error } = await supabase
           .from("repositories")
           .select("*")
@@ -46,13 +76,14 @@ export function RepoProvider({ children, repoId }: { children: React.ReactNode; 
           .single();
 
         if (error) {
-          throw error;
+          throw toError(error, "Failed to fetch repository");
         }
 
         setRepo(data as RepoMetadata);
       } catch (err) {
-        console.error("Error fetching repo:", err);
-        setError(err instanceof Error ? err : new Error("Failed to fetch repository"));
+        const normalizedError = toError(err, "Failed to fetch repository");
+        console.error("Error fetching repo:", normalizedError.message);
+        setError(normalizedError);
       } finally {
         setLoading(false);
       }
