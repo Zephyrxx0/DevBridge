@@ -12,7 +12,7 @@ DevBridge prioritizes contextually grounded understanding and intent retrieval o
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] **Interactive Frontend**: Next.js dashboard with SSE streaming responses. *(Validated in Phase 06: basic-chat-interface-sse)*
 
 ### Active
 
@@ -20,7 +20,7 @@ DevBridge prioritizes contextually grounded understanding and intent retrieval o
 - [ ] **GCP Infrastructure**: Serverless backend on Cloud Run, GCS snapshots, and Pub/Sub queues.
 - [ ] **Ingestion Pipeline**: Automated file parsing and semantic chunking using Tree-sitter.
 - [ ] **RAG Pipeline**: Vector search integration using Supabase and `pgvector`.
-- [ ] **Interactive Frontend**: Next.js dashboard with Monaco editor and SSE for streaming responses.
+- [ ] **Interactive Frontend+**: Extend dashboard with Monaco editor and richer streaming controls.
 - [ ] **Annotation System**: Persistent human-written metadata attached to code chunks.
 
 ### Out of Scope
@@ -66,4 +66,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-15 after initialization*
+*Last updated: 2026-04-25 after phase 06 completion*

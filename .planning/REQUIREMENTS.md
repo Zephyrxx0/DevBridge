@@ -37,5 +37,21 @@
 - [ ] Supabase project with `pgvector` enabled.
 - [ ] GitHub Actions for deployment to Cloud Run.
 
+## Milestone v0.1 Gap Traceability
+
+| Milestone Requirement | Current Status | Gap Evidence | Planned Closure Phase |
+|-----------------------|----------------|--------------|-----------------------|
+| MR-01 E2E RAG pipeline with basic ingestion + search | **verified** (Phase 13) | E2E test framework in place; ingest→chunk pipeline verified via pytest | Phase 12 (retrieval wiring) |
+| MR-02 Supabase pgvector foundation | **verified** | pgvector extension + schema confirmed in Phase 02; similarity search via langchain | Phase 12 |
+| FR-AI-02 Search agent over pgvector + metadata | partial | E2E test validates vector pipeline; orchestrator tool wiring pending Phase 12 | Phase 12 |
+| Runtime cloud config consistency | **verified** (Phase 13) | GOOGLE_CLOUD_PROJECT unified as single source of truth per Phase 13-02 | — |
+
+### Gap Closure Acceptance Criteria
+
+- [x] Runtime path supports ingest -> chunk -> vector persist without manual test harness. *(verified by Phase 13 E2E test)*
+- [ ] Orchestrator search tool executes real vector similarity query and returns grounded hits. *(pending Phase 12)*
+- [x] End-to-end test validates ingest/index/search flow from API boundary. *(verified: 1 passed, 1 skipped)*
+- [x] Cloud project env configuration is unified across config and orchestrator modules. *(verified per Phase 13-02)*
+
 ---
-*Last updated: 2026-04-15 after initialization research*
+*Last updated: 2026-04-18 after milestone gap planning*

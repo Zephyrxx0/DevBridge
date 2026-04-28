@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+langgraph==1.1.7
+langchain-google-vertexai
+langchain-google-genai
+python-dotenv
+pydantic
+google-cloud-aiplatform
+google-cloud-secret-manager==2.27.0
+pydantic-settings==2.13.1
+python-dotenv>=1.0.0
+langchain-postgres==0.0.17
+psycopg[binary]==3.3.3
+sqlalchemy>=2.0.0
+asyncpg>=0.29.0
+tree-sitter-language-pack>=1.6.2
+fastapi-cache2[redis]==0.2.2
