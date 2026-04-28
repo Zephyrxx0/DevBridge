@@ -1,0 +1,372 @@
+1. Remove the border when typing in the notes section.
+2. The graph doesn't generate, fix that
+
+---
+
+[Terminal 71b600b0-53b0-4ba0-bc32-55d1de642184 notification: command completed with exit code 1. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+INFO:api.agents.orchestrator:GOOGLE_CLOUD_PROJECT found (handy-curve-491715-e9), initializing ChatGoogleGenerativeAI
+INFO:api.agents.orchestrator:Health check passed. LLM type: ChatGoogleGenerativeAI
+INFO:numexpr.utils:Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+INFO:numexpr.utils:NumExpr defaulting to 16 threads.
+INFO:     Started server process [35340]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8000): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal 48bd143a-5cef-41a4-ae42-8835b1463e69 notification: command completed with exit code 1. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+INFO:api.agents.orchestrator:GOOGLE_CLOUD_PROJECT found (handy-curve-491715-e9), initializing ChatGoogleGenerativeAI
+INFO:api.agents.orchestrator:Health check passed. LLM type: ChatGoogleGenerativeAI
+INFO:numexpr.utils:Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+INFO:numexpr.utils:NumExpr defaulting to 16 threads.
+INFO:     Started server process [18396]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8000): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal cea8386d-4000-4edd-ba06-53396d71521a notification: command completed with exit code 0. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> curl http://127.0.0.1:8000/api/health
+{"detail":"Not Found"}
+
+/d/codes/personal/devbridge
+> curl -v http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files
+*   Trying 127.0.0.1:8000...
+* Established connection to 127.0.0.1 (127.0.0.1 port 8000) from 127.0.0.1 port 57084 
+* using HTTP/1.x
+> GET /repo/813710b4-420b-4141-aacd-eaf31b6911c8/files HTTP/1.1
+> Host: 127.0.0.1:8000
+> User-Agent: curl/8.16.0
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 200 OK
+< date: Tue, 28 Apr 2026 15:40:26 GMT
+< server: uvicorn
+< content-length: 44
+< content-type: application/json
+< 
+{"name":"root","path":"","type":"directory"}* Connection #0 to host 127.0.0.1:8000 left intact
+
+/d/codes/personal/devbridge
+> curl http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files
+{"name":"root","path":"","type":"directory"}
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal e63a2afd-2e13-4d7a-b533-ac82147bc464 notification: command completed with exit code 0. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> python -c "import asyncio; from api.db.session import get_engine; from sqlalchemy import text; async def main(): engine = get_engine(); async with engine.connect() as conn: result = await conn.execute(text(\"SELECT github_url, name FROM repositories WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid) LIMIT 1\")); print(result.fetchone()._mapping); asyncio.run(main())"
+ParserError: 
+Line |
+   1 |  … ies WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid) L …
+     |                                                               ~~
+     | Unexpected token 'AS' in expression or statement.
+
+/d/codes/personal/devbridge
+> python -c 'import asyncio; from api.db.session import engine; print(engine)'
+None
+
+/d/codes/personal/devbridge
+> cat << 'EOF' > test_db.py
+ParserError: 
+Line |
+   1 |  cat << 'EOF' > test_db.py
+     |       ~
+     | Missing file specification after redirection operator.
+
+/d/codes/personal/devbridge
+> import asyncio
+import: The term 'import' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> from api.db.session import init_db, get_engine
+ParserError: 
+Line |
+   1 |  from api.db.session import init_db, get_engine
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> from sqlalchemy import text
+ParserError: 
+Line |
+   1 |  from sqlalchemy import text
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> async def main():
+ParserError: 
+Line |
+   1 |  async def main():
+     |                 ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     await init_db()
+ParserError: 
+Line |
+   1 |      await init_db()
+     |                    ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     engine = get_engine()
+ParserError: 
+Line |
+   1 |      engine = get_engine()
+     |                          ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     async with engine.connect() as conn:
+ParserError: 
+Line |
+   1 |      async with engine.connect() as conn:
+     |                                ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>         result = await conn.execute(text("SELECT * FROM repositories WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid)"))
+text: The term 'text' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>         row = result.fetchone()
+ParserError: 
+Line |
+   1 |          row = result.fetchone()
+     |                                ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>         if row:
+ParserError: 
+Line |
+   1 |          if row:
+     |            ~
+     | Missing '(' after 'if' in if statement.
+
+/d/codes/personal/devbridge
+>             print(dict(row._mapping))
+row._mapping: The term 'row._mapping' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>         else:
+else:: The term 'else:' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>             print("Not found")
+Unable to initialize device PRN
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> asyncio.run(main())
+ParserError: 
+Line |
+   1 |  asyncio.run(main())
+     |                   ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+> EOF
+EOF: The term 'EOF' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> python test_db.py  
+C:\Users\tronl\AppData\Local\Programs\Python\Python313\python.exe: can't open file 'D:\\Codes\\Personal\\DevBridge\\test_db.py': [Errno 2] No such file or directory
+
+/d/codes/personal/devbridge
+> Set-Content -Path test_db.py -Value @'                                        
+>> import asyncio                               
+>> from api.db.session import init_db, get_engine
+>> from sqlalchemy import text
+>> 
+>> async def main():
+>>     await init_db()
+>>     engine = get_engine()
+>>     async with engine.connect() as conn:
+>>         result = await conn.execute(text("SELECT * FROM repositories WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid)"))
+>>         row = result.fetchone()
+>>         if row:
+>>             print(dict(row._mapping))
+>>         else:
+>>             print("Not found")
+>> 
+>> asyncio.run(main())
+>> '@
+
+/d/codes/personal/devbridge
+> python test_db.py  
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 2, in <module>
+    from api.db.session import init_db, get_engine
+ImportError: cannot import name 'init_db' from 'api.db.session' (D:\Codes\Personal\DevBridge\api\db\session.py)
+
+/d/codes/personal/devbridge
+> python test_db.py                                                 
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 2, in <module>
+    from api.db.session import init_db, get_engine
+ImportError: cannot import name 'init_db' from 'api.db.session' (D:\Codes\Personal\DevBridge\api\db\session.py)
+
+/d/codes/personal/devbridge
+> cat api/db/session.py | grep -i init
+grep: The term 'grep' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+[General Feedback]
+  The most similar commands are:
+    ➤ gres
+
+
+/d/codes/personal/devbridge
+> Get-Content api/db/session.py | Select-String "init"                  
+
+async def init_db_pool(connection_string: str) -> AsyncEngine:
+        raise RuntimeError("FATAL: connection_string is EMPTY in 
+init_db_pool!")
+
+
+/d/codes/personal/devbridge
+> Set-Content -Path test_db.py -Value @'                                        
+>> import asyncio                               
+>> from api.core.config import settings
+>> from api.db.session import init_db_pool, get_engine
+>> from sqlalchemy import text
+>> 
+>> async def main():
+>>     await init_db_pool(settings.DATABASE_URL)
+>>     engine = get_engine()
+>>     async with engine.connect() as conn:
+>>         result = await conn.execute(text("SELECT github_url, name FROM repositories WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid) LIMIT 1"))
+>>         row = result.fetchone()
+>>         if row:
+>>             print(dict(row._mapping))
+>>         else:
+>>             print("Not found")
+>> 
+>> asyncio.run(main())
+>> '@
+
+/d/codes/personal/devbridge
+> python test_db.py  
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 17, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 7, in main
+    await init_db_pool(settings.DATABASE_URL)
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\main.py", line 1026, in __getattr__
+    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+AttributeError: 'Settings' object has no attribute 'DATABASE_URL'
+
+/d/codes/personal/devbridge
+> python test_db.py                                                 
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 17, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 7, in main
+    await init_db_pool(settings.DATABASE_URL)
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\main.py", line 1026, in __getattr__
+    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+AttributeError: 'Settings' object has no attribute 'DATABASE_URL'
+
+/d/codes/personal/devbridge
+> Remove-Item test_db.py -ErrorAction SilentlyContinue
+
+/d/codes/personal/devbridge
+> curl -v http://127.0.0.1:8000/repo/1/files                                
+*   Trying 127.0.0.1:8000...
+* Established connection to 127.0.0.1 (127.0.0.1 port 8000) from 127.0.0.1 port 52295 
+* using HTTP/1.x
+> GET /repo/1/files HTTP/1.1
+> Host: 127.0.0.1:8000
+> User-Agent: curl/8.16.0
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 503 Service Unavailable
+< date: Tue, 28 Apr 2026 15:44:32 GMT
+< server: uvicorn
+< content-length: 550
+< content-type: application/json
+< 
+{"detail":"Repository files unavailable: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.DataError'>: invalid input for query argument $1: '1' (invalid UUID '1': length must be between 32..36 characters, got 1)\n[SQL: \n        SELECT cc.file_path\n        FROM code_chunks cc\n        JOIN repositories r ON r.name = cc.repo\n        WHERE r.id = CAST($1 AS uuid)\n        GROUP BY cc.file_path\n        ORDER BY cc.file_path\n        ]\n[parameters: ('1',)]\n(Background on this error at: https://sqlalche.me/e/20/dbapi)"}* Connection #0 to host 127.0.0.1:8000 left intact
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal fefdd9a5-9289-471b-a19a-12704f992b9b notification: command completed with exit code 0. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> curl -s http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/ | ConvertFrom-Json
+
+/d/codes/personal/devbridge
+>
