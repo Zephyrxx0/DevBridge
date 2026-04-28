@@ -12,7 +12,7 @@ test.describe('Full Ingestion Loop E2E', () => {
     // Ensure clean state
     try {
       execSync(`python ${path.join(rootDir, 'scripts/cleanup_e2e.py')} --repo ${repoName}`, { stdio: 'inherit' });
-    } catch (e) {
+    } catch {
       console.warn('Cleanup failed, might be first run or missing credentials. Continuing...');
     }
   });

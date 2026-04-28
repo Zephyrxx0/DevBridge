@@ -38,6 +38,7 @@ CLAUDE.md
 *.log
 *.csv
 DEVBRIDGE_SPEC.md
+implementation_plan.md
 
 #Critical
 .env

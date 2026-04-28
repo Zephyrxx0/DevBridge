@@ -116,9 +116,9 @@ export function CodebaseGraph() {
     // Repulsion between all pairs
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
-        let dx = nodes[j].x - nodes[i].x;
-        let dy = nodes[j].y - nodes[i].y;
-        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const dx = nodes[j].x - nodes[i].x;
+        const dy = nodes[j].y - nodes[i].y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
         const force = REPULSION / (dist * dist);
         const fx = (dx / dist) * force;
         const fy = (dy / dist) * force;
@@ -133,9 +133,9 @@ export function CodebaseGraph() {
     for (const edge of DEMO_EDGES) {
       const a = nodes[edge.source];
       const b = nodes[edge.target];
-      let dx = b.x - a.x;
-      let dy = b.y - a.y;
-      let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
       const force = (dist - REST_LENGTH) * ATTRACTION;
       const fx = (dx / dist) * force;
       const fy = (dy / dist) * force;
