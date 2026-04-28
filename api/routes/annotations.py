@@ -1,11 +1,13 @@
 from typing import List, Optional
 from datetime import datetime
 import logging
+import asyncio
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import text
 from api.db.session import get_engine
+from api.db.vector_store import vector_db
 
 router = APIRouter(tags=["annotations"])
 logger = logging.getLogger(__name__)
@@ -69,10 +71,22 @@ async def create_annotation(annotation: AnnotationCreate, request: Request):
     if engine is None:
         raise HTTPException(status_code=500, detail="Database engine not initialized")
         
+    embedding = None
+    try:
+        if not vector_db._vectorstore:
+            vector_db.initialize()
+        if vector_db._vectorstore:
+            embedding = await asyncio.to_thread(
+                vector_db._vectorstore.embedding_service.embed_query,
+                annotation.comment,
+            )
+    except Exception:
+        logger.warning("Annotation embedding generation failed; continuing without embedding")
+
     async with engine.connect() as conn:
         insert_sql = text("""
-            INSERT INTO annotations (repo_id, file_path, start_line, end_line, author_id, comment, tags)
-            VALUES (:repo_id, :file_path, :start_line, :end_line, :author_id, :comment, :tags)
+            INSERT INTO annotations (repo_id, file_path, start_line, end_line, author_id, comment, tags, embedding)
+            VALUES (:repo_id, :file_path, :start_line, :end_line, :author_id, :comment, :tags, CAST(:embedding AS vector))
             RETURNING id, repo_id, file_path, start_line, end_line, author_id, comment, tags, upvotes, created_at
         """)
         
@@ -84,7 +98,8 @@ async def create_annotation(annotation: AnnotationCreate, request: Request):
                 "end_line": annotation.end_line,
                 "author_id": user_id,
                 "comment": annotation.comment,
-                "tags": annotation.tags or []
+                "tags": annotation.tags or [],
+                "embedding": embedding,
             })
             await conn.commit()
             row = result.fetchone()

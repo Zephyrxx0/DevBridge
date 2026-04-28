@@ -11,6 +11,9 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.tools import tool
+from sqlalchemy import text
+
+from api.db.session import get_engine
 
 from api.db.models import Annotation
 
@@ -149,6 +152,120 @@ async def get_pr_detail(repo: str, pr_number: int):
         return "Failed to load pull request detail."
 
 
+@tool
+async def trace_call_chain(symbol: str, repo: str = "", depth: int = 2):
+    """Trace call chain around a symbol by scanning chunk content recursively."""
+    engine = get_engine()
+    if engine is None:
+        return "Database engine is not initialized."
+
+    normalized_depth = max(1, min(depth, 4))
+    visited: set[str] = set()
+    chain: list[dict] = []
+
+    async def _expand(current_symbol: str, current_depth: int):
+        key = f"{current_symbol}:{current_depth}"
+        if key in visited or current_depth > normalized_depth:
+            return
+        visited.add(key)
+
+        query = text(
+            """
+            SELECT symbol_name, file_path, start_line, end_line, chunk_id
+            FROM code_chunks
+            WHERE content ILIKE :needle
+              AND (:repo = '' OR repo = :repo)
+            ORDER BY created_at DESC
+            LIMIT 12
+            """
+        )
+
+        async with engine.connect() as conn:
+            result = await conn.execute(query, {"needle": f"%{current_symbol}%", "repo": repo})
+            rows = result.fetchall()
+
+        for row in rows:
+            m = row._mapping
+            symbol_name = (m.get("symbol_name") or "").strip()
+            node = {
+                "depth": current_depth,
+                "query_symbol": current_symbol,
+                "symbol_name": symbol_name,
+                "file_path": m.get("file_path"),
+                "start_line": m.get("start_line"),
+                "end_line": m.get("end_line"),
+                "chunk_id": m.get("chunk_id"),
+            }
+            chain.append(node)
+
+            if symbol_name and symbol_name != current_symbol:
+                await _expand(symbol_name, current_depth + 1)
+
+    try:
+        await _expand(symbol.strip(), 1)
+        if not chain:
+            return f"No call chain context found for symbol '{symbol}'."
+        return json.dumps({"symbol": symbol, "depth": normalized_depth, "chain": chain}, indent=2)
+    except Exception as e:
+        logger.error(f"Error in trace_call_chain: {e}")
+        return "Failed to trace call chain."
+
+
+@tool
+async def search_error_patterns(query: str, repo: str = "", k: int = 5):
+    """Search error patterns via lexical matches and semantic hybrid search."""
+    from api.db.vector_store import vector_db
+
+    engine = get_engine()
+    if engine is None:
+        return "Database engine is not initialized."
+
+    try:
+        lexical_sql = text(
+            """
+            SELECT file_path, start_line, end_line, error_type, error_message, content
+            FROM code_chunks
+            WHERE error_message IS NOT NULL
+              AND (
+                error_message ILIKE :needle
+                OR content ILIKE :needle
+              )
+              AND (:repo = '' OR repo = :repo)
+            ORDER BY created_at DESC
+            LIMIT :k
+            """
+        )
+        async with engine.connect() as conn:
+            lexical_rows = await conn.execute(
+                lexical_sql,
+                {"needle": f"%{query}%", "repo": repo, "k": max(1, min(k, 20))},
+            )
+            lexical = [dict(row._mapping) for row in lexical_rows.fetchall()]
+
+        semantic: list[dict] = []
+        if not vector_db._vectorstore:
+            vector_db.initialize()
+        if vector_db._vectorstore:
+            semantic = await vector_db.hybrid_search(
+                query,
+                k=max(1, min(k, 20)),
+                filters={"repo": repo} if repo else None,
+            )
+
+        return json.dumps(
+            {
+                "query": query,
+                "lexical_matches": lexical,
+                "semantic_matches": semantic,
+            },
+            indent=2,
+            default=str,
+        )
+    except Exception as e:
+        logger.error(f"Error in search_error_patterns: {e}")
+        return "Failed to search error patterns."
+
+
 def get_llm():
     """Lazy LLM initialization with mock fallback."""
     from api.core.config import settings
@@ -207,7 +324,13 @@ def get_llm():
     return MockLLM()
 
 
-tools = [code_search, search_pr_history, get_pr_detail]
+tools = [
+    code_search,
+    search_pr_history,
+    get_pr_detail,
+    trace_call_chain,
+    search_error_patterns,
+]
 checkpointer = MemorySaver()
 
 SYSTEM_PROMPT = """You are DevBridge, a team-aware knowledge system for codebases.

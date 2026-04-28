@@ -46,6 +46,11 @@ class GCPSecretSource(PydanticBaseSettingsSource):
         return None, field_name, False
 
     def __call__(self) -> dict[str, Any]:
+        # Respect explicit local env/.env override for easier debugging and
+        # to avoid unintentionally masking local connection string changes.
+        if os.environ.get("SUPABASE_CONNECTION_STRING"):
+            return {}
+
         project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
 
         if not project_id:

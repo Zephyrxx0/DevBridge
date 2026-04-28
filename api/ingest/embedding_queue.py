@@ -1,7 +1,9 @@
 import logging
 import json
+import asyncio
 from typing import List
 from api.ingestion.types import EmbeddingJob
+from api.ingest.embedding_worker import processor
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +21,7 @@ async def enqueue_embedding_jobs(jobs: List[EmbeddingJob]) -> bool:
     Returns:
         True if all jobs were accepted for delivery.
     """
+    scheduled = 0
     for job in jobs:
         # T-05-03: Mitigate DoS by bounding payload (log warning if oversized)
         # 100k chars is a reasonable bound for most code symbols/files
@@ -35,7 +38,10 @@ async def enqueue_embedding_jobs(jobs: List[EmbeddingJob]) -> bool:
             "ENQUEUE_EMBEDDING_JOB: repo=%s, file=%s, chunk_id=%s, idempotency_key=%s",
             job.repo, job.file_path, job.chunk_id, payload.get("idempotency_key")
         )
-        
+        asyncio.create_task(processor.add_job(job))
+        scheduled += 1
+
+    logger.info("Scheduled %d embedding jobs", scheduled)
     return True
 
 async def enqueue_chunk_embedding(

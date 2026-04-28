@@ -2,7 +2,9 @@ from typing import Optional
 from contextlib import asynccontextmanager
 import logging
 import os
+import sys
 import secrets as pysecrets
+import uuid
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -19,6 +21,17 @@ from fastapi_cache.decorator import cache
 from api.routes import annotations
 from api.routes import webhooks
 from api.routes import pr
+from api.routes import repo
+from api.routes import questions
+from api.routes import chats
+from api.db.models import Annotation
+from api.db.vector_store import vector_db
+from api.db.session import get_engine
+from sqlalchemy import text
+
+# psycopg async is incompatible with ProactorEventLoop on Windows.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -80,11 +93,73 @@ async def inject_user_context(request, call_next):
 app.include_router(annotations.router)
 app.include_router(webhooks.router)
 app.include_router(pr.router)
+app.include_router(repo.router)
+app.include_router(questions.router)
+app.include_router(chats.router)
 
 class ChatRequest(BaseModel):
     message: str
     thread_id: str = "default-thread"
     repo_id: Optional[str] = None
+
+
+async def _persist_chat_turn(repo_id: str | None, session_id: str, question: str, answer: str) -> None:
+    if not repo_id or not session_id:
+        return
+
+    engine = get_engine()
+    if engine is None:
+        return
+
+    try:
+        repo_uuid = str(uuid.UUID(repo_id))
+    except Exception:
+        logger.warning("Skipping chat persistence: invalid repo_id", extra={"repo_id": repo_id})
+        return
+
+    session_uuid: str | None = None
+    try:
+        session_uuid = str(uuid.UUID(session_id))
+    except Exception:
+        logger.info("Session id is not UUID, skipping chat_messages persistence", extra={"session_id": session_id})
+
+    params = {
+        "session_id": session_uuid,
+        "user_content": question,
+        "assistant_content": answer,
+        "repo_id": repo_uuid,
+        "thread_id": session_id,
+        "question": question,
+        "answer": answer,
+    }
+
+    async with engine.connect() as conn:
+        if session_uuid:
+            await conn.execute(
+                text(
+                    """
+                    INSERT INTO chat_messages (session_id, role, content, sources)
+                    VALUES (CAST(:session_id AS uuid), 'user', :user_content, '[]'::jsonb),
+                           (CAST(:session_id AS uuid), 'assistant', :assistant_content, '[]'::jsonb)
+                    """
+                ),
+                params,
+            )
+            await conn.execute(
+                text("UPDATE chat_sessions SET updated_at = NOW() WHERE id = CAST(:session_id AS uuid)"),
+                params,
+            )
+        await conn.execute(
+            text(
+                """
+                INSERT INTO questions (repo_id, thread_id, question, answer, sources)
+                VALUES (CAST(:repo_id AS uuid), :thread_id, :question, :answer, '[]'::jsonb)
+                """
+            ),
+            params,
+        )
+        await conn.commit()
+
 
 @app.get("/")
 async def root():
@@ -99,6 +174,11 @@ async def root():
 async def chat(request: ChatRequest):
     try:
         response = await orchestrator.chat(request.message, request.thread_id)
+        try:
+            await _persist_chat_turn(request.repo_id, request.thread_id, request.message, response)
+        except Exception:
+            logger.exception("Failed to persist chat turn for /chat")
+
         return {
             "response": response,
             "thread_id": request.thread_id
@@ -106,6 +186,67 @@ async def chat(request: ChatRequest):
     except Exception as e:
         logger.exception("Chat request failed")
         raise HTTPException(status_code=500, detail="Chat request failed")
+
+
+@app.get("/context")
+async def get_context(repo_id: str, query: str, k: int = 5):
+    try:
+        if not vector_db._vectorstore:
+            vector_db.initialize()
+        code_results = await vector_db.hybrid_search(query, k=max(1, min(k, 20)))
+
+        annotations: list[dict] = []
+        if code_results:
+            for hit in code_results[:5]:
+                file_path = hit.get("file_path")
+                if not file_path:
+                    continue
+                anns = await Annotation.get_annotations(repo_id=repo_id, file_path=file_path, limit=5)
+                annotations.extend(
+                    {
+                        "id": str(a.id),
+                        "file_path": a.file_path,
+                        "start_line": a.start_line,
+                        "end_line": a.end_line,
+                        "comment": a.comment,
+                        "tags": a.tags,
+                        "upvotes": a.upvotes,
+                    }
+                    for a in anns
+                )
+
+        return {
+            "repo_id": repo_id,
+            "query": query,
+            "results": code_results,
+            "annotations": annotations,
+        }
+    except Exception:
+        logger.exception("Context request failed")
+        raise HTTPException(status_code=500, detail="Context request failed")
+
+
+@app.get("/health/db")
+async def health_db():
+    """Lightweight DB connectivity probe for local diagnostics."""
+    engine = get_engine()
+    if engine is None:
+        return {
+            "ok": False,
+            "status": "not_initialized",
+            "detail": "DB engine not initialized. Check SUPABASE_CONNECTION_STRING and startup logs.",
+        }
+
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return {"ok": True, "status": "connected"}
+    except Exception as exc:
+        return {
+            "ok": False,
+            "status": "connection_failed",
+            "detail": str(exc),
+        }
 
 
 @app.post("/chat/stream")
@@ -146,6 +287,7 @@ async def chat_stream(request: ChatRequest):
                 input_data = {"messages": [HumanMessage(content=request.message)]}
 
                 chunk_count = 0
+                accumulated_response = ""
                 async for event in orchestrator.graph.astream(input_data, config=config, stream_mode="messages"):
                     message_chunk = event[0] if isinstance(event, tuple) and event else None
                     if message_chunk is None:
@@ -154,6 +296,7 @@ async def chat_stream(request: ChatRequest):
                     chunk_text = _extract_chunk_text(getattr(message_chunk, "content", ""))
                     if chunk_text:
                         chunk_count += 1
+                        accumulated_response += chunk_text
                         yield f"data: {json.dumps({'type': 'chunk', 'content': chunk_text})}\n\n"
                         await asyncio.sleep(0.02)
 
@@ -161,9 +304,14 @@ async def chat_stream(request: ChatRequest):
                 if chunk_count == 0:
                     response = await orchestrator.chat(request.message, request.thread_id)
                     if response:
+                        accumulated_response = response
                         yield f"data: {json.dumps({'type': 'chunk', 'content': response})}\n\n"
 
                 # Send done event
+                try:
+                    await _persist_chat_turn(request.repo_id, request.thread_id, request.message, accumulated_response)
+                except Exception:
+                    logger.exception("Failed to persist chat turn for /chat/stream")
                 yield f"data: {json.dumps({'type': 'done'})}\n\n"
                     
             except Exception as e:

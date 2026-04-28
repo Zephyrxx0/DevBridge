@@ -28,6 +28,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def _summarize_chunk(chunk) -> str:
+    symbol = (chunk.symbol_name or "symbol").strip()
+    kind = (chunk.symbol_kind or "code").strip()
+    language = (chunk.language or "text").strip()
+    span = f"{chunk.start_line}-{chunk.end_line}" if chunk.start_line and chunk.end_line else "unknown lines"
+    summary = f"{language} {kind} {symbol} in {chunk.file_path} lines {span}".strip()
+    words = summary.split()
+    return " ".join(words[:20])
+
+
 def _parse_repo_path(object_name: str) -> tuple[str, str]:
     """Parse GCS object name into repo and file path.
     
@@ -164,11 +174,11 @@ async def _ingest_file(bucket: str, object_name: str, job_id: str = None) -> Ing
                     INSERT INTO code_chunks (
                         repo, file_path, language, symbol_name, symbol_kind,
                         start_line, end_line, chunk_type, content_hash, chunk_id,
-                        parse_status, error_type, error_message, content
+                        parse_status, error_type, error_message, content, summary
                     ) VALUES (
                         :repo, :file_path, :language, :symbol_name, :symbol_kind,
                         :start_line, :end_line, :chunk_type, :content_hash, :chunk_id,
-                        :parse_status, :error_type, :error_message, :content
+                        :parse_status, :error_type, :error_message, :content, :summary
                     )
                 """)
                 await conn.execute(insert, {
@@ -186,6 +196,7 @@ async def _ingest_file(bucket: str, object_name: str, job_id: str = None) -> Ing
                     "error_type": chunk.error_type,
                     "error_message": chunk.error_message,
                     "content": chunk.content,
+                    "summary": _summarize_chunk(chunk),
                 })
             
             await conn.commit()

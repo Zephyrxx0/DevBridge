@@ -1,7 +1,14 @@
 import logging
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
-from api.agents.orchestrator import get_llm, code_search, search_pr_history, get_pr_detail
+from api.agents.orchestrator import (
+    get_llm,
+    code_search,
+    search_pr_history,
+    get_pr_detail,
+    trace_call_chain,
+    search_error_patterns,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +32,13 @@ def create_debugger_agent():
     to keep debug session state separate from general repository chat.
     """
     llm = get_llm()
-    tools = [code_search, search_pr_history, get_pr_detail]
+    tools = [
+        code_search,
+        search_pr_history,
+        get_pr_detail,
+        trace_call_chain,
+        search_error_patterns,
+    ]
     checkpointer = MemorySaver()
     return create_react_agent(
         llm,
