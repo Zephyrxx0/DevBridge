@@ -1,0 +1,2639 @@
+1. Remove the border when typing in the notes section.
+2. The graph doesn't generate, fix that
+
+---
+
+[Terminal 71b600b0-53b0-4ba0-bc32-55d1de642184 notification: command completed with exit code 1. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+INFO:api.agents.orchestrator:GOOGLE_CLOUD_PROJECT found (handy-curve-491715-e9), initializing ChatGoogleGenerativeAI
+INFO:api.agents.orchestrator:Health check passed. LLM type: ChatGoogleGenerativeAI
+INFO:numexpr.utils:Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+INFO:numexpr.utils:NumExpr defaulting to 16 threads.
+INFO:     Started server process [35340]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8000): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal 48bd143a-5cef-41a4-ae42-8835b1463e69 notification: command completed with exit code 1. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+INFO:api.agents.orchestrator:GOOGLE_CLOUD_PROJECT found (handy-curve-491715-e9), initializing ChatGoogleGenerativeAI
+INFO:api.agents.orchestrator:Health check passed. LLM type: ChatGoogleGenerativeAI
+INFO:numexpr.utils:Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+INFO:numexpr.utils:NumExpr defaulting to 16 threads.
+INFO:     Started server process [18396]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8000): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal cea8386d-4000-4edd-ba06-53396d71521a notification: command completed with exit code 0. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> curl http://127.0.0.1:8000/api/health
+{"detail":"Not Found"}
+
+/d/codes/personal/devbridge
+> curl -v http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files
+*   Trying 127.0.0.1:8000...
+* Established connection to 127.0.0.1 (127.0.0.1 port 8000) from 127.0.0.1 port 57084 
+* using HTTP/1.x
+> GET /repo/813710b4-420b-4141-aacd-eaf31b6911c8/files HTTP/1.1
+> Host: 127.0.0.1:8000
+> User-Agent: curl/8.16.0
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 200 OK
+< date: Tue, 28 Apr 2026 15:40:26 GMT
+< server: uvicorn
+< content-length: 44
+< content-type: application/json
+< 
+{"name":"root","path":"","type":"directory"}* Connection #0 to host 127.0.0.1:8000 left intact
+
+/d/codes/personal/devbridge
+> curl http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files
+{"name":"root","path":"","type":"directory"}
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal e63a2afd-2e13-4d7a-b533-ac82147bc464 notification: command completed with exit code 0. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> python -c "import asyncio; from api.db.session import get_engine; from sqlalchemy import text; async def main(): engine = get_engine(); async with engine.connect() as conn: result = await conn.execute(text(\"SELECT github_url, name FROM repositories WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid) LIMIT 1\")); print(result.fetchone()._mapping); asyncio.run(main())"
+ParserError: 
+Line |
+   1 |  … ies WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid) L …
+     |                                                               ~~
+     | Unexpected token 'AS' in expression or statement.
+
+/d/codes/personal/devbridge
+> python -c 'import asyncio; from api.db.session import engine; print(engine)'
+None
+
+/d/codes/personal/devbridge
+> cat << 'EOF' > test_db.py
+ParserError: 
+Line |
+   1 |  cat << 'EOF' > test_db.py
+     |       ~
+     | Missing file specification after redirection operator.
+
+/d/codes/personal/devbridge
+> import asyncio
+import: The term 'import' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> from api.db.session import init_db, get_engine
+ParserError: 
+Line |
+   1 |  from api.db.session import init_db, get_engine
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> from sqlalchemy import text
+ParserError: 
+Line |
+   1 |  from sqlalchemy import text
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> async def main():
+ParserError: 
+Line |
+   1 |  async def main():
+     |                 ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     await init_db()
+ParserError: 
+Line |
+   1 |      await init_db()
+     |                    ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     engine = get_engine()
+ParserError: 
+Line |
+   1 |      engine = get_engine()
+     |                          ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     async with engine.connect() as conn:
+ParserError: 
+Line |
+   1 |      async with engine.connect() as conn:
+     |                                ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>         result = await conn.execute(text("SELECT * FROM repositories WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid)"))
+text: The term 'text' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>         row = result.fetchone()
+ParserError: 
+Line |
+   1 |          row = result.fetchone()
+     |                                ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>         if row:
+ParserError: 
+Line |
+   1 |          if row:
+     |            ~
+     | Missing '(' after 'if' in if statement.
+
+/d/codes/personal/devbridge
+>             print(dict(row._mapping))
+row._mapping: The term 'row._mapping' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>         else:
+else:: The term 'else:' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>             print("Not found")
+Unable to initialize device PRN
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> asyncio.run(main())
+ParserError: 
+Line |
+   1 |  asyncio.run(main())
+     |                   ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+> EOF
+EOF: The term 'EOF' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> python test_db.py  
+C:\Users\tronl\AppData\Local\Programs\Python\Python313\python.exe: can't open file 'D:\\Codes\\Personal\\DevBridge\\test_db.py': [Errno 2] No such file or directory
+
+/d/codes/personal/devbridge
+> Set-Content -Path test_db.py -Value @'                                        
+>> import asyncio                               
+>> from api.db.session import init_db, get_engine
+>> from sqlalchemy import text
+>> 
+>> async def main():
+>>     await init_db()
+>>     engine = get_engine()
+>>     async with engine.connect() as conn:
+>>         result = await conn.execute(text("SELECT * FROM repositories WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid)"))
+>>         row = result.fetchone()
+>>         if row:
+>>             print(dict(row._mapping))
+>>         else:
+>>             print("Not found")
+>> 
+>> asyncio.run(main())
+>> '@
+
+/d/codes/personal/devbridge
+> python test_db.py  
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 2, in <module>
+    from api.db.session import init_db, get_engine
+ImportError: cannot import name 'init_db' from 'api.db.session' (D:\Codes\Personal\DevBridge\api\db\session.py)
+
+/d/codes/personal/devbridge
+> python test_db.py                                                 
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 2, in <module>
+    from api.db.session import init_db, get_engine
+ImportError: cannot import name 'init_db' from 'api.db.session' (D:\Codes\Personal\DevBridge\api\db\session.py)
+
+/d/codes/personal/devbridge
+> cat api/db/session.py | grep -i init
+grep: The term 'grep' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+[General Feedback]
+  The most similar commands are:
+    ➤ gres
+
+
+/d/codes/personal/devbridge
+> Get-Content api/db/session.py | Select-String "init"                  
+
+async def init_db_pool(connection_string: str) -> AsyncEngine:
+        raise RuntimeError("FATAL: connection_string is EMPTY in 
+init_db_pool!")
+
+
+/d/codes/personal/devbridge
+> Set-Content -Path test_db.py -Value @'                                        
+>> import asyncio                               
+>> from api.core.config import settings
+>> from api.db.session import init_db_pool, get_engine
+>> from sqlalchemy import text
+>> 
+>> async def main():
+>>     await init_db_pool(settings.DATABASE_URL)
+>>     engine = get_engine()
+>>     async with engine.connect() as conn:
+>>         result = await conn.execute(text("SELECT github_url, name FROM repositories WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid) LIMIT 1"))
+>>         row = result.fetchone()
+>>         if row:
+>>             print(dict(row._mapping))
+>>         else:
+>>             print("Not found")
+>> 
+>> asyncio.run(main())
+>> '@
+
+/d/codes/personal/devbridge
+> python test_db.py  
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 17, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 7, in main
+    await init_db_pool(settings.DATABASE_URL)
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\main.py", line 1026, in __getattr__
+    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+AttributeError: 'Settings' object has no attribute 'DATABASE_URL'
+
+/d/codes/personal/devbridge
+> python test_db.py                                                 
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 17, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 7, in main
+    await init_db_pool(settings.DATABASE_URL)
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\main.py", line 1026, in __getattr__
+    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+AttributeError: 'Settings' object has no attribute 'DATABASE_URL'
+
+/d/codes/personal/devbridge
+> Remove-Item test_db.py -ErrorAction SilentlyContinue
+
+/d/codes/personal/devbridge
+> curl -v http://127.0.0.1:8000/repo/1/files                                
+*   Trying 127.0.0.1:8000...
+* Established connection to 127.0.0.1 (127.0.0.1 port 8000) from 127.0.0.1 port 52295 
+* using HTTP/1.x
+> GET /repo/1/files HTTP/1.1
+> Host: 127.0.0.1:8000
+> User-Agent: curl/8.16.0
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 503 Service Unavailable
+< date: Tue, 28 Apr 2026 15:44:32 GMT
+< server: uvicorn
+< content-length: 550
+< content-type: application/json
+< 
+{"detail":"Repository files unavailable: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.DataError'>: invalid input for query argument $1: '1' (invalid UUID '1': length must be between 32..36 characters, got 1)\n[SQL: \n        SELECT cc.file_path\n        FROM code_chunks cc\n        JOIN repositories r ON r.name = cc.repo\n        WHERE r.id = CAST($1 AS uuid)\n        GROUP BY cc.file_path\n        ORDER BY cc.file_path\n        ]\n[parameters: ('1',)]\n(Background on this error at: https://sqlalche.me/e/20/dbapi)"}* Connection #0 to host 127.0.0.1:8000 left intact
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal fefdd9a5-9289-471b-a19a-12704f992b9b notification: command completed with exit code 0. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> curl -s http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/ | ConvertFrom-Json
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal 41b10d5e-036a-49f6-b848-f8d7bebeb6a1 notification: command completed with exit code 0. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> cat << 'EOF' > test_db.py
+ParserError: 
+Line |
+   1 |  cat << 'EOF' > test_db.py
+     |       ~
+     | Missing file specification after redirection operator.
+
+/d/codes/personal/devbridge
+> import asyncio
+import: The term 'import' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> from api.core.config import settings
+ParserError: 
+Line |
+   1 |  from api.core.config import settings
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> from api.db.session import init_db_pool, get_engine
+ParserError: 
+Line |
+   1 |  from api.db.session import init_db_pool, get_engine
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> from sqlalchemy import text
+ParserError: 
+Line |
+   1 |  from sqlalchemy import text
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> async def main():
+ParserError: 
+Line |
+   1 |  async def main():
+     |                 ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     settings.DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/devbridge?ssl=prefer"
+settings.DATABASE_URL: The term 'settings.DATABASE_URL' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>     await init_db_pool(settings.DATABASE_URL)
+settings.DATABASE_URL: The term 'settings.DATABASE_URL' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>     engine = get_engine()
+ParserError: 
+Line |
+   1 |      engine = get_engine()
+     |                          ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     async with engine.connect() as conn:
+ParserError: 
+Line |
+   1 |      async with engine.connect() as conn:
+     |                                ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>         result = await conn.execute(text("SELECT * FROM repositories WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid)"))
+text: The term 'text' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>         row = result.fetchone()
+ParserError: 
+Line |
+   1 |          row = result.fetchone()
+     |                                ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>         if row:
+ParserError: 
+Line |
+   1 |          if row:
+     |            ~
+     | Missing '(' after 'if' in if statement.
+
+/d/codes/personal/devbridge
+>             print(dict(row._mapping))
+row._mapping: The term 'row._mapping' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>         else:
+else:: The term 'else:' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>             print("Not found")
+Unable to initialize device PRN
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> asyncio.run(main())
+ParserError: 
+Line |
+   1 |  asyncio.run(main())
+     |                   ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+> EOF
+EOF: The term 'EOF' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> python test_db.py  
+C:\Users\tronl\AppData\Local\Programs\Python\Python313\python.exe: can't open file 'D:\\Codes\\Personal\\DevBridge\\test_db.py': [Errno 2] No such file or directory
+
+/d/codes/personal/devbridge
+> Set-Content -Path test_db.py -Value @'                                        
+>> import asyncio                               
+>> from api.core.config import settings
+>> from api.db.session import init_db_pool, get_engine
+>> from sqlalchemy import text
+>> 
+>> async def main():
+>>     await init_db_pool("postgresql+asyncpg://postgres:postgres@localhost:5432/postgres?ssl=" if not hasattr(settings, 'DATABASE_URL') else settings.DATABASE_URL)
+>>     engine = get_engine()
+>>     async with engine.connect() as conn:
+>>         result = await conn.execute(text("SELECT github_url, name FROM repositories WHERE id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid) LIMIT 1"))
+>>         row = result.fetchone()
+>>         if row:
+>>             print(dict(row._mapping))
+>>         else:
+>>             print("Not found")
+>> 
+>> asyncio.run(main())
+>> '@
+
+/d/codes/personal/devbridge
+> python test_db.py  
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 17, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 9, in main
+    async with engine.connect() as conn:
+               ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\ext\asyncio\base.py", line 121, in __aenter__
+    return await self.start(is_ctxmanager=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 275, in start
+    await greenlet_spawn(self.sync_engine.connect)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 955, in connect
+    await_only(creator_fn(*arg, **kw)),
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connection.py", line 2443, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<22 lines>...
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1249, in _connect
+    raise last_error or exceptions.TargetServerAttributeNotMatched(
+    ...<2 lines>...
+    )
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1218, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1050, in _connect_addr
+    return await __connect_addr(params, False, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1099, in __connect_addr
+    tr, pr = await connector
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 969, in _create_ssl_connection
+    tr, pr = await loop.create_connection(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        host, port)
+        ^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1166, in create_connection
+    raise exceptions[0]
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1136, in create_connection
+    sock = await self._connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+        exceptions, addrinfo, laddr_infos)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1039, in _connect_sock
+    await self.sock_connect(sock, address)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 726, in sock_connect
+    return await self._proactor.connect(sock, address)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 804, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 600, in finish_connect
+    ov.getresult()
+    ~~~~~~~~~~~~^^
+ConnectionRefusedError: [WinError 1225] The remote computer refused the network connection
+
+/d/codes/personal/devbridge
+> python test_db.py                                                 
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 17, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 9, in main
+    async with engine.connect() as conn:
+               ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\ext\asyncio\base.py", line 121, in __aenter__
+    return await self.start(is_ctxmanager=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 275, in start
+    await greenlet_spawn(self.sync_engine.connect)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 955, in connect
+    await_only(creator_fn(*arg, **kw)),
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connection.py", line 2443, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<22 lines>...
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1249, in _connect
+    raise last_error or exceptions.TargetServerAttributeNotMatched(
+    ...<2 lines>...
+    )
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1218, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1050, in _connect_addr
+    return await __connect_addr(params, False, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1099, in __connect_addr
+    tr, pr = await connector
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 969, in _create_ssl_connection
+    tr, pr = await loop.create_connection(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        host, port)
+        ^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1166, in create_connection
+    raise exceptions[0]
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1136, in create_connection
+    sock = await self._connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+        exceptions, addrinfo, laddr_infos)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1039, in _connect_sock
+    await self.sock_connect(sock, address)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 726, in sock_connect
+    return await self._proactor.connect(sock, address)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 804, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 600, in finish_connect
+    ov.getresult()
+    ~~~~~~~~~~~~^^
+ConnectionRefusedError: [WinError 1225] The remote computer refused the network connection
+
+/d/codes/personal/devbridge
+> Get-Content api/core/config.py | Select-Object -First 20              
+import os
+import warnings
+from typing import Any
+
+from google.cloud import secretmanager
+from pydantic import Field
+from pydantic.fields import FieldInfo
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
+
+
+def _log_startup_config() -> None:
+    """Log which config is in use at startup."""
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT_ID")
+    source = "GOOGLE_CLOUD_PROJECT" if os.environ.get("GOOGLE_CLOUD_PROJECT") else "GCP_PROJECT_ID (deprecated)"
+    print(f"[CONFIG] Using project: {project or 'NOT SET'} (source: {source})")
+
+
+/d/codes/personal/devbridge
+> curl http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/api/main.py
+{"detail":"Repository file unavailable: HTTP Error 403: rate limit exceeded"}
+
+/d/codes/personal/devbridge
+> cat << 'EOF' > test_db.py
+ParserError: 
+Line |
+   1 |  cat << 'EOF' > test_db.py
+     |       ~
+     | Missing file specification after redirection operator.
+
+/d/codes/personal/devbridge
+> import asyncio
+import: The term 'import' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> from api.core.config import settings
+ParserError: 
+Line |
+   1 |  from api.core.config import settings
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> from api.db.session import init_db, get_engine
+ParserError: 
+Line |
+   1 |  from api.db.session import init_db, get_engine
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> from sqlalchemy import text
+ParserError: 
+Line |
+   1 |  from sqlalchemy import text
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> async def main():
+ParserError: 
+Line |
+   1 |  async def main():
+     |                 ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     await init_db()
+ParserError: 
+Line |
+   1 |      await init_db()
+     |                    ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     engine = get_engine()
+ParserError: 
+Line |
+   1 |      engine = get_engine()
+     |                          ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     async with engine.connect() as conn:
+ParserError: 
+Line |
+   1 |      async with engine.connect() as conn:
+     |                                ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>         result = await conn.execute(text("SELECT repo, file_path FROM code_chunks LIMIT 5"))
+text: The term 'text' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>         for row in result.fetchall():
+ParserError: 
+Line |
+   1 |          for row in result.fetchall():
+     |             ~
+     | Missing opening '(' after keyword 'for'.
+
+/d/codes/personal/devbridge
+>             print(dict(row._mapping))
+row._mapping: The term 'row._mapping' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> asyncio.run(main())
+ParserError: 
+Line |
+   1 |  asyncio.run(main())
+     |                   ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+> EOF
+EOF: The term 'EOF' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> python test_db.py  
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 17, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 9, in main
+    async with engine.connect() as conn:
+               ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\ext\asyncio\base.py", line 121, in __aenter__
+    return await self.start(is_ctxmanager=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 275, in start
+    await greenlet_spawn(self.sync_engine.connect)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 955, in connect
+    await_only(creator_fn(*arg, **kw)),
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connection.py", line 2443, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<22 lines>...
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1249, in _connect
+    raise last_error or exceptions.TargetServerAttributeNotMatched(
+    ...<2 lines>...
+    )
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1218, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1050, in _connect_addr
+    return await __connect_addr(params, False, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1099, in __connect_addr
+    tr, pr = await connector
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 969, in _create_ssl_connection
+    tr, pr = await loop.create_connection(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        host, port)
+        ^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1166, in create_connection
+    raise exceptions[0]
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1136, in create_connection
+    sock = await self._connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+        exceptions, addrinfo, laddr_infos)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1039, in _connect_sock
+    await self.sock_connect(sock, address)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 726, in sock_connect
+    return await self._proactor.connect(sock, address)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 804, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 600, in finish_connect
+    ov.getresult()
+    ~~~~~~~~~~~~^^
+ConnectionRefusedError: [WinError 1225] The remote computer refused the network connection
+
+/d/codes/personal/devbridge
+> python -c 'import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8000/repo/").read().decode())'
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8000/repo/").read().decode())
+                                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 495, in open
+    response = meth(req, response)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 604, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 533, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 613, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 503: Service Unavailable
+
+/d/codes/personal/devbridge
+> curl -s http://127.0.0.1:8000/repo/ | findstr 813710b4
+
+/d/codes/personal/devbridge
+> curl -s http://127.0.0.1:8000/repo/
+{"detail":"Repository listing unavailable: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"last_indexed_at\" does not exist\n[SQL: \n        SELECT id, name, github_url, created_at, last_indexed_at\n        FROM repositories\n        ORDER BY created_at DESC\n        ]\n(Background on this error at: https://sqlalche.me/e/20/f405)"}
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; import json; repo_id='813710b4-420b-4141-aacd-eaf31b6911c8'; print(json.loads(urllib.request.urlopen(f'http://127.0.0.1:8000/repo/{repo_id}').read().decode()))"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import urllib.request; import json; repo_id='813710b4-420b-4141-aacd-eaf31b6911c8'; print(json.loads(urllib.request.urlopen(f'http://127.0.0.1:8000/repo/{repo_id}').read().decode()))
+                                                                                                         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 495, in open
+    response = meth(req, response)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 604, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 533, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 613, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 503: Service Unavailable
+
+/d/codes/personal/devbridge
+> Get-Content api/routes/repo.py | Select-String "last_indexed_at"      
+
+        SELECT id, name, github_url, created_at, last_indexed_at
+        SELECT r.id, r.name, r.github_url, r.created_at, r.last_indexed_at,
+
+
+/d/codes/personal/devbridge
+> Get-Content api/routes/repo.py | Select-String "OR CAST"              
+
+        JOIN repositories r ON (r.name = cc.repo OR CAST(r.id AS text) = 
+cc.repo)
+        JOIN repositories r ON (r.name = pr.repo OR CAST(r.id AS text) = 
+pr.repo)
+        JOIN repositories r ON (r.name = ij.repo OR CAST(r.id AS text) = 
+ij.repo)
+
+
+/d/codes/personal/devbridge
+> curl http://127.0.0.1:8000/repo/
+[{"id":"2dff0bf6-0c3b-4149-97ca-08bcf7b0a5ac","name":"Zephyrxx0/DevBridge","github_url":"https://github.com/Zephyrxx0/DevBridge/tree/feat/git-repos","created_at":"2026-04-28T14:58:16.886671+00:00"},{"id":"813710b4-420b-4141-aacd-eaf31b6911c8","name":"Zephyrxx0/InteractiveDashboard","github_url":"https://github.com/Zephyrxx0/InteractiveDashboard","created_at":"2026-04-28T08:13:53.298786+00:00"}]
+
+/d/codes/personal/devbridge
+> 
+
+[Terminal 889c8bc1-7b4b-4695-bab0-e51615c67b60 notification: command completed with exit code 0. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> curl -s http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files | ConvertFrom-Json | Select-Object -Property children
+
+children
+--------
+
+
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal 5653a5ba-0c89-45c8-b0ed-d2fb114ee827 notification: command completed with exit code 1. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> curl -v http://127.0.0.1:8000/repo/2dff0bf6-0c3b-4149-97ca-08bcf7b0a5ac/files
+*   Trying 127.0.0.1:8000...
+* Established connection to 127.0.0.1 (127.0.0.1 port 8000) from 127.0.0.1 port 59844 
+* using HTTP/1.x
+> GET /repo/2dff0bf6-0c3b-4149-97ca-08bcf7b0a5ac/files HTTP/1.1
+> Host: 127.0.0.1:8000
+> User-Agent: curl/8.16.0
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 200 OK
+< date: Tue, 28 Apr 2026 15:50:16 GMT
+< server: uvicorn
+< content-length: 44
+< content-type: application/json
+< 
+{"name":"root","path":"","type":"directory"}* Connection #0 to host 127.0.0.1:8000 left intact
+
+/d/codes/personal/devbridge
+> cat << 'EOF' > test_db.py
+ParserError: 
+Line |
+   1 |  cat << 'EOF' > test_db.py
+     |       ~
+     | Missing file specification after redirection operator.
+
+/d/codes/personal/devbridge
+> import asyncio
+import: The term 'import' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> from api.core.config import settings
+ParserError: 
+Line |
+   1 |  from api.core.config import settings
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> from api.db.session import init_db_pool, get_engine
+ParserError: 
+Line |
+   1 |  from api.db.session import init_db_pool, get_engine
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> from sqlalchemy import text
+ParserError: 
+Line |
+   1 |  from sqlalchemy import text
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> async def main():
+ParserError: 
+Line |
+   1 |  async def main():
+     |                 ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     await init_db_pool("postgresql+asyncpg://postgres:postgres@localhost:5432/postgres?ssl=" if not hasattr(settings, 'DATABASE_URL') else settings.DATABASE_URL)
+ParserError: 
+Line |
+   1 |  … +asyncpg://postgres:postgres@localhost:5432/postgres?ssl=" if not has …
+     |                                                               ~~
+     | Unexpected token 'if' in expression or statement.
+
+/d/codes/personal/devbridge
+>     engine = get_engine()
+ParserError: 
+Line |
+   1 |      engine = get_engine()
+     |                          ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     async with engine.connect() as conn:
+ParserError: 
+Line |
+   1 |      async with engine.connect() as conn:
+     |                                ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>         result = await conn.execute(text("SELECT r.id, cc.repo, cc.file_path FROM code_chunks cc JOIN repositories r ON (r.name = cc.repo OR CAST(r.id AS text) = cc.repo) LIMIT 5"))
+text: The term 'text' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>         for row in result.fetchall():
+ParserError: 
+Line |
+   1 |          for row in result.fetchall():
+     |             ~
+     | Missing opening '(' after keyword 'for'.
+
+/d/codes/personal/devbridge
+>             print(dict(row._mapping))
+row._mapping: The term 'row._mapping' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> asyncio.run(main())
+ParserError: 
+Line |
+   1 |  asyncio.run(main())
+     |                   ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+> EOF
+EOF: The term 'EOF' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> python test_db.py  
+[CONFIG] Using project: handy-curve-491715-e9 (source: GOOGLE_CLOUD_PROJECT)
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 17, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\Codes\Personal\DevBridge\test_db.py", line 9, in main
+    async with engine.connect() as conn:
+               ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\ext\asyncio\base.py", line 121, in __aenter__
+    return await self.start(is_ctxmanager=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 275, in start
+    await greenlet_spawn(self.sync_engine.connect)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 955, in connect
+    await_only(creator_fn(*arg, **kw)),
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connection.py", line 2443, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<22 lines>...
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1249, in _connect
+    raise last_error or exceptions.TargetServerAttributeNotMatched(
+    ...<2 lines>...
+    )
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1218, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1050, in _connect_addr
+    return await __connect_addr(params, False, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 1099, in __connect_addr
+    tr, pr = await connector
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connect_utils.py", line 969, in _create_ssl_connection
+    tr, pr = await loop.create_connection(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        host, port)
+        ^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1166, in create_connection
+    raise exceptions[0]
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1136, in create_connection
+    sock = await self._connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+        exceptions, addrinfo, laddr_infos)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1039, in _connect_sock
+    await self.sock_connect(sock, address)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 726, in sock_connect
+    return await self._proactor.connect(sock, address)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 804, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 600, in finish_connect
+    ov.getresult()
+    ~~~~~~~~~~~~^^
+ConnectionRefusedError: [WinError 1225] The remote computer refused the network connection
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/2dff0bf6-0c3b-4149-97ca-08bcf7b0a5ac/').read().decode())"
+{"id":"2dff0bf6-0c3b-4149-97ca-08bcf7b0a5ac","name":"Zephyrxx0/DevBridge","github_url":"https://github.com/Zephyrxx0/DevBridge/tree/feat/git-repos","created_at":"2026-04-28T14:58:16.886671+00:00","file_count":0,"annotation_count":0}
+
+/d/codes/personal/devbridge
+> docker ps                                                                     
+failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+
+/d/codes/personal/devbridge
+> cat supabase/.env
+Get-Content: Cannot find path 'D:\Codes\Personal\DevBridge\supabase\.env' because it does not exist.
+
+/d/codes/personal/devbridge
+> cat supabase/config.toml
+Get-Content: Cannot find path 'D:\Codes\Personal\DevBridge\supabase\config.toml' because it does not exist.
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/2dff0bf6-0c3b-4149-97ca-08bcf7b0a5ac/').read().decode())"
+{"id":"2dff0bf6-0c3b-4149-97ca-08bcf7b0a5ac","name":"Zephyrxx0/DevBridge","github_url":"https://github.com/Zephyrxx0/DevBridge/tree/feat/git-repos","created_at":"2026-04-28T14:58:16.886671+00:00","file_count":0,"annotation_count":0}
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/').read().decode())"
+{"id":"813710b4-420b-4141-aacd-eaf31b6911c8","name":"Zephyrxx0/InteractiveDashboard","github_url":"https://github.com/Zephyrxx0/InteractiveDashboard","created_at":"2026-04-28T08:13:53.298786+00:00","file_count":0,"annotation_count":0}
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files').read().decode())"
+{"name":"root","path":"","type":"directory"}
+
+/d/codes/personal/devbridge
+> cat web/src/app/repo/[id]/map/page.tsx | findstr -i fetch
+Get-Content: An object at the specified path web/src/app/repo/[id]/map/page.tsx does not exist, or has been filtered by the -Include or -Exclude parameter.
+
+/d/codes/personal/devbridge
+> cat 'web/src/app/repo/[id]/map/page.tsx' | Select-String fetch
+Get-Content: An object at the specified path web/src/app/repo/[id]/map/page.tsx does not exist, or has been filtered by the -Include or -Exclude parameter.
+
+/d/codes/personal/devbridge
+> cat "web/src/app/repo/`[id`]/map/page.tsx" | Select-String fetch
+Get-Content: An object at the specified path web/src/app/repo/[id]/map/page.tsx does not exist, or has been filtered by the -Include or -Exclude parameter.
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/web%2Fsrc%2Fapp%2Frepo%2F%5Bid%5D%2Fmap%2Fpage.tsx').read().decode())"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/web%2Fsrc%2Fapp%2Frepo%2F%5Bid%5D%2Fmap%2Fpage.tsx').read().decode())
+                                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 495, in open
+    response = meth(req, response)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 604, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 533, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 613, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 503: Service Unavailable
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/src/utils/dummy.ts').read().decode())"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/src/utils/dummy.ts').read().decode())
+                                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 495, in open
+    response = meth(req, response)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 604, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 533, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 613, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 503: Service Unavailable
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/web%2Fsrc%2Fapp%2Frepo%2F%5Bid%5D%2Fmap%2Fpage.tsx').read().decode())"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/web%2Fsrc%2Fapp%2Frepo%2F%5Bid%5D%2Fmap%2Fpage.tsx').read().decode())
+                                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 489, in open
+    response = self._open(req, data)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 506, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+                              '_open', req)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1348, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1323, in do_open
+    r = h.getresponse()
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1428, in getresponse
+    response.begin()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 719, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+KeyboardInterrupt
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal fdf63b6d-42b7-4c08-8a96-364bdbbfe7eb notification: command completed with exit code 1. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> cat api/routes/repo.py | Select-String "_repo_from_github_url"
+
+def _repo_from_github_url(url: str | None) -> str | None:
+            repo_slug = 
+_repo_from_github_url(repo_row._mapping.get("github_url")) or 
+repo_row._mapping.get("name")
+            repo_slug = 
+_repo_from_github_url(repo_row._mapping.get("github_url")) if repo_row else 
+None
+
+
+/d/codes/personal/devbridge
+> cat api/routes/repo.py | Select-String "get_github_token"
+
+from api.core.secrets import get_github_token
+            token = await get_github_token()
+                token = await get_github_token()
+
+
+/d/codes/personal/devbridge
+> cat api/routes/repo.py | Select-String "_github_get_json"
+
+async def _github_get_json(url: str, token: str | None = None) -> Any:
+                tree_payload = await _github_get_json(
+                    repo_payload = await 
+_github_get_json(f"https://api.github.com/repos/{repo_slug}", token)
+                    tree_payload = await _github_get_json(
+                    gh_payload = await _github_get_json(content_url, token)
+
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/web/src/app/repo/%5Bid%5D/map/page.tsx').read().decode())"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/web/src/app/repo/%5Bid%5D/map/page.tsx').read().decode())
+                                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 495, in open
+    response = meth(req, response)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 604, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 533, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 613, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 503: Service Unavailable
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal c17d492d-0e29-424e-b4c5-7f9d19aec574 notification: command completed with exit code 1. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> psql -U postgres -c "EXPLAIN ANALYZE SELECT cc.content, cc.language FROM code_chunks cc JOIN repositories r ON (r.name = cc.repo OR CAST(r.id AS text) = cc.repo) WHERE r.id = CAST('813710b4-420b-4141-aacd-eaf31b6911c8' AS uuid) AND cc.file_path = 'web/src/app/repo/[id]/map/page.tsx' ORDER BY (cc.chunk_type = 'file') DESC, cc.start_line ASC LIMIT 1;"
+psql: The term 'psql' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/web/src/app/repo/%5Bid%5D/map/page.tsx').read().decode())"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/web/src/app/repo/%5Bid%5D/map/page.tsx').read().decode())
+                                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 495, in open
+    response = meth(req, response)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 604, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 533, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 613, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 503: Service Unavailable
+
+/d/codes/personal/devbridge
+> 
+
+[Terminal db5b272f-5e91-4d5f-9f00-6228b41433ab notification: command completed with exit code 1. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> grep -n "request.pathname2url" api/routes/repo.py
+grep: The term 'grep' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+[General Feedback]
+  The most similar commands are:
+    ➤ gres
+
+
+/d/codes/personal/devbridge
+> cat api/routes/repo.py | Select-String "request"
+
+from urllib import request
+    def _request() -> Any:
+        req = request.Request(url)
+        with request.urlopen(req, timeout=30) as resp:
+    return await asyncio.to_thread(_request)
+                    encoded_path = request.pathname2url(file_path)
+        FROM pull_requests pr
+
+
+/d/codes/personal/devbridge
+> cat api/routes/repo.py | Select-String "get_repository_file"
+
+async def get_repository_file(repo_id: str, file_path: str):
+
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/web%2Fsrc%2Fapp%2Frepo%2F%5Bid%5D%2Fmap%2Fpage.tsx').read().decode())"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/web%2Fsrc%2Fapp%2Frepo%2F%5Bid%5D%2Fmap%2Fpage.tsx').read().decode())
+                                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 495, in open
+    response = meth(req, response)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 604, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 533, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 613, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 503: Service Unavailable
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal 21df2b61-3c4c-4a3a-b153-58aa678c5bfc notification: command completed with exit code 0. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+class GCPSecretSource(PydanticBaseSettingsSource):
+    def get_field_value(self, field: FieldInfo, field_name: str) -> tuple[Any, str, bool]:
+        # Required by abstract base class; this source resolves all fields in __call__.
+        return None, field_name, False
+
+    def __call__(self) -> dict[str, Any]:
+        # Respect explicit local env/.env override for easier debugging and
+        # to avoid unintentionally masking local connection string changes.
+        if os.environ.get("SUPABASE_CONNECTION_STRING"):
+            return {}
+
+        project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
+
+        if not project_id:
+            return {}
+
+        try:
+            client = secretmanager.SecretManagerServiceClient()
+        except Exception:
+            return {}
+
+        name = f"projects/{project_id}/secrets/SUPABASE_CONNECTION_STRING/versions/latest"
+        try:
+            response = client.access_secret_version(request={"name": name})
+            val = response.payload.data.decode("UTF-8")
+            return {
+                "supabase_connection_string": val,
+                "google_cloud_project": project_id,
+            }
+        except Exception:
+            return {}
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    supabase_connection_string: str = Field(default="", validation_alias="SUPABASE_CONNECTION_STRING")
+    google_cloud_project: str | None = Field(default=None, validation_alias="GOOGLE_CLOUD_PROJECT")
+    github_webhook_secret: str | None = Field(default=None, validation_alias="GITHUB_WEBHOOK_SECRET")
+    env: str = Field(default="development", validation_alias="ENV")
+
+    def __init__(self, **values):
+        super().__init__(**values)
+
+        # T-05-04: Reject empty project identity in production mode
+        if self.env.lower() == "production" and not self.google_cloud_project:
+            raise ValueError("GOOGLE_CLOUD_PROJECT must be set in production mode")
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            file_secret_settings,
+            GCPSecretSource(settings_cls),
+        )
+
+
+settings = Settings()
+
+/d/codes/personal/devbridge
+> cat api/routes/repo.py | Select-String -Context 0,20 "list_repository_files"
+
+> async def list_repository_files(repo_id: str):
+      engine = get_engine()
+      if engine is None:
+          raise HTTPException(status_code=500, detail="Database engine not 
+initialized")
+  
+      query = text(
+          """
+          SELECT cc.file_path
+          FROM code_chunks cc
+          JOIN repositories r ON (r.name = cc.repo OR CAST(r.id AS text) = 
+cc.repo)
+          WHERE r.id = CAST(:repo_id AS uuid)
+          GROUP BY cc.file_path
+          ORDER BY cc.file_path
+          """
+      )
+      try:
+          async with engine.connect() as conn:
+              result = await conn.execute(query, {"repo_id": repo_id})
+              rows = result.fetchall()
+              
+              root: dict[str, Any] = {
+
+
+/d/codes/personal/devbridge
+> cat api/routes/repo.py | Select-String -Context 20,40 "async def list_repository_files"
+
+              GROUP BY repo_id
+          ) anns ON anns.repo_id = r.id
+          WHERE r.id = CAST(:repo_id AS uuid)
+          LIMIT 1
+          """
+      )
+      try:
+          async with engine.connect() as conn:
+              result = await conn.execute(query, {"repo_id": repo_id})
+              row = result.fetchone()
+              if not row:
+                  raise HTTPException(status_code=404, detail="Repository not 
+found")
+              return dict(row._mapping)
+      except HTTPException:
+          raise
+      except Exception as exc:
+          raise HTTPException(status_code=503, detail=f"Repository detail 
+unavailable: {exc}")
+  
+  
+  @router.get("/repo/{repo_id}/files")
+> async def list_repository_files(repo_id: str):
+      engine = get_engine()
+      if engine is None:
+          raise HTTPException(status_code=500, detail="Database engine not 
+initialized")
+  
+      query = text(
+          """
+          SELECT cc.file_path
+          FROM code_chunks cc
+          JOIN repositories r ON (r.name = cc.repo OR CAST(r.id AS text) = 
+cc.repo)
+          WHERE r.id = CAST(:repo_id AS uuid)
+          GROUP BY cc.file_path
+          ORDER BY cc.file_path
+          """
+      )
+      try:
+          async with engine.connect() as conn:
+              result = await conn.execute(query, {"repo_id": repo_id})
+              rows = result.fetchall()
+              
+              root: dict[str, Any] = {
+                  "name": "root",
+                  "path": "",
+                  "type": "directory",
+                  "children": {},
+              }
+              valid_paths: list[str] = []
+              
+              for row in rows:
+                  file_path = row._mapping.get("file_path")
+                  if isinstance(file_path, str) and file_path.strip():
+                      valid_paths.append(file_path.strip())
+  
+              if valid_paths:
+                  for file_path in valid_paths:
+                      _insert_tree_path(root, file_path)
+                  return _materialize_tree(root)
+  
+              # Fallback: list files from GitHub tree if ingestion not done 
+yet.
+              repo_query = text("SELECT github_url, name FROM repositories 
+WHERE id = CAST(:repo_id AS uuid) LIMIT 1")
+              
+
+
+/d/codes/personal/devbridge
+> cat api/routes/repo.py | Select-String -Context 0,50 "Fallback: list files from GitHub tree"
+
+>             # Fallback: list files from GitHub tree if ingestion not done 
+yet.
+              repo_query = text("SELECT github_url, name FROM repositories 
+WHERE id = CAST(:repo_id AS uuid) LIMIT 1")
+              
+              repo_result = await conn.execute(repo_query, {"repo_id": 
+repo_id})
+              repo_row = repo_result.fetchone()
+              if not repo_row:
+                  return _materialize_tree(root)
+  
+              repo_slug = 
+_repo_from_github_url(repo_row._mapping.get("github_url")) or 
+repo_row._mapping.get("name")
+              token = await get_github_token()
+              if not repo_slug:
+                  return _materialize_tree(root)
+  
+              try:
+                  tree_payload = await _github_get_json(
+                      
+f"https://api.github.com/repos/{repo_slug}/git/trees/HEAD?recursive=1",
+                      token,
+                  )
+              except Exception:
+                  tree_payload = {}
+  
+              tree_nodes = tree_payload.get("tree", []) if 
+isinstance(tree_payload, dict) else []
+              if not tree_nodes:
+                  try:
+                      repo_payload = await 
+_github_get_json(f"https://api.github.com/repos/{repo_slug}", token)
+                      default_branch = repo_payload.get("default_branch", 
+"main") if isinstance(repo_payload, dict) else "main"
+                      tree_payload = await _github_get_json(
+                          f"https://api.github.com/repos/{repo_slug}/git/trees/
+{default_branch}?recursive=1",
+                          token,
+                      )
+                      tree_nodes = tree_payload.get("tree", []) if 
+isinstance(tree_payload, dict) else []
+                  except Exception:
+                      tree_nodes = []
+  
+              for node in tree_nodes:
+                  if node.get("type") != "blob":
+                      continue
+                  file_path = node.get("path")
+                  if isinstance(file_path, str) and file_path:
+                      _insert_tree_path(root, file_path)
+  
+              return _materialize_tree(root)
+      except Exception as exc:
+          raise HTTPException(status_code=503, detail=f"Repository files 
+unavailable: {exc}")
+  
+  
+  @router.get("/repo/{repo_id}/files/{file_path:path}")
+  async def get_repository_file(repo_id: str, file_path: str):
+      engine = get_engine()
+      if engine is None:
+          raise HTTPException(status_code=500, detail="Database engine not 
+initialized")
+
+
+/d/codes/personal/devbridge
+> cat api/core/secrets.py
+from functools import lru_cache
+import os
+
+from google.cloud import secretmanager
+
+from api.core.config import settings
+
+class SecretManager:
+    """
+    Temporary facade over central configuration settings.
+    Kept to avoid breaking existing imports while callers migrate.
+    """
+    def __init__(self, project_id: str = None):
+        self.project_id = project_id or settings.google_cloud_project
+
+    @lru_cache(maxsize=32)
+    def get_secret(self, secret_id: str, version_id: str = "latest") -> str:
+        """
+        Resolve requested values from the central settings object.
+        """
+        _ = version_id  # Kept for backwards-compatible signature.
+        mapping = {
+            "SUPABASE_CONNECTION_STRING": settings.supabase_connection_string,
+            "GOOGLE_CLOUD_PROJECT": settings.google_cloud_project or "",
+        }
+        return mapping.get(secret_id, "")
+
+# Singleton instance
+secrets = SecretManager()
+
+def get_secret_manager() -> SecretManager:
+    return secrets
+
+
+async def get_github_token() -> str:
+    """Resolve GitHub token using Secret Manager first, then environment fallback."""
+    project_id = settings.google_cloud_project
+    if project_id:
+        try:
+            client = secretmanager.SecretManagerServiceClient()
+            name = f"projects/{project_id}/secrets/GITHUB_TOKEN/versions/latest"
+            response = client.access_secret_version(request={"name": name})
+            token = response.payload.data.decode("utf-8").strip()
+            if token:
+                return token
+        except Exception:
+            pass
+
+    return (os.getenv("GITHUB_TOKEN") or "").strip()
+
+/d/codes/personal/devbridge
+> cat << 'EOF' > db_test.py
+ParserError: 
+Line |
+   1 |  cat << 'EOF' > db_test.py
+     |       ~
+     | Missing file specification after redirection operator.
+
+/d/codes/personal/devbridge
+> import os
+import: The term 'import' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> import asyncio
+import: The term 'import' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> from pydantic_settings import BaseSettings, SettingsConfigDict
+ParserError: 
+Line |
+   1 |  from pydantic_settings import BaseSettings, SettingsConfigDict
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> from sqlalchemy.ext.asyncio import create_async_engine
+ParserError: 
+Line |
+   1 |  from sqlalchemy.ext.asyncio import create_async_engine
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> from sqlalchemy import text
+ParserError: 
+Line |
+   1 |  from sqlalchemy import text
+     |  ~~~~
+     | The 'from' keyword is not supported in this version of the language.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> class Settings(BaseSettings):
+ParserError: 
+Line |
+   1 |  class Settings(BaseSettings):
+     |                ~
+     | Missing 'class' body in 'class' declaration.
+
+/d/codes/personal/devbridge
+>     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+ParserError: 
+Line |
+   1 |      model_config = SettingsConfigDict(env_file=".env", env_file_encod …
+     |                                                       ~
+     | Missing argument in parameter list.
+
+/d/codes/personal/devbridge
+>     supabase_connection_string: str = ""
+supabase_connection_string:: The term 'supabase_connection_string:' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> settings = Settings()
+ParserError: 
+Line |
+   1 |  settings = Settings()
+     |                      ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> async def main():
+ParserError: 
+Line |
+   1 |  async def main():
+     |                 ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>     if not settings.supabase_connection_string:
+ParserError: 
+Line |
+   1 |      if not settings.supabase_connection_string:
+     |        ~
+     | Missing '(' after 'if' in if statement.
+
+/d/codes/personal/devbridge
+>         print("NO DB URL")
+Unable to initialize device PRN
+
+/d/codes/personal/devbridge
+>         return
+
+/d/codes/personal/devbridge
+>     engine = create_async_engine(settings.supabase_connection_string.replace("postgresql://", "postgresql+asyncpg://"))
+settings.supabase_connection_string.replace: The term 'settings.supabase_connection_string.replace' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>     async with engine.connect() as conn:
+ParserError: 
+Line |
+   1 |      async with engine.connect() as conn:
+     |                                ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+>         res = await conn.execute(text("SELECT COUNT(*) FROM code_chunks;"))
+text: The term 'text' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>         print("Total chunks:", res.scalar())
+ParserError: 
+Line |
+   1 |          print("Total chunks:", res.scalar())
+     |                                ~
+     | Missing expression after ','.
+
+/d/codes/personal/devbridge
+>         res = await conn.execute(text("SELECT DISTINCT repo FROM code_chunks;"))
+text: The term 'text' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+>         for row in res:
+ParserError: 
+Line |
+   1 |          for row in res:
+     |             ~
+     | Missing opening '(' after keyword 'for'.
+
+/d/codes/personal/devbridge
+>             print("Repo:", row[0])
+ParserError: 
+Line |
+   1 |              print("Repo:", row[0])
+     |                            ~
+     | Missing expression after ','.
+
+/d/codes/personal/devbridge
+> 
+
+/d/codes/personal/devbridge
+> asyncio.run(main())
+ParserError: 
+Line |
+   1 |  asyncio.run(main())
+     |                   ~
+     | An expression was expected after '('.
+
+/d/codes/personal/devbridge
+> EOF
+EOF: The term 'EOF' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+/d/codes/personal/devbridge
+> python db_test.py
+C:\Users\tronl\AppData\Local\Programs\Python\Python313\python.exe: can't open file 'D:\\Codes\\Personal\\DevBridge\\db_test.py': [Errno 2] No such file or directory
+
+/d/codes/personal/devbridge
+> Set-Content -Path db_test.py -Value @'                                        
+>> import os                                    
+>> import asyncio
+>> from pydantic_settings import BaseSettings, SettingsConfigDict
+>> from sqlalchemy.ext.asyncio import create_async_engine
+>> from sqlalchemy import text
+>> 
+>> class Settings(BaseSettings):
+>>     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+>>     supabase_connection_string: str = ""
+>> 
+>> async def main():
+>>     s = Settings()
+>>     url = s.supabase_connection_string or os.environ.get("SUPABASE_CONNECTION_STRING")
+>>     if not url:
+>>         print("NO URL")
+>>         return
+>>     url = url.replace("postgresql://", "postgresql+asyncpg://")
+>>     engine = create_async_engine(url)
+>>     async with engine.connect() as conn:
+>>         res = await conn.execute(text("SELECT COUNT(*) FROM code_chunks;"))
+>>         print("TOTAL CHUNKS:", res.scalar())
+>>         res = await conn.execute(text("SELECT DISTINCT repo FROM code_chunks;"))
+>>         for row in res.fetchall():
+>>             print("REPO:", row[0])
+>> 
+>> asyncio.run(main())
+>> '@
+
+/d/codes/personal/devbridge
+> python db_test.py
+TOTAL CHUNKS: 0
+
+/d/codes/personal/devbridge
+> python db_test.py                                                 
+Traceback (most recent call last):
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 526, in _prepare_and_execute
+    prepared_stmt, attributes = await adapt_connection._prepare(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        operation, self._invalidate_schema_cache_asof
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 773, in _prepare
+    prepared_stmt = await self._connection.prepare(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        operation, name=self._prepared_statement_name_func()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connection.py", line 638, in prepare
+    return await self._prepare(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connection.py", line 657, in _prepare
+    stmt = await self._get_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\asyncpg\connection.py", line 443, in _get_statement
+    statement = await self._protocol.prepare(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "asyncpg/protocol/protocol.pyx", line 165, in prepare
+asyncpg.exceptions.DuplicatePreparedStatementError: prepared statement "__asyncpg_stmt_1__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 585, in execute
+    self._adapt_connection.await_(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._prepare_and_execute(operation, parameters)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 563, in _prepare_and_execute
+    self._handle_exception(error)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 513, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 797, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.ProgrammingError: <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_1__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Codes\Personal\DevBridge\db_test.py", line 26, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\Codes\Personal\DevBridge\db_test.py", line 19, in main
+    async with engine.connect() as conn:
+               ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\ext\asyncio\base.py", line 121, in __aenter__
+    return await self.start(is_ctxmanager=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 275, in start
+    await greenlet_spawn(self.sync_engine.connect)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\pool\base.py", line 914, in __connect
+    )._exec_w_sync_on_first_run(self.dbapi_connection, self)
+      ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\event\attr.py", line 501, in _exec_w_sync_on_first_run
+    self(*args, **kw)
+    ~~~~^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\event\attr.py", line 515, in __call__
+    fn(*args, **kw)
+    ~~^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 1897, in go
+    return once_fn(*arg, **kw)
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\create.py", line 773, in first_connect
+    dialect.initialize(c)
+    ~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\base.py", line 3340, in initialize
+    super().initialize(connection)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 528, in initialize
+    self.server_version_info = self._get_server_version_info(
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        connection
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\base.py", line 3610, in _get_server_version_info
+    v = connection.exec_driver_sql("select pg_catalog.version()").scalar()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1779, in exec_driver_sql
+    ret = self._execute_context(
+        dialect,
+    ...<5 lines>...
+        distilled_parameters,
+    )
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 585, in execute
+    self._adapt_connection.await_(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._prepare_and_execute(operation, parameters)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 563, in _prepare_and_execute
+    self._handle_exception(error)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 513, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\tronl\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 797, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_1__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+[SQL: select pg_catalog.version()]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+
+/d/codes/personal/devbridge
+> cat api/db/session.py
+from __future__ import annotations
+
+import shlex
+from typing import Optional
+from urllib.parse import parse_qsl, quote, unquote, urlencode, urlsplit, urlunsplit
+
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+
+engine: Optional[AsyncEngine] = None
+
+
+def _conninfo_to_url(connection_string: str) -> str:
+    raw_conninfo, _, raw_query = connection_string.partition("?")
+    fields: dict[str, str] = {}
+    for token in shlex.split(raw_conninfo):
+        if "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        fields[key.strip().lower()] = value.strip()
+
+    host = fields.get("host", "")
+    dbname = fields.get("dbname") or fields.get("database") or ""
+    if not host or not dbname:
+        raise ValueError("conninfo string must include host and dbname/database")
+
+    user = fields.get("user", "")
+    password = fields.get("password", "")
+    port = fields.get("port", "")
+
+    safe_user = quote(user, safe="") if user else ""
+    safe_password = quote(password, safe="") if password else ""
+    auth = ""
+    if safe_user:
+        auth = safe_user
+        if password:
+            auth = f"{auth}:{safe_password}"
+        auth = f"{auth}@"
+
+    hostport = f"{host}:{port}" if port else host
+    query = dict(parse_qsl(raw_query, keep_blank_values=True))
+
+    # Keep extra conninfo fields (except URL core parts) as query args.
+    reserved = {"host", "port", "user", "password", "dbname", "database"}
+    for key, value in fields.items():
+        if key not in reserved:
+            query.setdefault(key, value)
+
+    query.pop("sslmode", None)
+    query.pop("ssl", None)
+    return urlunsplit(
+        (
+            "postgresql+asyncpg",
+            f"{auth}{hostport}",
+            f"/{quote(dbname, safe='')}",
+            urlencode(query),
+            "",
+        )
+    )
+
+
+def _normalize_connection_string(connection_string: str) -> str:
+    normalized = connection_string.strip()
+
+    # Support libpq conninfo format ("key=value key=value") often returned by
+    # secret stores for Postgres credentials.
+    if "://" not in normalized and "=" in normalized:
+        return _conninfo_to_url(normalized)
+
+    if normalized.startswith("postgres://"):
+        normalized = normalized.replace("postgres://", "postgresql+asyncpg://", 1)
+    if normalized.startswith("postgresql://"):
+        normalized = normalized.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if normalized.startswith("postgresql+psycopg://"):
+        normalized = normalized.replace("postgresql+psycopg://", "postgresql+asyncpg://", 1)
+
+    parts = urlsplit(normalized)
+    netloc = parts.netloc
+
+    # Encode password safely when it contains reserved URL characters
+    # (for example '@') so SQLAlchemy can parse the URL.
+    if "@" in netloc:
+        userinfo, hostinfo = netloc.rsplit("@", 1)
+        if ":" in userinfo:
+            username, raw_password = userinfo.split(":", 1)
+            safe_password = quote(unquote(raw_password), safe="")
+            netloc = f"{username}:{safe_password}@{hostinfo}"
+
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query.pop("sslmode", None)
+    query.pop("ssl", None)
+
+    # Supabase transaction pooler (PgBouncer) does not support prepared
+    # statements in the default asyncpg mode. Disable statement caches.
+    host = (parts.hostname or "").lower()
+    if "pooler.supabase.com" in host:
+        query.setdefault("prepared_statement_cache_size", "0")
+
+    return urlunsplit((parts.scheme, netloc, parts.path, urlencode(query), parts.fragment))
+
+
+async def init_db_pool(connection_string: str) -> AsyncEngine:
+    global engine
+    if engine is not None:
+        return engine
+
+    if not connection_string:
+        raise RuntimeError("FATAL: connection_string is EMPTY in init_db_pool!")
+
+    normalized = _normalize_connection_string(connection_string)
+    if "@" in normalized and "%40" not in normalized and normalized.count("@") != 1:
+        raise RuntimeError(f"FATAL: normalization failed!! String is: {normalized!r}")
+
+    try:
+        engine = create_async_engine(
+            normalized,
+            pool_size=10,
+            connect_args={
+                "ssl": "require",
+                "statement_cache_size": 0,
+            },
+        )
+    except Exception as e:
+        raise RuntimeError(f"FATAL: create_async_engine failed on string: {normalized!r}") from e
+    
+    return engine
+
+
+async def close_db_pool() -> None:
+    global engine
+    if engine is not None:
+        await engine.dispose()
+        engine = None
+
+
+def get_engine() -> Optional[AsyncEngine]:
+    return engine
+
+/d/codes/personal/devbridge
+> Set-Content -Path db_test.py -Value @'                                        
+>> import os                                    
+>> import asyncio
+>> from pydantic_settings import BaseSettings, SettingsConfigDict
+>> from sqlalchemy.ext.asyncio import create_async_engine
+>> from sqlalchemy import text
+>> 
+>> class Settings(BaseSettings):
+>>     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+>>     supabase_connection_string: str = ""
+>> 
+>> async def main():
+>>     s = Settings()
+>>     url = s.supabase_connection_string or os.environ.get("SUPABASE_CONNECTION_STRING")
+>>     if not url:
+>>         print("NO URL")
+>>         return
+>>     url = url.replace("postgresql://", "postgresql+asyncpg://")
+>>     engine = create_async_engine(url, connect_args={"statement_cache_size": 0})
+>>     async with engine.connect() as conn:
+>>         res = await conn.execute(text("SELECT COUNT(*) FROM code_chunks;"))
+>>         print("TOTAL CHUNKS:", res.scalar())
+>>         res = await conn.execute(text("SELECT DISTINCT repo FROM code_chunks;"))
+>>         for row in res.fetchall():
+>>             print("REPO:", row[0])
+>> 
+>> asyncio.run(main())
+>> '@
+
+/d/codes/personal/devbridge
+> python db_test.py
+TOTAL CHUNKS: 0
+
+/d/codes/personal/devbridge
+> python db_test.py                                                 
+TOTAL CHUNKS: 0
+
+/d/codes/personal/devbridge
+>
+
+---
+
+[Terminal 741a0009-ef3b-4d6f-9498-d7c52038e651 notification: command completed with exit code 1. Use send_to_terminal to send another command or kill_terminal to stop it.]
+Terminal output:
+
+/d/codes/personal/devbridge
+> Set-Content -Path db_test.py -Value @'                                        
+>> import os                                    
+>> import asyncio
+>> from pydantic_settings import BaseSettings, SettingsConfigDict
+>> from sqlalchemy.ext.asyncio import create_async_engine
+>> from sqlalchemy import text
+>> 
+>> class Settings(BaseSettings):
+>>     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+>>     supabase_connection_string: str = ""
+>> 
+>> async def main():
+>>     s = Settings()
+>>     url = s.supabase_connection_string or os.environ.get("SUPABASE_CONNECTION_STRING")
+>>     if not url:
+>>         print("NO URL")
+>>         return
+>>     url = url.replace("postgresql://", "postgresql+asyncpg://")
+>>     engine = create_async_engine(url, connect_args={"statement_cache_size": 0})
+>>     async with engine.connect() as conn:
+>>         res = await conn.execute(text("SELECT COUNT(*) FROM repositories;"))
+>>         print("TOTAL REPOS:", res.scalar())
+>>         res = await conn.execute(text("SELECT id, name FROM repositories;"))
+>>         for row in res.fetchall():
+>>             print("REPO:", row[0], row[1])
+>> 
+>> asyncio.run(main())
+>> '@
+
+/d/codes/personal/devbridge
+> python db_test.py
+TOTAL REPOS: 2
+REPO: 813710b4-420b-4141-aacd-eaf31b6911c8 Zephyrxx0/InteractiveDashboard
+REPO: 2dff0bf6-0c3b-4149-97ca-08bcf7b0a5ac Zephyrxx0/DevBridge
+
+/d/codes/personal/devbridge
+> python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/repo/813710b4-420b-4141-aacd-eaf31b6911c8/files/src/utils/dummy.ts').read().decode())"
+
+/d/codes/personal/devbridge
+>
