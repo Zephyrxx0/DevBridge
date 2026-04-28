@@ -1,0 +1,35 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "965b6ed04775",
+  "strategy": "manual-commit",
+  "branch": "phase-14-audit-closeout",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/package-lock.json",
+    "web/package.json",
+    "web/playwright.config.ts",
+    "web/src/app/globals.css",
+    "web/src/app/repo/[id]/files/[...path]/page.tsx",
+    "web/src/app/repo/[id]/layout.tsx",
+    "web/src/app/repo/[id]/map/page.tsx",
+    "web/src/app/repo/[id]/notes/page.tsx",
+    "web/src/app/repo/[id]/page.tsx",
+    "web/src/components/floating-header.tsx",
+    "web/tests/ingestion_loop.spec.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/96/5b6ed04775/0/metadata.json",
+      "transcript": "/96/5b6ed04775/0/full.jsonl",
+      "content_hash": "/96/5b6ed04775/0/content_hash.txt",
+      "prompt": "/96/5b6ed04775/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
