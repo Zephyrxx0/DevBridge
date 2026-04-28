@@ -1,0 +1,40 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "090f1ddbe92e",
+  "strategy": "manual-commit",
+  "branch": "phase-14-audit-closeout",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/agents/debugger.py",
+    "api/agents/orchestrator.py",
+    "api/core/config.py",
+    "api/db/session.py",
+    "api/ingest/embedding_queue.py",
+    "api/ingest/trigger.py",
+    "api/main.py",
+    "api/requirements.txt",
+    "api/routes/annotations.py",
+    "api/routes/chats.py",
+    "api/routes/questions.py",
+    "api/routes/repo.py",
+    "api/run_server.py",
+    "db_test.py",
+    "test_db.py",
+    "test_list.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/09/0f1ddbe92e/0/metadata.json",
+      "transcript": "/09/0f1ddbe92e/0/full.jsonl",
+      "content_hash": "/09/0f1ddbe92e/0/content_hash.txt",
+      "prompt": "/09/0f1ddbe92e/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
