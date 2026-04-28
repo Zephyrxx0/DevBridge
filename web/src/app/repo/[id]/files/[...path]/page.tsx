@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, Copy, ExternalLink, Zap, ThumbsUp, MessageSquare } from "lucide-react";
+import { ChevronLeft, ExternalLink, ThumbsUp } from "lucide-react";
 
 interface Annotation {
   id: string;
@@ -50,26 +50,19 @@ export default function CodeViewerPage() {
   const pathArray = (params.path as string[]) || [];
   const filePath = pathArray.join("/");
   const lineParam = searchParams.get("line");
-  const highlightParam = searchParams.get("highlight");
   const annParam = searchParams.get("ann");
 
   const [fileContent, setFileContent] = useState<FileContent | null>(null);
   const [loading, setLoading] = useState(true);
-  const [highlightedLine, setHighlightedLine] = useState<number | null>(lineParam ? parseInt(lineParam) : null);
-  const [expandedAnnotation, setExpandedAnnotation] = useState<string | null>(annParam || null);
+  const [highlightedLine] = useState<number | null>(lineParam ? parseInt(lineParam) : null);
+  const [, setExpandedAnnotation] = useState<string | null>(annParam || null);
   const [mounted, setMounted] = useState(false);
-  const [annotationForm, setAnnotationForm] = useState<{ startLine?: number; endLine?: number } | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    fetchFileContent();
-  }, [mounted, repoId, filePath]);
-
-  const fetchFileContent = async () => {
+  const fetchFileContent = useCallback(async () => {
     try {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -83,13 +76,17 @@ export default function CodeViewerPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [repoId, filePath]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    fetchFileContent();
+  }, [mounted, fetchFileContent]);
 
   if (!mounted) return null;
 
   const lines = fileContent?.content.split("\n") || [];
   const sortedAnnotations = fileContent?.annotations.sort((a, b) => a.line - b.line) || [];
-  const topAnnotations = sortedAnnotations.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

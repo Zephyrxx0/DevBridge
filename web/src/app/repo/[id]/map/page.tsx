@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, Zap, GitBranch, TrendingUp, ChevronDown } from "lucide-react";
+import { ChevronLeft, Zap, TrendingUp, ChevronDown } from "lucide-react";
 
 interface FileNode {
   name: string;
@@ -47,12 +47,7 @@ export default function MapPage() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    fetchMapData();
-  }, [mounted, repoId]);
-
-  const fetchMapData = async () => {
+  const fetchMapData = useCallback(async () => {
     try {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -77,7 +72,12 @@ export default function MapPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [repoId]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    fetchMapData();
+  }, [mounted, fetchMapData]);
 
   const toggleFolder = (path: string) => {
     const newExpanded = new Set(expandedFolders);

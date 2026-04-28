@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, type SVGProps } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, GitMerge, Clock, Zap, Search, ChevronDown, RotateCw } from "lucide-react";
+import { ChevronLeft, GitMerge, Search, ChevronDown, RotateCw } from "lucide-react";
 
 interface PR {
   number: number;
@@ -39,12 +39,7 @@ export default function PRPage() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    fetchPRs();
-  }, [mounted, repoId]);
-
-  const fetchPRs = async () => {
+  const fetchPRs = useCallback(async () => {
     try {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -57,7 +52,12 @@ export default function PRPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [repoId]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    fetchPRs();
+  }, [mounted, fetchPRs]);
 
   const getStatusColor = (status: string) => {
     if (status === "open") return "bg-[var(--accent-ember-muted)] text-[var(--accent-ember)]";
@@ -284,7 +284,7 @@ export default function PRPage() {
   );
 }
 
-function ExternalLink(props: any) {
+function ExternalLink(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}

@@ -1,4 +1,4 @@
-/* eslint-disable react/no-unescaped-entities */
+ 
 import Link from "next/link";
 import {
   ArrowRight,
@@ -256,9 +256,9 @@ function CodebaseGraphSection() {
                 <CardDescription>Jump into the workspace map view for real data once a repo is connected.</CardDescription>
               </CardHeader>
               <CardContent className="px-6 pb-6 pt-0">
-                <Link href="/repo/sample/map">
+                <Link href="/dashboard">
                   <Button variant="outline" className="w-full">
-                    Open repo map
+                    Go to Dashboard
                     <ArrowRight className="size-4" />
                   </Button>
                 </Link>
@@ -291,15 +291,10 @@ function FinalCTA() {
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Link href="/repo/sample">
+                <Link href="/dashboard">
                   <Button size="lg" className="w-full rounded-full sm:w-auto">
-                    Connect repo
+                    Go to Dashboard
                     <ArrowRight className="size-4" />
-                  </Button>
-                </Link>
-                <Link href="/repo/sample/map">
-                  <Button size="lg" variant="outline" className="w-full rounded-full sm:w-auto">
-                    View repo map
                   </Button>
                 </Link>
               </div>

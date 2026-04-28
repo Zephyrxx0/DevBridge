@@ -2,11 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Grid2x2PlusIcon, MenuIcon, Moon, Sun } from 'lucide-react';
+import { MenuIcon, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Sheet, SheetContent, SheetFooter } from '@/components/sheet';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { AuthButton } from './auth-button';
 
 export function FloatingHeader() {
 	const [open, setOpen] = React.useState(false);
@@ -86,11 +87,9 @@ export function FloatingHeader() {
 					>
 						{mounted ? (isDark ? <Sun className="size-4" /> : <Moon className="size-4" />) : <div className="size-4" />}
 					</Button>
-					<Link href="/repo/demo" className="hidden sm:block">
-						<Button size="sm" className="h-9 rounded-lg px-3.5">
-							Open repo
-						</Button>
-					</Link>
+					<div className="hidden sm:block">
+						<AuthButton />
+					</div>
 					<Sheet open={open} onOpenChange={setOpen}>
 						<Button
 							size="icon"

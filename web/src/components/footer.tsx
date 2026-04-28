@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Grid2x2PlusIcon } from "lucide-react";
 
 export function Footer() {
   return (

@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, MessageSquare, ThumbsUp, Trash2, Edit2, Plus, FileText } from "lucide-react";
+import { ChevronLeft, MessageSquare, ThumbsUp, Plus } from "lucide-react";
 
 interface Annotation {
   id: string;
@@ -61,12 +61,7 @@ export default function AnnotationsPage() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    fetchAnnotations();
-  }, [mounted, repoId]);
-
-  const fetchAnnotations = async () => {
+  const fetchAnnotations = useCallback(async () => {
     try {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -79,7 +74,12 @@ export default function AnnotationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [repoId]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    fetchAnnotations();
+  }, [mounted, fetchAnnotations]);
 
   const toggleTagFilter = (tag: string) => {
     const newTags = new Set(selectedTags);

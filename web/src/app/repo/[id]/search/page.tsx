@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, Search, Code2, GitBranch, GitMerge, Clock } from "lucide-react";
 
@@ -49,14 +49,7 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    if (initialQuery) {
-      performSearch(initialQuery);
-    }
-  }, []);
-
-  const performSearch = async (searchQuery: string) => {
+  const performSearch = useCallback(async (searchQuery: string, tab: typeof activeTab = activeTab) => {
     if (!searchQuery.trim()) return;
 
     try {
@@ -64,21 +57,21 @@ export default function SearchPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
       // Simulate search by tab
-      if (activeTab === "semantic") {
+      if (tab === "semantic") {
         const response = await fetch(
           `${apiUrl}/repo/${repoId}/search?query=${encodeURIComponent(searchQuery)}&type=semantic`
         );
         if (response.ok) {
           setSemanticResults(await response.json());
         }
-      } else if (activeTab === "symbol") {
+      } else if (tab === "symbol") {
         const response = await fetch(
           `${apiUrl}/repo/${repoId}/search?query=${encodeURIComponent(searchQuery)}&type=symbol`
         );
         if (response.ok) {
           setSymbolResults(await response.json());
         }
-      } else if (activeTab === "history") {
+      } else if (tab === "history") {
         const response = await fetch(
           `${apiUrl}/repo/${repoId}/search?query=${encodeURIComponent(searchQuery)}&type=history`
         );
@@ -91,7 +84,16 @@ export default function SearchPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, repoId]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!initialQuery) return;
+    performSearch(initialQuery);
+  }, [initialQuery, performSearch]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,8 +143,9 @@ export default function SearchPage() {
               <button
                 key={id}
                 onClick={() => {
-                  setActiveTab(id as typeof activeTab);
-                  if (query) performSearch(query);
+                  const nextTab = id as typeof activeTab;
+                  setActiveTab(nextTab);
+                  if (query) performSearch(query, nextTab);
                 }}
                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded transition-colors ${
                   activeTab === id
@@ -182,7 +185,7 @@ export default function SearchPage() {
                 {semanticResults.length === 0 ? (
                   <Card>
                     <CardContent className="py-8 text-center">
-                      <p className="text-muted-foreground text-sm">No semantic results found for "{query}"</p>
+                      <p className="text-muted-foreground text-sm">No semantic results found for &quot;{query}&quot;</p>
                     </CardContent>
                   </Card>
                 ) : (
@@ -235,7 +238,7 @@ export default function SearchPage() {
                 {symbolResults.length === 0 ? (
                   <Card>
                     <CardContent className="py-8 text-center">
-                      <p className="text-muted-foreground text-sm">No symbols found for "{query}"</p>
+                      <p className="text-muted-foreground text-sm">No symbols found for &quot;{query}&quot;</p>
                     </CardContent>
                   </Card>
                 ) : (
@@ -277,7 +280,7 @@ export default function SearchPage() {
                 {prResults.length === 0 ? (
                   <Card>
                     <CardContent className="py-8 text-center">
-                      <p className="text-muted-foreground text-sm">No PRs found for "{query}"</p>
+                      <p className="text-muted-foreground text-sm">No PRs found for &quot;{query}&quot;</p>
                     </CardContent>
                   </Card>
                 ) : (
