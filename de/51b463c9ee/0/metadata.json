@@ -1,0 +1,35 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "de51b463c9ee",
+  "session_id": "82feb945-de60-4e04-8894-0b9a8b7c7d47",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-28T19:19:49.4127512Z",
+  "branch": "phase-17-vercel-deployment",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/core/config.py",
+    "api/requirements.txt"
+  ],
+  "agent": "Claude Code",
+  "model": "gemini-3.1-pro-preview",
+  "turn_id": "1291cc79bd67",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-28T19:19:48.9395724Z",
+    "agent_lines": 0,
+    "human_added": 4709,
+    "human_modified": 126,
+    "human_removed": 0,
+    "total_committed": 4835,
+    "agent_percentage": 0
+  }
+}
