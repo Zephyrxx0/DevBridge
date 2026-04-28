@@ -10,8 +10,8 @@ def main() -> None:
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     host = os.getenv("API_HOST", "0.0.0.0")
-    port = int(os.getenv("API_PORT", "8000"))
-    uvicorn.run("api.main:app", host=host, port=port)
+    port = int(os.getenv("PORT", os.getenv("API_PORT", "8000")))
+    uvicorn.run("main:app", host=host, port=port)
 
 
 if __name__ == "__main__":
