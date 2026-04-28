@@ -1,0 +1,40 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "d3a7e2c8223d",
+  "strategy": "manual-commit",
+  "branch": "master",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/agents/debugger.py",
+    "api/agents/orchestrator.py",
+    "api/core/config.py",
+    "api/db/session.py",
+    "api/ingest/embedding_queue.py",
+    "api/main.py",
+    "api/requirements.txt",
+    "db_test.py",
+    "test_db.py",
+    "test_list.py",
+    "web/package-lock.json",
+    "web/package.json",
+    "web/playwright-report/index.html",
+    "web/playwright.config.ts",
+    "web/test-results/.last-run.json",
+    "web/tests/ingestion_loop.spec.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d3/a7e2c8223d/0/metadata.json",
+      "transcript": "/d3/a7e2c8223d/0/full.jsonl",
+      "content_hash": "/d3/a7e2c8223d/0/content_hash.txt",
+      "prompt": "/d3/a7e2c8223d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
