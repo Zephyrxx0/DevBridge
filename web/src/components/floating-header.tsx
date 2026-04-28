@@ -13,10 +13,13 @@ export function FloatingHeader() {
 	const [open, setOpen] = React.useState(false);
 	const [mounted, setMounted] = React.useState(false);
 	const [lastRepo, setLastRepo] = React.useState('demo');
+	const [lastRepoGithubUrl, setLastRepoGithubUrl] = React.useState('');
 	React.useEffect(() => setMounted(true), []);
 	React.useEffect(() => {
 		const lastRepoId = localStorage.getItem('devbridge.lastRepoId');
 		if (lastRepoId) setLastRepo(lastRepoId);
+		const meta = JSON.parse(localStorage.getItem('devbridge.recentRepoMeta') ?? '{}') as Record<string, { name: string; url: string }>;
+		if (lastRepoId && meta[lastRepoId]?.url) setLastRepoGithubUrl(meta[lastRepoId].url);
 	}, []);
 	const { theme, setTheme } = useTheme();
 	const isDark = mounted ? theme !== 'light' : true;
@@ -48,7 +51,7 @@ export function FloatingHeader() {
 		},
 		{
 			label: 'Project GitHub',
-			href: `https://github.com/${lastRepo}`,
+			href: lastRepoGithubUrl || `https://github.com/${lastRepo}`,
 		},
 	];
 

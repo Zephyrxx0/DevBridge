@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowUp, ChevronDown, ChevronRight, Clock3, Code2, GitBranch, StickyNote } from "lucide-react";
+import { ArrowUp, ChevronDown, ChevronRight, Clock3, Code2, Folder, GitBranch, StickyNote } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,13 @@ type SnippetChip = {
   code: string;
 };
 
+type FileNode = {
+  name: string;
+  path: string;
+  type: "file" | "directory";
+  children?: FileNode[];
+};
+
 import { useRepo } from "@/contexts/repo-context";
 
 export default function RepoWorkspacePage() {
@@ -44,6 +52,10 @@ export default function RepoWorkspacePage() {
   const [snippetChips, setSnippetChips] = useState<SnippetChip[]>([]);
   const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
   const [selectedSource, setSelectedSource] = useState<SourceReference | null>(null);
+  const [sidePanelTab, setSidePanelTab] = useState<"summary" | "files">("summary");
+  const [fileTree, setFileTree] = useState<FileNode | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [loadingFiles, setLoadingFiles] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -60,6 +72,24 @@ export default function RepoWorkspacePage() {
     if (!scrollRef.current) return;
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
+
+  useEffect(() => {
+    async function loadFileTree() {
+      if (sidePanelTab !== "files" || fileTree) return;
+      setLoadingFiles(true);
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const response = await fetch(`${apiUrl}/repo/${repoId}/files`);
+        if (!response.ok) return;
+        const data = await response.json();
+        setFileTree(data as FileNode);
+      } finally {
+        setLoadingFiles(false);
+      }
+    }
+
+    loadFileTree();
+  }, [fileTree, repoId, sidePanelTab]);
 
   const toggleSourceSection = (messageIndex: number) => {
     setExpandedSources((prev) => {
@@ -226,6 +256,54 @@ export default function RepoWorkspacePage() {
     }
   };
 
+  const toggleFolder = (path: string) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  };
+
+  const renderTreeNode = (node: FileNode, depth = 0): React.ReactNode => {
+    const isDirectory = node.type === "directory";
+    const isExpanded = expandedFolders.has(node.path);
+
+    if (depth === 0 && node.children?.length) {
+      return node.children.map((child) => renderTreeNode(child, depth + 1));
+    }
+
+    if (isDirectory) {
+      return (
+        <div key={node.path}>
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-[var(--foreground-muted)] hover:bg-[var(--surface-2)]"
+            style={{ paddingLeft: `${depth * 12}px` }}
+            onClick={() => toggleFolder(node.path)}
+          >
+            <ChevronDown className={cn("size-3.5 transition-transform", isExpanded ? "" : "-rotate-90")} />
+            <Folder className="size-3.5" />
+            <span className="truncate">{node.name}</span>
+          </button>
+          {isExpanded && node.children?.length ? node.children.map((child) => renderTreeNode(child, depth + 1)) : null}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={node.path}
+        href={`/repo/${repoId}/files?path=${encodeURIComponent(node.path)}`}
+        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[var(--foreground-muted)] hover:bg-[var(--surface-2)]"
+        style={{ paddingLeft: `${depth * 12}px` }}
+      >
+        <Code2 className="size-3.5" />
+        <span className="truncate">{node.name}</span>
+      </Link>
+    );
+  };
+
   return (
     <section className="flex min-h-0 flex-1 gap-[var(--space-lg)] p-[var(--space-lg)]">
       <div className="flex min-h-0 flex-[3] flex-col">
@@ -379,42 +457,69 @@ export default function RepoWorkspacePage() {
           </div>
         ) : (
           <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-lg)]">
-            <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]">Repository Summary</p>
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
-                <Code2 className="h-4 w-4 text-[var(--foreground-muted)]" />
-                <div>
-                  <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Files</p>
-                  <p className="text-[var(--text-h3)] font-semibold">{repo?.fileCount ?? 0}</p>
-                </div>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]">Repository Panel</p>
+              <div className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-1">
+                <button
+                  type="button"
+                  onClick={() => setSidePanelTab("summary")}
+                  className={cn("rounded-md px-2.5 py-1 text-xs", sidePanelTab === "summary" ? "bg-[var(--surface-3)] text-[var(--foreground)]" : "text-[var(--foreground-muted)]")}
+                >
+                  Summary
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSidePanelTab("files")}
+                  className={cn("rounded-md px-2.5 py-1 text-xs", sidePanelTab === "files" ? "bg-[var(--surface-3)] text-[var(--foreground)]" : "text-[var(--foreground-muted)]")}
+                >
+                  Files
+                </button>
               </div>
-              <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
-                <StickyNote className="h-4 w-4 text-[var(--foreground-muted)]" />
-                <div>
-                  <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Annotations</p>
-                  <p className="text-[var(--text-h3)] font-semibold">{repo?.annotationCount ?? 0}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
-                <GitBranch className="h-4 w-4 text-[var(--foreground-muted)]" />
-                <div>
-                  <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">PRs</p>
-                  <p className="text-[var(--text-h3)] font-semibold">{repo?.prCount ?? 0}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
-                <Clock3 className="h-4 w-4 text-[var(--foreground-muted)]" />
-                <div>
-                  <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Last Indexed</p>
-                  <p className="text-[var(--text-sm)] text-[var(--foreground-muted)]">
-                    {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "Never"}
-                  </p>
-                </div>
-              </div>
-              <p className="pt-2 text-[var(--text-xs)] text-[var(--foreground-subtle)]">
-                Click a source citation from chat to inspect it in this panel.
-              </p>
             </div>
+
+            {sidePanelTab === "summary" ? (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                  <Code2 className="h-4 w-4 text-[var(--foreground-muted)]" />
+                  <div>
+                    <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Files</p>
+                    <p className="text-[var(--text-h3)] font-semibold">{repo?.fileCount ?? 0}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                  <StickyNote className="h-4 w-4 text-[var(--foreground-muted)]" />
+                  <div>
+                    <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Annotations</p>
+                    <p className="text-[var(--text-h3)] font-semibold">{repo?.annotationCount ?? 0}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                  <GitBranch className="h-4 w-4 text-[var(--foreground-muted)]" />
+                  <div>
+                    <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">PRs</p>
+                    <p className="text-[var(--text-h3)] font-semibold">{repo?.prCount ?? 0}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                  <Clock3 className="h-4 w-4 text-[var(--foreground-muted)]" />
+                  <div>
+                    <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Last Indexed</p>
+                    <p className="text-[var(--text-sm)] text-[var(--foreground-muted)]">
+                      {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "Never"}
+                    </p>
+                  </div>
+                </div>
+                <p className="pt-2 text-[var(--text-xs)] text-[var(--foreground-subtle)]">
+                  Click source citation from chat to inspect it in this panel.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4 min-h-0 flex-1 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-2">
+                {loadingFiles ? <p className="px-2 py-1 text-xs text-[var(--foreground-subtle)]">Loading files...</p> : null}
+                {!loadingFiles && fileTree ? renderTreeNode(fileTree) : null}
+                {!loadingFiles && !fileTree ? <p className="px-2 py-1 text-xs text-[var(--foreground-subtle)]">Files unavailable.</p> : null}
+              </div>
+            )}
           </div>
         )}
       </aside>

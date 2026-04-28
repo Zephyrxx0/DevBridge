@@ -61,7 +61,15 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
     const next = [repoId, ...existing.filter((id) => id !== repoId)].slice(0, 12);
     localStorage.setItem(key, JSON.stringify(next));
     localStorage.setItem("devbridge.lastRepoId", repoId);
-  }, [basePath]);
+
+    const metaKey = "devbridge.recentRepoMeta";
+    const meta = JSON.parse(localStorage.getItem(metaKey) ?? "{}") as Record<string, { name: string; url: string }>;
+    meta[repoId] = {
+      name: repo?.name ?? repoId,
+      url: repo?.url ?? "",
+    };
+    localStorage.setItem(metaKey, JSON.stringify(meta));
+  }, [basePath, repo]);
 
   if (!isRootWorkspace) {
     return <>{children}</>;
