@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronDown, File, Folder, Code2, GitBranch, Search } from "lucide-react";
+import { ShikiCode } from "@/components/shiki-code";
+import { ChevronLeft, ChevronDown, Folder, Code2, Search } from "lucide-react";
 
 interface FileNode {
   name: string;
@@ -37,22 +38,20 @@ export default function FilesPage() {
   const [filterText, setFilterText] = useState("");
   const [mounted, setMounted] = useState(false);
 
+  const handleDragSnippet = (
+    event: React.DragEvent<HTMLDivElement>,
+    payload: { filePath: string; startLine: number; endLine: number; code: string }
+  ) => {
+    event.dataTransfer.effectAllowed = "copy";
+    event.dataTransfer.setData("application/x-devbridge-snippet", JSON.stringify(payload));
+    event.dataTransfer.setData("text/plain", payload.code);
+  };
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    fetchFileTree();
-  }, [mounted, repoId]);
-
-  useEffect(() => {
-    if (selectedPath && mounted) {
-      fetchFileContent(selectedPath);
-    }
-  }, [selectedPath, mounted]);
-
-  const fetchFileTree = async () => {
+  const fetchFileTree = useCallback(async () => {
     try {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -66,9 +65,9 @@ export default function FilesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [repoId]);
 
-  const fetchFileContent = async (path: string) => {
+  const fetchFileContent = useCallback(async (path: string) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       const response = await fetch(`${apiUrl}/repo/${repoId}/files/${path}`);
@@ -79,7 +78,18 @@ export default function FilesPage() {
     } catch (err) {
       console.error("Error fetching file content:", err);
     }
-  };
+  }, [repoId]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    fetchFileTree();
+  }, [mounted, fetchFileTree]);
+
+  useEffect(() => {
+    if (selectedPath && mounted) {
+      fetchFileContent(selectedPath);
+    }
+  }, [selectedPath, mounted, fetchFileContent]);
 
   const toggleFolder = (path: string) => {
     const newExpanded = new Set(expandedFolders);
@@ -245,9 +255,20 @@ export default function FilesPage() {
                   </p>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <pre className="p-4 overflow-x-auto text-xs font-mono text-muted-foreground bg-muted/30">
-                    <code>{fileContent.content}</code>
-                  </pre>
+                  <div
+                    className="p-4 overflow-x-auto text-xs font-mono text-muted-foreground bg-muted/30"
+                    draggable
+                    onDragStart={(event) =>
+                      handleDragSnippet(event, {
+                        filePath: selectedPath,
+                        startLine: 1,
+                        endLine: fileContent.line_count,
+                        code: fileContent.content,
+                      })
+                    }
+                  >
+                    <ShikiCode code={fileContent.content} language={fileContent.language || "text"} />
+                  </div>
                 </CardContent>
               </Card>
             </div>

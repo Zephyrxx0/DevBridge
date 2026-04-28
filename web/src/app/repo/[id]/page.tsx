@@ -23,51 +23,38 @@ interface Message {
   sources?: SourceReference[];
 }
 
-interface RepoMetadata {
+type SnippetChip = {
   id: string;
-  name: string;
-  lastIndexed?: string;
-  fileCount?: number;
-  annotationCount?: number;
-  prCount?: number;
-}
-
-const INITIAL_ASSISTANT_MESSAGE: Message = {
-  role: "assistant",
-  content:
-    "Hello. I am DevBridge Orchestrator. Ask about architecture, trace data flow, or inspect code intent with cited sources.",
+  filePath: string;
+  startLine: number;
+  endLine: number;
+  code: string;
 };
+
+import { useRepo } from "@/contexts/repo-context";
 
 export default function RepoWorkspacePage() {
   const params = useParams<{ id: string }>();
   const repoId = String(params.id ?? "");
 
-  const [repo, setRepo] = useState<RepoMetadata | null>(null);
-  const [messages, setMessages] = useState<Message[]>([INITIAL_ASSISTANT_MESSAGE]);
+  const { repo } = useRepo();
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [snippetChips, setSnippetChips] = useState<SnippetChip[]>([]);
   const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
   const [selectedSource, setSelectedSource] = useState<SourceReference | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!repoId) return;
-
-    const fetchRepoMetadata = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        const response = await fetch(`${apiUrl}/repo/${repoId}`);
-        if (response.ok) {
-          setRepo((await response.json()) as RepoMetadata);
-        }
-      } catch {
-        setRepo(null);
-      }
-    };
-
-    void fetchRepoMetadata();
-  }, [repoId]);
+    if (repo && messages.length === 0) {
+      setMessages([{
+        role: "assistant",
+        content: `Welcome to the workspace for **${repo.name}**. I am the DevBridge Agent. You can ask me to explain the architecture, trace data flows, or answer specific questions about this codebase.`,
+      }]);
+    }
+  }, [repo, messages.length]);
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -92,8 +79,17 @@ export default function RepoWorkspacePage() {
     if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
+    const snippetContext = snippetChips.length
+      ? `\n\nReferenced snippets:\n${snippetChips
+          .map(
+            (chip) => `- ${chip.filePath}:${chip.startLine}-${chip.endLine}\n\`\`\`\n${chip.code}\n\`\`\``
+          )
+          .join("\n")}`
+      : "";
+    const fullPrompt = `${userMessage}${snippetContext}`;
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setSnippetChips([]);
+    setMessages((prev) => [...prev, { role: "user", content: fullPrompt }]);
     setIsLoading(true);
 
     let accumulatedContent = "";
@@ -106,7 +102,7 @@ export default function RepoWorkspacePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query: userMessage,
+          query: fullPrompt,
           repo_id: repoId,
           history: messages,
         }),
@@ -199,6 +195,37 @@ export default function RepoWorkspacePage() {
     }
   };
 
+  const removeSnippetChip = (chipId: string) => {
+    setSnippetChips((prev) => prev.filter((chip) => chip.id !== chipId));
+  };
+
+  const handleDropSnippet = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const raw = event.dataTransfer.getData("application/x-devbridge-snippet");
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw) as {
+        filePath: string;
+        startLine: number;
+        endLine: number;
+        code: string;
+      };
+
+      if (!parsed.filePath || !parsed.code) return;
+      const chip: SnippetChip = {
+        id: `${parsed.filePath}:${parsed.startLine}-${parsed.endLine}:${Date.now()}`,
+        filePath: parsed.filePath,
+        startLine: parsed.startLine,
+        endLine: parsed.endLine,
+        code: parsed.code,
+      };
+      setSnippetChips((prev) => [...prev, chip]);
+    } catch {
+      // Ignore malformed drop payload.
+    }
+  };
+
   return (
     <section className="flex min-h-0 flex-1 gap-[var(--space-lg)] p-[var(--space-lg)]">
       <div className="flex min-h-0 flex-[3] flex-col">
@@ -283,18 +310,39 @@ export default function RepoWorkspacePage() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-[var(--space-md)] border-t border-[var(--border)] pt-[var(--space-md)]">
-          <div className="flex items-center gap-[var(--space-sm)] rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-sm)]">
-            <Input
-              type="text"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              disabled={isLoading}
-              placeholder="Ask about your code..."
-              className="h-11 border-transparent bg-transparent focus-visible:border-transparent focus-visible:ring-0"
-            />
-            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-              <ArrowUp className="size-4" />
-            </Button>
+          <div
+            className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-[var(--space-sm)]"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={handleDropSnippet}
+          >
+            {snippetChips.length > 0 ? (
+              <div className="flex flex-wrap gap-2 px-1">
+                {snippetChips.map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => removeSnippetChip(chip.id)}
+                    className="rounded-full border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-3 py-1 text-[var(--text-xs)] text-[var(--brand)]"
+                    title="Click to remove snippet"
+                  >
+                    {chip.filePath}:{chip.startLine}-{chip.endLine}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <div className="flex items-center gap-[var(--space-sm)]">
+              <Input
+                type="text"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                disabled={isLoading}
+                placeholder="Ask about your code or drop snippet here..."
+                className="h-11 border-transparent bg-transparent focus-visible:border-transparent focus-visible:ring-0"
+              />
+              <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                <ArrowUp className="size-4" />
+              </Button>
+            </div>
           </div>
         </form>
       </div>
@@ -317,7 +365,7 @@ export default function RepoWorkspacePage() {
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-4 p-[var(--space-lg)]">
               <pre className="min-h-0 flex-1 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--surface-3)] p-[var(--space-md)] font-mono text-[var(--text-code)] text-[var(--foreground-muted)]">
-                <code>// File preview panel placeholder. Monaco integration lives in files view.</code>
+                <code>{"File preview panel placeholder. Monaco integration lives in files view."}</code>
               </pre>
               <div>
                 <p className="text-[var(--text-xs)] font-medium uppercase tracking-[0.08em] text-[var(--foreground-subtle)]">
