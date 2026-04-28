@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useParams, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
+  BookOpen,
   FolderCode,
   GitPullRequest,
   MessageCircle,
@@ -18,12 +19,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-type RepoMetadata = {
-  id: string;
-  name: string;
-  lastIndexed?: string;
-};
+import { RepoProvider, useRepo } from "@/contexts/repo-context";
 
 const NAV_ITEMS = [
   { label: "Chat", hrefSuffix: "", icon: MessageCircle },
@@ -32,6 +28,7 @@ const NAV_ITEMS = [
   { label: "Search", hrefSuffix: "/search", icon: Search },
   { label: "PRs", hrefSuffix: "/pr", icon: GitPullRequest },
   { label: "Annotations", hrefSuffix: "/annotations", icon: StickyNote },
+  { label: "Notes", hrefSuffix: "/notes", icon: BookOpen },
   { label: "Settings", hrefSuffix: "/settings", icon: Settings2 },
 ];
 
@@ -42,39 +39,16 @@ const PAGE_LABELS: Record<string, string> = {
   search: "Search",
   pr: "PRs",
   annotations: "Annotations",
+  notes: "Notes",
   settings: "Settings",
 };
 
-export default function RepoLayout({ children }: { children: React.ReactNode }) {
-  const params = useParams<{ id: string }>();
+function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: React.ReactNode, isRootWorkspace: boolean, basePath: string }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-
-  const repoId = String(params.id ?? "");
-  const basePath = `/repo/${repoId}`;
-  const isRootWorkspace = pathname === basePath;
+  const { repo, loading } = useRepo();
+  
   const isDark = theme !== "light";
-
-  const [repo, setRepo] = useState<RepoMetadata | null>(null);
-
-  useEffect(() => {
-    if (!repoId || !isRootWorkspace) return;
-
-    const fetchRepoMetadata = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        const response = await fetch(`${apiUrl}/repo/${repoId}`);
-        if (response.ok) {
-          const data = (await response.json()) as RepoMetadata;
-          setRepo(data);
-        }
-      } catch {
-        setRepo(null);
-      }
-    };
-
-    void fetchRepoMetadata();
-  }, [repoId, isRootWorkspace]);
 
   const currentSection = useMemo(() => {
     const suffix = pathname.replace(basePath, "").split("/").filter(Boolean)[0] ?? "";
@@ -98,7 +72,7 @@ export default function RepoLayout({ children }: { children: React.ReactNode }) 
             </div>
             <div className="min-w-0">
               <p className="truncate text-[var(--text-sm)] font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
-                {repo?.name || "Repository"}
+                {loading ? "Loading..." : repo?.name || "Repository"}
               </p>
               <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-[var(--accent-emerald-muted)] px-2 py-0.5 text-[var(--text-xs)] font-medium text-[var(--accent-emerald)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--accent-emerald)]" />
@@ -152,11 +126,27 @@ export default function RepoLayout({ children }: { children: React.ReactNode }) 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_88%,transparent)] px-[var(--space-lg)] py-[var(--space-md)]">
           <p className="text-[var(--text-xs)] font-medium uppercase text-[var(--foreground-subtle)]" style={{ letterSpacing: "0.08em" }}>
-            DevBridge &gt; {repo?.name || "Repository"} &gt; {currentSection}
+            DevBridge &gt; {loading ? "..." : repo?.name || "Repository"} &gt; {currentSection}
           </p>
         </header>
         <main className="flex min-h-0 flex-1">{children}</main>
       </div>
     </div>
+  );
+}
+
+export default function RepoLayout({ children }: { children: React.ReactNode }) {
+  const params = useParams<{ id: string }>();
+  const pathname = usePathname();
+  const repoId = String(params.id ?? "");
+  const basePath = `/repo/${repoId}`;
+  const isRootWorkspace = pathname === basePath;
+
+  return (
+    <RepoProvider repoId={repoId}>
+      <RepoLayoutContent isRootWorkspace={isRootWorkspace} basePath={basePath}>
+        {children}
+      </RepoLayoutContent>
+    </RepoProvider>
   );
 }
