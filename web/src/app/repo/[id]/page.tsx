@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import { ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Code2, Folder, GitBranch, Plus, Sun, Moon } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ type SourceReference = {
 interface Message {
   role: "user" | "assistant";
   content: string;
+  fallback?: boolean;
   sources?: SourceReference[];
   artifacts?: SnippetChip[];
 }
@@ -489,6 +491,7 @@ export default function RepoWorkspacePage() {
             const data = JSON.parse(eventChunk.slice(6)) as {
               type: string;
               content?: string;
+              fallback?: boolean;
               sources?: SourceReference[];
               message?: string;
             };
@@ -507,6 +510,18 @@ export default function RepoWorkspacePage() {
                   content: accumulatedContent,
                   sources: accumulatedSources.length > 0 ? accumulatedSources : undefined,
                 };
+                return next;
+              });
+            } else if (data.type === "metadata" && data.fallback === true) {
+              setMessages((prev) => {
+                const next = [...prev];
+                const last = next[next.length - 1];
+                if (last?.role === "assistant") {
+                  next[next.length - 1] = {
+                    ...last,
+                    fallback: true,
+                  };
+                }
                 return next;
               });
             } else if (data.type === "sources" && data.sources) {
@@ -786,6 +801,14 @@ export default function RepoWorkspacePage() {
                     </Avatar>
 
                     <div className="min-w-0">
+                      {!isUser ? (
+                        <div className="mb-1 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]">
+                          <span>DevBridge</span>
+                          {message.fallback ? (
+                            <Badge className="border-yellow-500/20 bg-yellow-500/10 text-yellow-600">Fast Mode</Badge>
+                          ) : null}
+                        </div>
+                      ) : null}
                       <div
                         className={cn(
                            "rounded-xl border px-4 py-3 text-[var(--text-body)] leading-[1.62]",
