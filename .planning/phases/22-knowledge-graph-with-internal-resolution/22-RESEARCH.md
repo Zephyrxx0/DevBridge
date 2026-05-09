@@ -149,12 +149,12 @@ call_query = """
 | A2 | `tree-sitter-language-pack` includes robust TS/Python queries. | Standard Stack | May need to manually load separate grammar if pack is outdated. |
 | A3 | High-frequency library list covers 90% of useful external context. | Pitfalls | Missing important boundaries for specific domains (e.g., PyTorch). |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **How to handle `__init__.py` exports?**
-   - Recommendation: If `api/db/__init__.py` imports `session`, then `import api.db` should be treated as potentially calling symbols in `api/db/session.py`. 
+   - RESOLVED. If `api/db/__init__.py` imports `session`, then `import api.db` will be treated as potentially calling symbols in `api/db/session.py`. The graph will map package-level imports to the package module itself, preserving the coarse file-to-file relationship.
 2. **Shadow Node List?**
-   - Recommendation: Start with `react`, `fastapi`, `langchain`, `pydantic`, `sqlalchemy`, `pytest`, `next`.
+   - RESOLVED. Initial list includes: `react`, `fastapi`, `langchain`, `pydantic`, `sqlalchemy`, `pytest`, `next`.
 
 ## Environment Availability
 
