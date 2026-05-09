@@ -1,175 +1,124 @@
 # ROADMAP
 
-## Milestone 1: Foundational Bridge (v0.1)
+## Milestone 1: Foundational Bridge (v0.1) — COMPLETED
 *Goal: E2E RAG pipeline with basic ingestion and single-agent search.*
 
-- [x] **Phase 1: Project Skeleton & Core Orchestrator**
- (completed 2026-04-16)
-  - [x] Initialize Next.js & FastAPI project structure.
-  - [x] Implement basic ReAct loop with Gemini 1.5 Flash.
-- [x] **Phase 2: Data Foundation & Secret Management**
- (completed 2026-04-17)
-  - [x] Configure Supabase `pgvector` extension.
-  - [x] Implement GCP Secret Manager integration for API keys.
-- [x] **Phase 3: Code Parsing with Tree-sitter**
- (completed 2026-04-18)
-  - [x] Implement chunking logic for .ts and .py using Tree-sitter.
-  - [x] Define metadata schema for code chunks.
-  - [x] Plan 01: Ingestion contracts and scoped file discovery.
-  - [x] Plan 02: Tree-sitter semantic chunker with hybrid fallback.
-- [x] **Phase 4: GCS & Pub/Sub Ingestion Triggers**
-  (completed 2026-04-24)
-  - [x] Setup GCS bucket for code snapshots.
-  - [x] Implement Pub/Sub triggered Cloud Run Job flow.
-
-### Phase 4: GCS & Pub/Sub Ingestion Triggers
-
-**Goal:** Setup GCS bucket for code snapshots and implement Pub/Sub triggered Cloud Run Job flow for ingestion.
-
-**Requirements:** No explicit requirements mapped (infrastructure setup)
-
-**Plans:** 2 plans
-
-- [x] 04-01-PLAN.md — GCS bucket and Pub/Sub topic configuration
-- [x] 04-02-PLAN.md — Pub/Sub triggered Cloud Run Job for ingestion
+- [x] **Phase 1: Project Skeleton & Core Orchestrator** (completed 2026-04-16)
+- [x] **Phase 2: Data Foundation & Secret Management** (completed 2026-04-17)
+- [x] **Phase 3: Code Parsing with Tree-sitter** (completed 2026-04-18)
+- [x] **Phase 4: GCS & Pub/Sub Ingestion Triggers** (completed 2026-04-24)
 - [x] **Phase 5: Vector Index & Hybrid Search** (completed 2026-04-25)
-  - [x] Plan 01: Create indexing primitives (SQL & Vector store).
-  - [x] Plan 02: Wire runtime ingestion-to-search flow.
 - [x] **Phase 6: Basic Chat Interface & SSE** (completed 2026-04-25)
-  - [x] Create Next.js dashboard for querying.
-  - [x] Implement Server-Sent Events (SSE) for streaming agent responses.
-
-**Plans:** 2 plans
-
-- [x] 06-01-PLAN.md — SSE streaming endpoint on backend
-- [x] 06-02-PLAN.md — Frontend SSE client with typewriter effect
-
-### Gap Closure (Post v0.1 Audit)
-
-- [x] **Phase 12: Milestone Gap Wiring - Ingestion + Search**
- (completed 2026-04-26)
-  - [x] Wire runtime ingestion trigger path (`ingest -> chunk -> persist`).
-  - [x] Connect orchestrator `code_search` to vector similarity search.
-  - [x] Close MR-01 and FR-AI-02 wiring blockers from `v0.1-v0.1-MILESTONE-AUDIT.md`.
-
-**Plans:** 1 plan
-
-- [x] 12-01-PLAN.md — Tracking schema, trigger logic, and agent citations
-
-- [x] **Phase 13: Milestone Gap Hardening - E2E + Runtime Config**
-  (completed 2026-04-26)
-  - [x] Add milestone E2E test: ingest sample -> index write -> chat search hit.
-  - [x] Align cloud project env usage (`GOOGLE_CLOUD_PROJECT` vs `GCP_PROJECT_ID`).
-  - [x] Re-run milestone audit gates and close remaining v0.1 flow gaps.
-
-**Plans:** 3 plans
-
-- [x] 13-01-PLAN.md — E2E Test Infrastructure
-- [x] 13-02-PLAN.md — Runtime Config Unification
-- [x] 13-03-PLAN.md — Milestone Audit Verification
-
-## Milestone 2: Team Intelligence (v0.2)
-*Goal: Context awareness from annotations and history.*
-
 - [x] **Phase 7: History & Intent Ingestion** (completed 2026-04-26)
-- [ ] **Phase 8: Human Annotation API**
-  - [ ] Plan 01: Annotations table + CRUD API
-  - [ ] Plan 02: Retrieval integration + feedback loop
-- [ ] **Phase 9: Collaborative Agents (Debug & PR Review)**
-
-**Plans:** 3 plans
-- [x] 09-01-PLAN.md — Agent Personas (PR Reviewer & Debugger)
-- [x] 09-02-PLAN.md — GitHub Webhooks & Background Dispatch
-- [x] 09-03-PLAN.md — Configuration & Manual Trigger API
-
-### Phase 7: History & Intent Ingestion
-
-**Goal:** Ingest GitHub PR and commit history to provide context for "why" code changed.
-
-**Success Criteria:**
-1. PR history available in orchestrator context.
-2. Commit messages linked to code chunks.
-
-### Phase 8: Human Annotation API
-
-**Goal:** Implement API for human feedback and annotations on code chunks and agent responses.
-
-**Success Criteria:**
-1. CRUD API for annotations.
-2. Annotations included in retrieval context.
-3. Feedback loop for agent response quality.
-
-### Phase 10: Performance & Optimization
-
-**Goal:** Optimize query latency and ingestion throughput for production-ready performance.
-
-**Success Criteria:**
-1. LLM response time reduced through caching or parallel tool calls.
-2. Ingestion pipeline handles large batches without GCS/PubSub timeouts.
-3. Database query plans optimized for large-scale chunk retrieval.
-
-## Milestone 3: Scale & Polish (v1.0)
-*Goal: Production-ready performance and UX.*
-
-- [x] **Phase 10: Performance & Optimization**
- (completed 2026-04-26)
-- [ ] **Phase 14: Design website pages from spec**
-  - [ ] Run /gsd-plan-phase 14 to break down into plans
-- [ ] **Phase 11: Security Audit & E2E Testing**
-
-### Phase 11: Security Audit & E2E Testing
-
-**Goal:** Conduct security audit (App + Infra) and implement E2E tests using Playwright.
-
-**Success Criteria:**
-1. Security vulnerabilities identified and documented.
-2. Automated security scanners integrated into build process.
-3. Full ingestion loop verified end-to-end via Playwright.
-
-**Plans:** 2 plans
-
-- [ ] 11-01-PLAN.md — Security Audit & Automated Scanning
-- [ ] 11-02-PLAN.md — E2E Testing Framework & Ingestion Loop
-
-### Phase 14: Design website pages from spec
-
-**Goal:** Design website pages from spec
-**Depends on**: Phase 6
-**Plans:** 4 plans
-
-Plans:
-- [ ] 14-01-PLAN.md — Landing page + Repo workspace shell
-- [ ] 14-02-PLAN.md — Code browser (file tree + code viewer)
-- [ ] 14-03-PLAN.md — Repo map + Search page
-- [ ] 14-04-PLAN.md — PR dashboard + Annotation center
-
-### Phase 15: update the design of the webUI accordingly
-
-**Goal:** Update the webUI design to match DESIGN.md specs - precision-luxe dark aesthetic, high-visibility areas first
-**Depends on**: Phase 14
-**Plans:** 4/4 plans complete
-
-Plans:
-- [x] 15-01-PLAN.md — Design foundation (typography, color/spacing tokens)
-- [x] 15-02-PLAN.md — High-visibility components (hero, navbar, landing)
-- [x] 15-03-PLAN.md — Base UI component updates (Card, Button, Input, Avatar)
-- [x] 15-04-PLAN.md — Chat interface and repo workspace shell
-
-### Phase 16: Complete web UI redesign - premium SaaS quality
-
-**Goal:** Complete redesign of DevBridge web UI into premium, modern SaaS-quality product website and application interface
-**Requirements**: TBD
-**Depends on:** Phase 15
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (run /gsd-plan-phase 16 to break down)
-
-- [x] **Phase 17: Vercel Deployment**
-  - [x] Configure environment variables for production.
-  - [x] Run build verification.
-  - [x] Deploy frontend to Vercel.
+- [x] **Phase 12: Milestone Gap Wiring - Ingestion + Search** (completed 2026-04-26)
+- [x] **Phase 13: Milestone Gap Hardening - E2E + Runtime Config** (completed 2026-04-26)
+- [x] **Phase 15: WebUI Design Update** (completed 2026-04-27)
+- [x] **Phase 17: Vercel Deployment** (completed 2026-04-27)
 
 ---
 
-*Last updated: 2026-04-27*
+## Milestone 2: AMD GPU Integration (v0.2) — IN PROGRESS
+*Goal: Multi-agent AI with dual-model routing on AMD MI300X GPU.*
+
+### Phase 20: AMD GPU Infrastructure Setup
+**Goal**: Configure single MI300X with VRAM partitioning and Docker volume for cache.
+**Requirements**: IR-01, IR-02, IR-03
+**Depends on**: None (new phase)
+**Plans**: 2 plans
+- [ ] 20-01-PLAN.md — VRAM partitioning config (0.60/0.20/0.20) and context cap enforcement
+- [ ] 20-02-PLAN.md — Docker volume binding for persistent `/app/repo_cache`
+
+**Success Criteria**:
+1. Big Model uses ≤60% VRAM
+2. Fast Model uses ≤20% VRAM
+3. No request exceeds 48K tokens
+
+### Phase 21: Dual-Model Agent Orchestrator
+**Goal**: Implement agent routing with Big Model (deep reasoning) and Fast Model (intent classification).
+**Requirements**: MR-01, MR-02, FR-01
+**Depends on**: Phase 20
+**Plans**: 3 plans
+- [ ] 21-01-PLAN.md — Fast Model intent classifier (binary FAST/DEEP)
+- [ ] 21-02-PLAN.md — Big Model reasoning engine for DEEP queries
+- [ ] 21-03-PLAN.md — Fallback logic: Fast Model works if Big Model fails
+
+**Success Criteria**:
+1. Intent classification responds in <5s
+2. Fallback succeeds within 30s timeout
+3. Both models load concurrently without OOM
+
+### Phase 22: Knowledge Graph with Internal Resolution
+**Goal**: Build graph with internal symbol resolution, dropping external/unresolvable CALLS edges.
+**Requirements**: FR-02
+**Depends on**: Phase 03 (code parsing)
+**Plans**: 2 plans
+- [ ] 22-01-PLAN.md — Graph storage schema (repo_graph table with JSONB)
+- [ ] 22-02-PLAN.md — Internal symbol resolution: resolve only local definitions
+
+**Success Criteria**:
+1. CALLS edges only connect internal symbols
+2. Unresolvable calls dropped silently
+3. Graph updates on repo re-index
+
+### Phase 23: Onboarding UX Improvements
+**Goal**: Polling/SSE endpoint for plan generation with strict JSON schema validation.
+**Requirements**: FR-03
+**Depends on**: Phase 06 (SSE streaming)
+**Plans**: 2 plans
+- [ ] 23-01-PLAN.md — `/repo/${repoId}/start-here` endpoint with progress states
+- [ ] 23-02-PLAN.md — Strict JSON schema validation for generated plan
+
+**Success Criteria**:
+1. Frontend receives intermediate loading states
+2. Generated plan conforms to JSON schema
+3. Retry with exponential backoff on failure
+
+### Phase 24: GitHub Integration
+**Goal**: Issue-to-file mapping via pgvector, OAuth token extraction from Supabase.
+**Requirements**: FR-04
+**Depends on**: Phase 05 (vector search)
+**Plans**: 2 plans
+- [ ] 24-01-PLAN.md — pgvector cosine distance for issue-to-file similarity
+- [ ] 24-02-PLAN.md — Extract `provider_token` from `auth.identities` for GitHub API
+
+**Success Criteria**:
+1. Issue search returns relevant files
+2. Uses user's OAuth token, not shared PAT
+3. No VRAM spikes from large context
+
+### Phase 25: Task Scheduling
+**Goal**: APScheduler for daily async jobs (sync, cleanup, metrics).
+**Requirements**: FR-05
+**Depends on**: None (new phase)
+**Plans**: 1 plan
+- [ ] 25-01-PLAN.md — APScheduler integration in FastAPI
+
+**Success Criteria**:
+1. Daily sync job runs without manual trigger
+2. Cache cleanup job prevents disk bloat
+
+### Phase 26: Admin Dashboard
+**Goal**: AI summarization of "intern confusion" topics using Gemma 4.
+**Requirements**: FR-06
+**Depends on**: Phase 21 (Fast Model available)
+**Plans**: 1 plan
+- [ ] 26-01-PLAN.md — Topic extraction and summarization dashboard
+
+**Success Criteria**:
+1. Dashboard shows confusion topics
+2. Gemma 4 generates summaries
+3. No pgvector clustering needed initially
+
+---
+
+## Milestone 3: Production Polish (v1.0)
+*Goal: Production-ready performance, security, and UX.*
+
+- [ ] **Phase 10: Performance & Optimization** — Optimize latency and throughput
+- [ ] **Phase 11: Security Audit & E2E Testing** — Full security review
+- [ ] **Phase 14: Design website pages** — Landing, code browser, PR dashboard
+- [ ] **Phase 16: Premium SaaS Redesign** — Complete UI polish
+
+---
+
+*Last updated: 2026-05-09 - v0.2 milestone initialized*
