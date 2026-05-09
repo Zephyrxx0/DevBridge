@@ -23,7 +23,7 @@ This phase delivers the core infrastructure for serving the multi-agent AI syste
 - **D-05:** **Enforcement Layer.** Enforce the 48K token cap at both layers, but the FastAPI Gateway acts as the primary layer.
 - **D-06:** **Rejection Behavior.** Instead of a hard 400 rejection, perform **Truncation + Warning**. The user gets the answer but is warned that context was trimmed, allowing them to refine their prompt.
 - **D-07:** **Truncation Priority.** Drop older conversational history first, keeping codebase chunks. Retrieved code context is prioritized for accuracy.
-- **D-08:** **Token Estimation.** Use the **Exact HuggingFace Tokenizers** for Qwen2.5 and Gemma-2 at the FastAPI layer, ensuring perfectly accurate token counting despite slight overhead.
+- **D-08:** **Token Estimation.** Use the **Exact HuggingFace Tokenizers** for Qwen2.5 and Gemma-4 at the FastAPI layer, ensuring perfectly accurate token counting despite slight overhead.
 
 ### Cache Storage Strategy
 - **D-09:** **Cache Structure.** Use **Isolated Directories** (e.g., `/app/repo_cache/qwen` and `/app/repo_cache/gemma`) for the models to prevent lock contention between the two vLLM containers.

@@ -1,9 +1,4 @@
-"""
-Pub/Sub Triggered Ingestion Handler
-
-This module handles Pub/Sub messages from GCS bucket notifications,
-downloads code snapshots from GCS, invokes chunking, and persists to database.
-"""
+"""Event-triggered ingestion handler."""
 
 from __future__ import annotations
 
@@ -14,12 +9,10 @@ import os
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from google.cloud import storage
 from sqlalchemy import text
-from sqlalchemy.dialects.postgresql import insert
 
-from api.core.config import GOOGLE_CLOUD_PROJECT, settings
-from api.db.session import get_engine, init_db_pool
+from api.core.config import settings
+from api.db.session import init_db_pool
 from api.ingest.embedding_queue import enqueue_embedding_jobs
 from api.ingestion.tree_sitter_chunker import chunk_source
 from api.ingestion.types import EmbeddingJob
@@ -39,7 +32,7 @@ def _summarize_chunk(chunk) -> str:
 
 
 def _parse_repo_path(object_name: str) -> tuple[str, str]:
-    """Parse GCS object name into repo and file path.
+    """Parse object name into repo and file path.
     
     Format: owner/repo/path/to/file (e.g., 'google/gemini/src/main.py')
     Returns: (repo: owner/repo, file_path: path/to/file)
@@ -66,7 +59,7 @@ class IngestionResult:
 
 
 def _parse_pubsub_message(message_data: dict) -> dict[str, Any]:
-    """Parse GCS event from Pub/Sub message payload."""
+    """Parse event payload with bucket/object attributes."""
     # Payload format is JSON, parse the notification payload
     payload = message_data.get("message", {})
     
@@ -93,30 +86,27 @@ def _parse_pubsub_message(message_data: dict) -> dict[str, Any]:
 
 
 async def _download_from_gcs(bucket_name: str, object_name: str) -> str:
-    """Download file content from GCS bucket."""
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(object_name)
-    
-    content = await asyncio.to_thread(blob.download_as_text)
-    return content
+    """Read file content from local path fallback.
+
+    `bucket_name` kept for backward compatibility with event payload shape.
+    """
+    _ = bucket_name
+    local_path = object_name
+    if not os.path.isabs(local_path):
+        local_path = os.path.join(os.getcwd(), local_path)
+    return await asyncio.to_thread(lambda: open(local_path, "r", encoding="utf-8").read())
 
 
 async def _ingest_file(bucket: str, object_name: str, job_id: str = None) -> IngestionResult:
-    """Ingest a single file from GCS.
+    """Ingest a single file from event payload.
     
     Args:
-        bucket: GCS bucket name
-        object_name: GCS object name (format: owner/repo/path/to/file)
+        bucket: optional bucket/source label
+        object_name: object path (format: owner/repo/path/to/file)
         job_id: Optional ingestion_jobs record ID for tracking
     """
     # Parse the file path - D-01, D-02 from Phase 12 Context
     repo, file_path = _parse_repo_path(object_name)
-    
-    # Ensure GCP project context per D-07 - use config.py as single source of truth
-    gcp_project = GOOGLE_CLOUD_PROJECT
-    if gcp_project:
-        logger.info(f"Processing ingestion for GCP project: {gcp_project}")
     
     # Get database session
     from api.db.session import engine
@@ -266,10 +256,10 @@ async def _ingest_file(bucket: str, object_name: str, job_id: str = None) -> Ing
 
 async def handle_pubsub_event(event: dict) -> dict:
     """
-    Handle a Pub/Sub message event.
+    Handle an ingestion message event.
     
     Args:
-        event: Pub/Sub message event dict with message data
+        event: message event dict with payload data
         
     Returns:
         Result dict with status, file_path, bucket, chunk_count, error fields
@@ -283,10 +273,10 @@ async def handle_pubsub_event(event: dict) -> dict:
             message = {}
     
     # Try parsing full event first
-    gcs_event = _parse_pubsub_message(event)
+    object_event = _parse_pubsub_message(event)
     
-    bucket = gcs_event.get("bucket", "")
-    object_name = gcs_event.get("object", "")
+    bucket = object_event.get("bucket", "")
+    object_name = object_event.get("object", "")
     
     # Fallback to data payload if not found in attributes
     if not bucket or not object_name:
@@ -299,9 +289,9 @@ async def handle_pubsub_event(event: dict) -> dict:
             except Exception:
                 data = {}
         
-        gcs_event = _parse_pubsub_message({"message": data})
-        bucket = bucket or gcs_event.get("bucket", "")
-        object_name = object_name or gcs_event.get("object", "")
+        object_event = _parse_pubsub_message({"message": data})
+        bucket = bucket or object_event.get("bucket", "")
+        object_name = object_name or object_event.get("object", "")
     
     if not bucket or not object_name:
         return {
@@ -343,7 +333,7 @@ async def handle_pubsub_event(event: dict) -> dict:
 
 
 async def main():
-    """Entry point for Cloud Run Job."""
+    """Entry point for event-driven ingestion job."""
     # Get event from environment
     event_data = os.environ.get("PUBSUB_EVENT_DATA", "{}")
     

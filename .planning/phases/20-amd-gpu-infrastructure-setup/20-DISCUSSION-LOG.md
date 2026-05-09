@@ -62,7 +62,7 @@
 | Option | Description | Selected |
 |--------|-------------|----------|
 | tiktoken (proxy) | Use OpenAI's fast tokenizer as a proxy. Very fast, but slightly inaccurate (approx. ±5% difference). | |
-| HF Exact Tokenizers | Use the exact HuggingFace tokenizers for Qwen2.5 and Gemma-2. Perfectly accurate, but adds slight overhead and dependencies. | ✓ |
+| HF Exact Tokenizers | Use the exact HuggingFace tokenizers for Qwen2.5 and Gemma-4. Perfectly accurate, but adds slight overhead and dependencies. | ✓ |
 
 ---
 

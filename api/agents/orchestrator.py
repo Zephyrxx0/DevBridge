@@ -4,7 +4,6 @@ import json
 import asyncio
 from uuid import UUID
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.language_models.chat_models import BaseChatModel
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
@@ -267,46 +266,14 @@ async def search_error_patterns(query: str, repo: str = "", k: int = 5):
 
 
 def get_llm():
-    """Lazy LLM initialization with mock fallback."""
-    from api.core.config import settings
-
-    model_name = os.environ.get("VERTEX_AI_MODEL", "gemini-1.5-flash")
-    gcp_project_id = settings.google_cloud_project
-    gcp_location = os.environ.get("GCP_LOCATION", "us-central1")
-    google_api_key = (os.environ.get("GOOGLE_API_KEY") or "").strip()
-
-    if gcp_project_id:
-        try:
-            import google.auth
-
-            google.auth.default()
-            logger.info(f"GOOGLE_CLOUD_PROJECT found ({gcp_project_id}), initializing Vertex AI chat model")
-            return ChatGoogleGenerativeAI(
-                model=model_name,
-                project=gcp_project_id,
-                location=gcp_location,
-                vertexai=True,
-            )
-        except Exception as exc:
-            logger.warning(f"Vertex AI auth unavailable, skipping vertex mode: {exc}")
-
-    if google_api_key:
-        logger.info("Using GOOGLE_API_KEY fallback for Gemini chat model")
-        return ChatGoogleGenerativeAI(
-            model=model_name,
-            google_api_key=google_api_key,
-        )
-
-    logger.warning(
-        "No usable Vertex/Gemini credentials found, using mock LLM fallback. Set GOOGLE_API_KEY or GOOGLE_CLOUD_PROJECT with ADC."
-    )
+    """Lazy LLM initialization with local mock fallback."""
 
     class MockLLM(BaseChatModel):
-        model_name: str = "mock-gemini-unavailable"
+        model_name: str = "mock-llm"
 
         @property
         def _llm_type(self) -> str:
-            return "mock-gemini-unavailable"
+            return "mock-llm"
 
         @property
         def _identifying_params(self) -> dict[str, str]:
@@ -326,7 +293,7 @@ def get_llm():
 
             response = AIMessage(
                 content=(
-                    "[Mock] Vertex AI not configured. Set GOOGLE_CLOUD_PROJECT and authenticate with ADC to enable AI responses.\n\n"
+                    "[Mock] Cloud LLM integration removed. Configure new provider integration before production AI responses.\n\n"
                     f"Your message was: {msg_content}"
                 )
             )

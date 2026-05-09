@@ -33,13 +33,13 @@ This document maps the v0.2 milestone requirements to the architectural refineme
 - **Quantization**: AWQ for VRAM efficiency
 
 ### MR-02: Fast Model (Intent Classification)
-- **Model**: `Gemma-2-9B-it`
+- **Model**: `Gemma-4-9B-it`
 - **Partition**: 20% VRAM (~38GB)
 - **Use Cases**: Fast intent classification, simple routing
 - **Route**: Binary `FAST` vs `DEEP` prompt
 
 ### MR-03: Embedding Model
-- **Model**: `text-embedding-004` (via Vertex AI) or local
+- **Model**: Local embedding service (provider-agnostic)
 - **Partition**: Within 20% VRAM pool
 - **Use Cases**: Chunk vectorization, issue-to-file similarity
 
