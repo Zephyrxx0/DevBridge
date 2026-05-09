@@ -51,7 +51,7 @@
 **Depends on**: Phase 20
 **Plans**: 3 plans
 - [x] 21-01-PLAN.md — Multi-Agent Foundation & Fast Path
-- [ ] 21-02-PLAN.md — Big Model Integration & Fallback
+- [x] 21-02-PLAN.md — Big Model Integration & Fallback
 - [ ] 21-03-PLAN.md — SSE Integration & UI Signaling
 
 **Success Criteria**:
