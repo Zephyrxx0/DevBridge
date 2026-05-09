@@ -50,9 +50,9 @@
 **Requirements**: MR-01, MR-02, FR-01
 **Depends on**: Phase 20
 **Plans**: 3 plans
-- [ ] 21-01-PLAN.md — Fast Model intent classifier (binary FAST/DEEP)
-- [ ] 21-02-PLAN.md — Big Model reasoning engine for DEEP queries
-- [ ] 21-03-PLAN.md — Fallback logic: Fast Model works if Big Model fails
+- [ ] 21-01-PLAN.md — Multi-Agent Foundation & Fast Path
+- [ ] 21-02-PLAN.md — Big Model Integration & Fallback
+- [ ] 21-03-PLAN.md — SSE Integration & UI Signaling
 
 **Success Criteria**:
 1. Intent classification responds in <5s
@@ -133,4 +133,4 @@
 
 ---
 
-*Last updated: 2026-05-09 - v0.2 milestone initialized*
+*Last updated: 2026-05-10 - Phase 21 plans added*
