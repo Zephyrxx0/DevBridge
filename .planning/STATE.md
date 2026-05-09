@@ -1,55 +1,30 @@
----
-gsd_state_version: 1.0
-milestone: v0.1
-milestone_name: milestone
-current_plan: 00 of 00
-status: Phase 02 complete
-stopped_at: Closed Phase 02 and moved focus to Phase 03
-last_updated: "2026-04-17T23:20:00.000Z"
-progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
----
+# State: v0.2 Milestone
 
-# STATE
+**Active Milestone**: v0.2 - Implement AMD-AUDIT-SPEC.md Refinements
 
-**Last Updated:** 2026-04-17
+**Status**: Planning phase - awaiting roadmap generation
 
-## Current Position
+## Milestone Context
 
-- **Milestone:** v0.1 (Foundational Bridge)
-- **Active Phase:** 03-code-parsing-with-tree-sitter
-- **Current Plan:** 00 of 00
-- **Plan Status:** Ready for planning
+Previous milestone (v0.1) completed: Phases 01-08, 11-13, 15 (basic chat, code parsing, ingestion, vector search, annotations, security).
 
-## Session
+Current milestone (v0.2) focuses on:
+- AMD GPU infrastructure integration
+- Multi-agent orchestration with dual-model routing
+- Knowledge graph with internal symbol resolution
+- GitHub integration (issues, OAuth)
+- Admin dashboard with AI summarization
 
-- **Stopped at:** Closed Phase 02 and updated roadmap tracking
-- **Resume file:** None
+## GSD Workflow State
 
-## Decisions
+- `gsd-new-milestone`: COMPLETED (initialized v0.2)
+- `gsd-plan-phase`: PENDING
+- `gsd-execute-phase`: PENDING
 
-- **Phase 02 / Plan 00:** Keep new tests dependency-light and non-networked so they pass before cloud credentials and database infrastructure are wired.
-- [Phase 02]: Plan 00 uses placeholder-only tests to lock contracts before cloud wiring.
-- [Phase 02]: Prioritized GCP Secret Manager as first source when GOOGLE_CLOUD_PROJECT is set, with env/.env fallback for local development.
-- [Phase 02]: Retained SecretManager and secrets singleton as a compatibility facade while migrating consumers to centralized settings.
-- [Phase 02]: Centralized AsyncEngine lifecycle in `api/db/session.py` and wired startup/shutdown through FastAPI lifespan.
-- [Phase 02]: Migrated vector store initialization to consume shared engine and documented pgvector setup in `sql/setup_vector_store.sql`.
-- [Phase 02]: Standardized Python execution for this phase in `.venv` (Python 3.12).
-- [Phase 02]: Fixed orchestrator startup import compatibility by aligning with pinned `langgraph==1.1.7`.
+## Current Focus
 
-## Blockers
-
-- None
-
-## Quick Tasks Completed
-
-| Date | Slug | Summary |
-| --- | --- | --- |
-| 2026-04-18 | git-hooks-fallow-entire | Fixed fallow hook invocation and added versioned Entire commit/push hooks with installer |
+Generate and approve ROADMAP.md for v0.2, then proceed to planning/execution of first phase.
 
 ---
 
-*State updated: 2026-04-17 after closing Phase 02*
+*Updated: 2026-05-09*

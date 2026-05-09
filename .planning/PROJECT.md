@@ -1,69 +1,66 @@
-# DevBridge
+# DevBridge AMD Edition
 
 ## What This Is
 
-DevBridge is a persistent, team-aware knowledge system for codebases, designed to answer the question: "Why does this codebase work the way it does?" It uses a multi-agent AI layer grounded in real code, human annotations, and PR history to provide deep context and understanding for developers.
+DevBridge is a persistent, team-aware knowledge system for codebases, designed to answer: "Why does this codebase work the way it does?" Uses a multi-agent AI layer grounded in real code, human annotations, and PR history.
+
+**Specialized for AMD GPU Infrastructure**: Optimized for single-GPU inference (MI300X) with strict VRAM partitioning for concurrent LLM serving.
 
 ## Core Value
 
-DevBridge prioritizes contextually grounded understanding and intent retrieval over simple code generation or autocompletion.
+Contextually grounded understanding and intent retrieval over simple code generation. Prioritizes deep codebase awareness through multi-agent reasoning.
 
 ## Requirements
 
 ### Validated
 
-- [x] **Interactive Frontend**: Next.js dashboard with SSE streaming responses. *(Validated in Phase 06: basic-chat-interface-sse)*
+- [x] Interactive Frontend (Phase 06)
+- [x] Tree-sitter Code Parsing (Phase 03)
+- [x] GCS/PubSub Ingestion (Phase 04)
+- [x] Vector Indexing + Hybrid Search (Phase 05)
+- [x] History & Intent Ingestion (Phase 07)
+- [x] Human Annotation API (Phase 08)
+- [x] Security Audit (Phase 11)
 
-### Active
+### Active (v0.2 Milestone)
 
-- [ ] **Multi-Agent AI Layer**: Orchestrator, Search, Debug, and PR Review agents using Gemini 1.5 Flash.
-- [ ] **GCP Infrastructure**: Serverless backend on Cloud Run, GCS snapshots, and Pub/Sub queues.
-- [ ] **Ingestion Pipeline**: Automated file parsing and semantic chunking using Tree-sitter.
-- [ ] **RAG Pipeline**: Vector search integration using Supabase and `pgvector`.
-- [ ] **Interactive Frontend+**: Extend dashboard with Monaco editor and richer streaming controls.
-- [ ] **Annotation System**: Persistent human-written metadata attached to code chunks.
+- [ ] **AMD GPU Integration**: Single MI300X with VRAM partitioning for concurrent LLM inference
+- [ ] **Agent Orchestrator**: Dual-model routing (Big Model for deep reasoning, Fast Model for intent classification)
+- [ ] **Knowledge Graph**: Internal symbol resolution with CALLS edges
+- [ ] **Onboarding UX**: Polling/SSE endpoint for plan generation with JSON schema validation
+- [ ] **GitHub Integration**: pgvector-based issue-to-file mapping, OAuth token extraction from Supabase
+- [ ] **Task Scheduling**: APScheduler for daily async jobs
+- [ ] **Admin Dashboard**: Gemma 4 summarization for "intern confusion" topics
 
 ### Out of Scope
 
-- **Code Autocompletion**: Explicitly focused on understanding rather than generation.
-- **Enterprise-Scale Infrastructure**: Focused on Hackathon-ready GCP Free Tier implementation.
-- **Stateless RAG**: Deliberately avoiding statelessness in favor of accumulated memory.
+- Multi-GPU clusters
+- Stateless RAG
+- Code autocompletion/generation
 
 ## Context
 
-DevBridge is being built for the Google Solutions Hackathon. It addresses the gap in developer onboarding and complex codebase maintenance by capturing not just the 'how' but the 'why' behind code changes. It leverages Gemini 1.5 Flash's long context window and Vertex AI's text-embedding-004.
+**Hackathon Environment**: AMD GPU cluster ($1.99/hr MI300X), 192GB VRAM, 5TB NVMe scratch disk. Budget: ~$100 total.
 
 ## Constraints
 
-- **Stack**: Next.js/Tailwind (Frontend), FastAPI/Python (Backend), Supabase (Database).
-- **AI**: Gemini 1.5 Flash (LLM), `text-embedding-004` (Embeddings).
-- **Budget**: Must fit within GCP Always Free Tier or $300 account credits.
-- **Security**: Secret Manager for all keys; no secrets in environment variables.
+- **GPU**: Single MI300X, 192GB VRAM, strict partitioning (0.60/0.20/0.20)
+- **Models**: Qwen2.5-72B-Instruct-AWQ (Big), Gemma-2-9B-it (Fast)
+- **Budget**: $100 total (~50 hours of MI300X)
+- **Caching**: Persistent Docker volume for `/app/repo_cache`
+- **Context Limit**: 48,000 tokens max per request (4.8GB KV cache)
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| Agentic Loop over Pipeline | ReAct pattern allows strategy selection based on query type | — Pending |
-| Semantic Chunking | Functions/classes are better units than tokens for reasoning | — Pending |
-| Scale-to-Zero | Essential for cost control in GCP Free Tier | — Pending |
-
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+| Decision | Rationale |
+|----------|-----------|
+| Single GPU with VRAM partitioning | Budget constraint: $1.99/hr MI300X vs multi-GPU |
+| Qwen2.5-72B + Gemma-2-9B | Balance of reasoning capability vs. latency |
+| 48K token context cap | Prevents KV cache OOM on shared GPU |
+| Internal symbol resolution | Drops external/unresolvable CALLS edges |
+| pgvector cosine distance | Avoids huge VRAM context spikes for issue mapping |
+| APScheduler over RQ/Redis | Simpler stack, fewer external dependencies |
 
 ---
-*Last updated: 2026-04-25 after phase 06 completion*
+
+*Last updated: 2026-05-09 - v0.2 milestone initialized*

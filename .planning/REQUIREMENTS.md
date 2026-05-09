@@ -1,57 +1,117 @@
-# REQUIREMENTS
+# Requirements: v0.2 Milestone
 
-## Functional
+## Generated: 2026-05-09
 
-### AI & Agents
-- [ ] **Orchestrator Agent**: Multi-step planning and tool routing.
-- [ ] **Search Agent**: Hybrid search over `pgvector` and file metadata.
-- [ ] **Debug Agent**: Explaining errors by tracing code logic and PR history.
-- [ ] **PR Review Agent**: Context-aware review based on existing human annotations.
-
-### Knowledge System
-- [ ] **Code Ingestion**: Parse `.ts`, `.py`, `.go` files into semantic chunks via Tree-sitter.
-- [ ] **Human Annotations**: API to attach/retrieve persistent comments on code blocks.
-- [ ] **History Analysis**: Indexing git commit messages and PR descriptions for intent retrieval.
-
-### Interface
-- [ ] **Streaming Dashboard**: Real-time display of agent activities and final grounded answers.
-- [ ] **Code Navigator**: View indexed code chunks alongside their AI-generated "Why" summaries.
-
-## Non-Functional
-
-### Performance
-- [ ] **Latency**: Initial agent response within 2 seconds.
-- [ ] **Throughput**: Support concurrent ingestion of up to 10 files via parallel Cloud Run Job tasks.
-
-### Reliability
-- [ ] **Groundedness**: Zero hallucinations for "Why" queries; system must say "I don't know" if intent is not found.
-- [ ] **Persistence**: Database state preserved in Supabase; raw files in GCS.
-
-### Security
-- [ ] **Secret Hygiene**: No hardcoded API keys; use GCP Secret Manager.
-- [ ] **Isolation**: Each user/team data isolated at the row level in Supabase RLS.
-
-## Table Stakes
-- [ ] Next.js project setup with Tailwind.
-- [ ] FastAPI backend with Vertex AI integration.
-- [ ] Supabase project with `pgvector` enabled.
-- [ ] GitHub Actions for deployment to Cloud Run.
-
-## Milestone v0.1 Gap Traceability
-
-| Milestone Requirement | Current Status | Gap Evidence | Planned Closure Phase |
-|-----------------------|----------------|--------------|-----------------------|
-| MR-01 E2E RAG pipeline with basic ingestion + search | **verified** (Phase 13) | E2E test framework in place; ingest→chunk pipeline verified via pytest | Phase 12 (retrieval wiring) |
-| MR-02 Supabase pgvector foundation | **verified** | pgvector extension + schema confirmed in Phase 02; similarity search via langchain | Phase 12 |
-| FR-AI-02 Search agent over pgvector + metadata | partial | E2E test validates vector pipeline; orchestrator tool wiring pending Phase 12 | Phase 12 |
-| Runtime cloud config consistency | **verified** (Phase 13) | GOOGLE_CLOUD_PROJECT unified as single source of truth per Phase 13-02 | — |
-
-### Gap Closure Acceptance Criteria
-
-- [x] Runtime path supports ingest -> chunk -> vector persist without manual test harness. *(verified by Phase 13 E2E test)*
-- [ ] Orchestrator search tool executes real vector similarity query and returns grounded hits. *(pending Phase 12)*
-- [x] End-to-end test validates ingest/index/search flow from API boundary. *(verified: 1 passed, 1 skipped)*
-- [x] Cloud project env configuration is unified across config and orchestrator modules. *(verified per Phase 13-02)*
+This document maps the v0.2 milestone requirements to the architectural refinements defined in `AMD-AUDIT-SPEC.md`.
 
 ---
-*Last updated: 2026-04-18 after milestone gap planning*
+
+## Infrastructure Requirements
+
+### IR-01: Single GPU VRAM Partitioning
+- **Requirement**: Partition 192GB VRAM across models via `--gpu-memory-utilization`
+- **Spec**: Big Model: 0.60, Fast Model: 0.20, Embedder/Reranker/OS: 0.20
+- **Risk**: KV cache OOM at >48K tokens per request
+- **Mitigation**: Enforce `FULL_FILE_MODE_THRESHOLD_TOKENS = 48_000`
+
+### IR-02: Docker Volume for Cache
+- **Requirement**: Bind Docker volume to instance's 5TB NVMe scratch disk
+- **Path**: `/app/repo_cache` for persistent model/repo cache
+
+### IR-03: Context Token Cap
+- **Requirement**: Cap context at 48,000 tokens per request
+- **Rationale**: ~4.8GB KV cache per request, safe within 60% VRAM partition
+
+---
+
+## Model Requirements
+
+### MR-01: Big Model (Deep Reasoning)
+- **Model**: `Qwen2.5-72B-Instruct-AWQ`
+- **Partition**: 60% VRAM (~115GB)
+- **Use Cases**: Code analysis, PR review, complex queries
+- **Quantization**: AWQ for VRAM efficiency
+
+### MR-02: Fast Model (Intent Classification)
+- **Model**: `Gemma-2-9B-it`
+- **Partition**: 20% VRAM (~38GB)
+- **Use Cases**: Fast intent classification, simple routing
+- **Route**: Binary `FAST` vs `DEEP` prompt
+
+### MR-03: Embedding Model
+- **Model**: `text-embedding-004` (via Vertex AI) or local
+- **Partition**: Within 20% VRAM pool
+- **Use Cases**: Chunk vectorization, issue-to-file similarity
+
+---
+
+## Feature Requirements
+
+### FR-01: Dual-Model Agent Orchestrator
+- **Components**:
+  - Fast Model: Intent classifier (binary: FAST/DEEP)
+  - Big Model: Reasoning engine for DEEP queries
+- **Fallback**: Fast Model for all queries if Big Model fails
+- **Timeout**: 30s for Fast Model, 120s for Big Model
+
+### FR-02: Knowledge Graph with Internal Resolution
+- **Nodes**: Files, functions, classes, modules
+- **Edges**: CALLS (internal only), DEFINES, IMPORTS
+- **Resolution**: Drop external/unresolvable calls
+- **Storage**: Supabase graph table with JSONB adjacency
+
+### FR-03: Onboarding UX (Plan Generation)
+- **Endpoint**: `/repo/${repoId}/start-here`
+- **Mechanism**: Polling or SSE for intermediate states
+- **Output**: Strict JSON schema for generated plan
+- **Error Handling**: Retry with exponential backoff
+
+### FR-04: GitHub Integration
+- **Issue Mapping**: Pure pgvector cosine distance (no context spikes)
+- **OAuth**: Extract `provider_token` from `auth.identities` for GitHub API
+- **Rate Limits**: Use user's token to avoid shared PAT limits
+
+### FR-05: Task Scheduling
+- **Tool**: APScheduler inside FastAPI
+- **Jobs**: Daily sync, cache cleanup, metrics collection
+- **Alternative**: RQ/Redis if APScheduler insufficient
+
+### FR-06: Admin Dashboard
+- **AI**: Gemma 4 (or Fast Model) for summarization
+- **Topic Extraction**: "Intern confusion" topics from query logs
+- **No Clustering**: Skip pgvector clustering initially
+
+---
+
+## Database Schema Requirements
+
+### DR-01: Graph Table
+```sql
+CREATE TABLE repo_graph (
+  repo_id UUID PRIMARY KEY,
+  nodes JSONB,        -- {id, type, name, file_path}
+  edges JSONB,        -- {from, to, type}
+  updated_at TIMESTAMPTZ
+);
+```
+
+### DR-2: Annotation Snippet
+```sql
+ALTER TABLE annotations
+ADD COLUMN snippet_text TEXT;  -- For start_line/end_line healing
+```
+
+---
+
+## Verification Criteria
+
+1. **VRAM Utilization**: Each model uses ≤ allocated partition
+2. **Dual-Model Fallback**: Fast Model works if Big Model fails
+3. **Token Cap Enforcement**: No request exceeds 48K tokens
+4. **Knowledge Graph**: Only internal symbol edges exist
+5. **Onboarding UX**: Polling/SSE provides progress updates
+6. **GitHub Auth**: Uses Supabase OAuth token, not shared PAT
+
+---
+
+*Generated from AMD-AUDIT-SPEC.md architectural refinements*
