@@ -38,14 +38,14 @@ created: 2026-05-10
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 20-01-01 | 01 | 1 | IR-01, IR-03 | T-20-01 | Truncate over-limit prompts | unit | `pytest tests/test_phase20_config.py tests/test_phase20_truncation.py` | ✅ | ⬜ pending |
-| 20-01-02 | 01 | 1 | IR-03 | T-20-01 | App-layer cap enforcement | lint | `grep -v '^#' api/routes/chats.py \| grep -c enforce_cap` | ✅ | ⬜ pending |
-| 20-01-03 | 01 | 1 | IR-01 | T-20-02 | Hardware VRAM isolation | infra | `docker compose config` | ✅ | ⬜ pending |
-| 20-02-01 | 02 | 2 | IR-02 | T-20-03 | Prevent root-owned caches | infra | `docker compose config` | ✅ | ⬜ pending |
-| 20-02-02 | 02 | 2 | IR-02 | — | Fast startup (no on-init pull) | shell | `bash -n scripts/download_models.sh` | ✅ | ⬜ pending |
-| 20-03-01 | 03 | 3 | IR-01 | — | Config defaults to Vertex | unit | `pytest tests/test_phase20_config.py` | ✅ | ⬜ pending |
-| 20-03-02 | 03 | 3 | IR-01 | — | Runtime service selection | shell | `python -c "from api.db.vector_store import vector_db; from api.core.config import settings; assert settings.embedding_model == 'text-embedding-004'"` | ✅ | ⬜ pending |
-| 20-03-03 | 03 | 3 | IR-01 | T-20-02 | Fallback logic verification | unit | `pytest tests/test_vertex_embeddings.py` | ✅ | ⬜ pending |
+| 20-01-01 | 01 | 1 | IR-01, IR-03 | T-20-01 | Truncate over-limit prompts | unit | `pytest tests/test_phase20_config.py tests/test_phase20_truncation.py` | ✅ | ✅ green |
+| 20-01-02 | 01 | 1 | IR-03 | T-20-01 | App-layer cap enforcement | lint | `grep -v '^#' api/routes/chats.py \| grep -c enforce_cap` | ✅ | ✅ green |
+| 20-01-03 | 01 | 1 | IR-01 | T-20-02 | Hardware VRAM isolation | infra | `docker compose config` | ✅ | ✅ green |
+| 20-02-01 | 02 | 2 | IR-02 | T-20-03 | Prevent root-owned caches | infra | `docker compose config` | ✅ | ✅ green |
+| 20-02-02 | 02 | 2 | IR-02 | — | Fast startup (no on-init pull) | shell | `bash -n scripts/download_models.sh` | ✅ | ✅ green |
+| 20-03-01 | 03 | 3 | IR-01 | — | Config defaults to Vertex | unit | `pytest tests/test_phase20_config.py` | ✅ | ✅ green |
+| 20-03-02 | 03 | 3 | IR-01 | — | Runtime service selection | shell | `python -c "from api.db.vector_store import vector_db; from api.core.config import settings; assert settings.embedding_model == 'text-embedding-004'"` | ✅ | ✅ green |
+| 20-03-03 | 03 | 3 | IR-01 | T-20-02 | Fallback logic verification | unit | `pytest tests/test_vertex_embeddings.py` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -55,7 +55,7 @@ created: 2026-05-10
 
 - [x] `tests/test_phase20_config.py` — existing
 - [x] `tests/test_phase20_truncation.py` — existing
-- [ ] `tests/test_vertex_embeddings.py` — pending Task 20-03-03
+- [x] `tests/test_vertex_embeddings.py` — created and passing
 
 ---
 
@@ -77,3 +77,11 @@ created: 2026-05-10
 - [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** approved 2026-05-10
+
+## Validation Audit 2026-05-10
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
