@@ -52,7 +52,7 @@
 **Plans**: 3 plans
 - [x] 21-01-PLAN.md — Multi-Agent Foundation & Fast Path
 - [x] 21-02-PLAN.md — Big Model Integration & Fallback
-- [ ] 21-03-PLAN.md — SSE Integration & UI Signaling
+- [x] 21-03-PLAN.md — SSE Integration & UI Signaling
 
 **Success Criteria**:
 1. Intent classification responds in <5s
