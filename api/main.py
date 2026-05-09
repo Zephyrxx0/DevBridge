@@ -12,7 +12,9 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import json
 import asyncio
-from api.agents.orchestrator import Orchestrator
+from langchain_core.messages import HumanMessage
+
+from api.agents.graph import graph
 from api.core.config import settings
 from api.db.session import close_db_pool, init_db_pool
 from api.db.cache import PostgresCacheBackend, repo_id_key_builder
@@ -24,6 +26,7 @@ from api.routes import pr
 from api.routes import repo
 from api.routes import questions
 from api.routes import chats
+from api.routes.chats import stream_graph_events
 from api.db.models import Annotation
 from api.db.vector_store import vector_db
 from api.db.session import get_engine
@@ -48,7 +51,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="DevBridge API", lifespan=lifespan)
-orchestrator = Orchestrator()
 
 # Configure CORS for Next.js with explicit origin allowlist.
 allowed_origins = [
@@ -173,7 +175,10 @@ async def root():
 @cache(expire=3600, namespace="chat", key_builder=repo_id_key_builder)
 async def chat(request: ChatRequest):
     try:
-        response = await orchestrator.chat(request.message, request.thread_id)
+        config = {"configurable": {"thread_id": request.thread_id}}
+        input_data = {"messages": [HumanMessage(content=request.message)]}
+        result = await graph.ainvoke(input_data, config=config)
+        response = str(result["messages"][-1].content)
         try:
             await _persist_chat_turn(request.repo_id, request.thread_id, request.message, response)
         except Exception:
@@ -257,6 +262,15 @@ async def chat_stream(request: ChatRequest):
         # Generator that yields SSE events for streaming responses
         async def event_generator():
             try:
+                def _contains_fallback(value) -> bool:
+                    if isinstance(value, dict):
+                        if value.get("fallback") is True:
+                            return True
+                        return any(_contains_fallback(v) for v in value.values())
+                    if isinstance(value, (list, tuple)):
+                        return any(_contains_fallback(v) for v in value)
+                    return False
+
                 def _extract_chunk_text(content) -> str:
                     if isinstance(content, str):
                         return content
@@ -272,24 +286,21 @@ async def chat_stream(request: ChatRequest):
                         return "".join(parts)
                     return ""
 
-                # Send optimization metadata first (D-08)
-                metadata = {
-                    "type": "metadata",
-                    "using_cache": False,  # Note: @cache decorator handles this transparently
-                    "optimization": "parallel"
-                }
-                yield f"data: {json.dumps(metadata)}\n\n"
-
-                from langchain_core.messages import HumanMessage
-                
-                # Create config for checkpointing
-                config = {"configurable": {"thread_id": request.thread_id}}
-                input_data = {"messages": [HumanMessage(content=request.message)]}
+                fallback_sent = False
+                yield f"data: {json.dumps({'type': 'metadata', 'fallback': False})}\n\n"
 
                 chunk_count = 0
                 accumulated_response = ""
-                async for event in orchestrator.graph.astream(input_data, config=config, stream_mode="messages"):
-                    message_chunk = event[0] if isinstance(event, tuple) and event else None
+                async for event in stream_graph_events(request.message, request.thread_id):
+                    if not fallback_sent and _contains_fallback(event):
+                        fallback_sent = True
+                        yield f"data: {json.dumps({'type': 'metadata', 'fallback': True})}\n\n"
+
+                    event_name = str(event.get("event", ""))
+                    if event_name != "on_chat_model_stream":
+                        continue
+
+                    message_chunk = event.get("data", {}).get("chunk")
                     if message_chunk is None:
                         continue
 
@@ -302,7 +313,14 @@ async def chat_stream(request: ChatRequest):
 
                 # Fallback for providers/modes that produce no incremental chunks.
                 if chunk_count == 0:
-                    response = await orchestrator.chat(request.message, request.thread_id)
+                    config = {"configurable": {"thread_id": request.thread_id}}
+                    input_data = {"messages": [HumanMessage(content=request.message)]}
+                    final_state = await graph.ainvoke(input_data, config=config)
+                    if final_state.get("fallback") is True and not fallback_sent:
+                        fallback_sent = True
+                        yield f"data: {json.dumps({'type': 'metadata', 'fallback': True})}\n\n"
+
+                    response = str(final_state["messages"][-1].content)
                     if response:
                         accumulated_response = response
                         yield f"data: {json.dumps({'type': 'chunk', 'content': response})}\n\n"

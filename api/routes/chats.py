@@ -1,14 +1,23 @@
 import json
 
 from fastapi import APIRouter, HTTPException, Request
+from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 from sqlalchemy import text
 
+from api.agents.graph import graph
 from api.core.config import settings
 from api.db.session import get_engine
 from api.utils.tokenizer import enforce_cap
 
 router = APIRouter(tags=["chats"])
+
+
+async def stream_graph_events(message: str, thread_id: str):
+    config = {"configurable": {"thread_id": thread_id}}
+    input_data = {"messages": [HumanMessage(content=message)]}
+    async for event in graph.astream_events(input_data, config=config, version="v2"):
+        yield event
 
 
 async def _resolve_repo_uuid(conn, repo_id: str) -> str:
