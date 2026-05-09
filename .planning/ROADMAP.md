@@ -50,7 +50,7 @@
 **Requirements**: MR-01, MR-02, FR-01
 **Depends on**: Phase 20
 **Plans**: 3 plans
-- [ ] 21-01-PLAN.md — Multi-Agent Foundation & Fast Path
+- [x] 21-01-PLAN.md — Multi-Agent Foundation & Fast Path
 - [ ] 21-02-PLAN.md — Big Model Integration & Fallback
 - [ ] 21-03-PLAN.md — SSE Integration & UI Signaling
 
