@@ -35,7 +35,9 @@ async def _resolve_repo(conn: Any, repo_id: str) -> dict[str, Any]:
     row = res.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail=f"Repository '{repo_id}' not found")
-    return dict(row._mapping)
+    repo = dict(row._mapping)
+    repo["id"] = str(repo["id"])
+    return repo
 
 
 def _repo_from_github_url(url: str | None) -> str | None:
@@ -300,6 +302,8 @@ async def list_repository_files(repo_id: str, branch: str | None = None, fresh: 
             if tree_nodes:
                 await _cache_file_tree(conn, actual_id, branch_key, tree)
             return tree
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Repository files unavailable: {exc}")
 

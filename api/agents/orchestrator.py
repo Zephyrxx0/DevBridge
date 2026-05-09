@@ -273,18 +273,32 @@ def get_llm():
     model_name = os.environ.get("VERTEX_AI_MODEL", "gemini-1.5-flash")
     gcp_project_id = settings.google_cloud_project
     gcp_location = os.environ.get("GCP_LOCATION", "us-central1")
+    google_api_key = (os.environ.get("GOOGLE_API_KEY") or "").strip()
 
     if gcp_project_id:
-        logger.info(f"GOOGLE_CLOUD_PROJECT found ({gcp_project_id}), initializing ChatGoogleGenerativeAI")
+        try:
+            import google.auth
+
+            google.auth.default()
+            logger.info(f"GOOGLE_CLOUD_PROJECT found ({gcp_project_id}), initializing Vertex AI chat model")
+            return ChatGoogleGenerativeAI(
+                model=model_name,
+                project=gcp_project_id,
+                location=gcp_location,
+                vertexai=True,
+            )
+        except Exception as exc:
+            logger.warning(f"Vertex AI auth unavailable, skipping vertex mode: {exc}")
+
+    if google_api_key:
+        logger.info("Using GOOGLE_API_KEY fallback for Gemini chat model")
         return ChatGoogleGenerativeAI(
             model=model_name,
-            project=gcp_project_id,
-            location=gcp_location,
-            vertexai=True,
+            google_api_key=google_api_key,
         )
 
     logger.warning(
-        "No GOOGLE_CLOUD_PROJECT found, using mock LLM fallback. Set GOOGLE_CLOUD_PROJECT to enable AI responses."
+        "No usable Vertex/Gemini credentials found, using mock LLM fallback. Set GOOGLE_API_KEY or GOOGLE_CLOUD_PROJECT with ADC."
     )
 
     class MockLLM(BaseChatModel):
