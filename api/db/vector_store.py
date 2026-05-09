@@ -1,15 +1,19 @@
 import logging
 import inspect
 import asyncio
-import os
 import json
 from typing import List, Optional, Dict, Any
 from langchain_postgres import PGVectorStore
 from langchain_core.documents import Document
-from langchain_google_vertexai import VertexAIEmbeddings
 from sqlalchemy import text
-from api.core.config import GOOGLE_CLOUD_PROJECT, settings
+from api.core.config import settings
 from api.db.session import get_engine
+from api.utils.local_embeddings import LocalEmbeddings
+
+try:
+    from langchain_google_vertexai import VertexAIEmbeddings
+except ImportError:  # pragma: no cover - validated in runtime logs/tests
+    VertexAIEmbeddings = None
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +36,7 @@ class VectorStoreManager:
             return False
 
         try:
-            # Use GOOGLE_CLOUD_PROJECT from config.py as single source of truth
-            # The config module handles deprecation warnings for legacy GCP_PROJECT_ID
-            project_id = GOOGLE_CLOUD_PROJECT
-            if not project_id:
-                project_id = "devbridge-default"
-                logger.warning("No project ID configured, using default")
-            embeddings = VertexAIEmbeddings(model_name="text-embedding-004", project=project_id)
+            embeddings = self.get_embedding_service()
 
             self._vectorstore = PGVectorStore(
                 engine=engine,
@@ -60,6 +58,18 @@ class VectorStoreManager:
         except Exception as e:
             logger.error(f"Failed to initialize vector store: {e}")
             return False
+
+    def get_embedding_service(self):
+        use_vertex = settings.embedding_model == "text-embedding-004"
+        if use_vertex and VertexAIEmbeddings is not None:
+            return VertexAIEmbeddings(model_name=settings.embedding_model)
+
+        if use_vertex and VertexAIEmbeddings is None:
+            logger.warning(
+                "Vertex AI embeddings requested but dependency not installed. Falling back to LocalEmbeddings."
+            )
+
+        return LocalEmbeddings()
 
     def add_documents(self, docs: List[Document]):
         if not self._vectorstore:
@@ -112,7 +122,7 @@ class VectorStoreManager:
             return []
 
         # 1. Generate embedding for query
-        # VertexAIEmbeddings.embed_query is usually synchronous but we run it in thread to be safe
+        # embed_query is synchronous; run it in thread to keep loop responsive
         embedding = await asyncio.to_thread(self._vectorstore.embedding_service.embed_query, query_text)
 
         # 2. Call SQL function

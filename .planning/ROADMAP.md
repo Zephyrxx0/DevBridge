@@ -33,7 +33,7 @@
 - [x] 20-02-PLAN.md — Docker volume binding for persistent `/app/repo_cache`
 
 **Wave 3 *(Gap Closure)***
-- [ ] 20-03-PLAN.md — Restore Vertex AI Embedding Continuity (D-03)
+- [x] 20-03-PLAN.md — Restore Vertex AI Embedding Continuity (D-03)
 
 **Cross-cutting constraints:**
 - System context limit: 48,000 tokens
