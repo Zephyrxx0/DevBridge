@@ -25,8 +25,17 @@
 **Requirements**: IR-01, IR-02, IR-03
 **Depends on**: None (new phase)
 **Plans**: 2 plans
+
+**Wave 1**
 - [ ] 20-01-PLAN.md — VRAM partitioning config (0.60/0.20/0.20) and context cap enforcement
+
+**Wave 2 *(blocked on Wave 1 completion)***
 - [ ] 20-02-PLAN.md — Docker volume binding for persistent `/app/repo_cache`
+
+**Cross-cutting constraints:**
+- System context limit: 48,000 tokens
+- ROCm docker base image required
+
 
 **Success Criteria**:
 1. Big Model uses ≤60% VRAM
