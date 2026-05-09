@@ -169,12 +169,12 @@ async def big_worker_node(state: AgentState):
 | A1 | MI300X handles 72B + 9B concurrently | Summary | OOM during peak load; requires strict IR-01 compliance. |
 | A2 | vLLM `hermes` parser is stable | Pitfalls | Tool calling failure for Big Model. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **How should the UI distinguish between a "Planned Fast" response and a "Fallback Fast" response?**
-   - Recommendation: Use a metadata flag `is_fallback: boolean` in the SSE stream.
+   - RESOLVED. Recommendation: Use a metadata flag `is_fallback: boolean` in the SSE stream to allow the UI to display the fallback badge (D-03).
 2. **Should the history be shared across model switches?**
-   - Recommendation: Yes, LangGraph `AgentState` handles this by default.
+   - RESOLVED. Recommendation: Yes, LangGraph `AgentState` handles this by default, preserving message history across model switches.
 
 ## Environment Availability
 
