@@ -6,7 +6,7 @@
 - [x] **Phase 1: Project Skeleton & Core Orchestrator** (completed 2026-04-16)
 - [x] **Phase 2: Data Foundation & Secret Management** (completed 2026-04-17)
 - [x] **Phase 3: Code Parsing with Tree-sitter** (completed 2026-04-18)
-- [x] **Phase 4: GCS & Pub/Sub Ingestion Triggers** (completed 2026-04-24)
+- [x] **Phase 4: Event-Driven Ingestion Triggers** (completed 2026-04-24)
 - [x] **Phase 5: Vector Index & Hybrid Search** (completed 2026-04-25)
 - [x] **Phase 6: Basic Chat Interface & SSE** (completed 2026-04-25)
 - [x] **Phase 7: History & Intent Ingestion** (completed 2026-04-26)
@@ -24,13 +24,16 @@
 **Goal**: Configure single MI300X with VRAM partitioning and Docker volume for cache.
 **Requirements**: IR-01, IR-02, IR-03
 **Depends on**: None (new phase)
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 **Wave 1**
-- [ ] 20-01-PLAN.md — VRAM partitioning config (0.60/0.20/0.20) and context cap enforcement
+- [x] 20-01-PLAN.md — VRAM partitioning config (0.60/0.20/0.20) and context cap enforcement
 
 **Wave 2 *(blocked on Wave 1 completion)***
-- [ ] 20-02-PLAN.md — Docker volume binding for persistent `/app/repo_cache`
+- [x] 20-02-PLAN.md — Docker volume binding for persistent `/app/repo_cache`
+
+**Wave 3 *(Gap Closure)***
+- [ ] 20-03-PLAN.md — Restore Vertex AI Embedding Continuity (D-03)
 
 **Cross-cutting constraints:**
 - System context limit: 48,000 tokens
