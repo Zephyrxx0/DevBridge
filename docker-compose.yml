@@ -1,6 +1,7 @@
 services:
   vllm-deep:
     image: rocm/vllm:latest
+    user: "${UID}:${GID}"
     ipc: host
     devices:
       - "/dev/kfd:/dev/kfd"
@@ -9,6 +10,8 @@ services:
       - video
     ports:
       - "8000:8000"
+    volumes:
+      - "/app/repo_cache/qwen:/root/.cache/huggingface"
     command: >
       --model Qwen/Qwen2.5-72B-Instruct-AWQ
       --gpu-memory-utilization 0.60
@@ -17,6 +20,7 @@ services:
 
   vllm-fast:
     image: rocm/vllm:latest
+    user: "${UID}:${GID}"
     ipc: host
     devices:
       - "/dev/kfd:/dev/kfd"
@@ -25,6 +29,8 @@ services:
       - video
     ports:
       - "8001:8001"
+    volumes:
+      - "/app/repo_cache/gemma:/root/.cache/huggingface"
     command: >
       --model Gemma-4-9B-it
       --gpu-memory-utilization 0.20
