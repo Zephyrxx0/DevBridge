@@ -1,3 +1,10 @@
+"""Legacy orchestrator module.
+
+Phase 21 routes now invoke `api.agents.graph.graph` directly for both sync and
+streaming chat execution. Keep this module for backward compatibility in
+existing tests and tooling.
+"""
+
 import os
 import logging
 import json
