@@ -15,10 +15,10 @@ from api.db.onboarding_models import OnboardingPlan
 VALID_PLAN_JSON = json.dumps({
     "summary": "A FastAPI backend for codebase knowledge.",
     "architecture": "Layered: routes → agents → DB with vector search.",
-    "setup": "pip install -r requirements.txt && uvicorn api.main:app",
+    "setup_commands": ["pip install -r requirements.txt", "uvicorn api.main:app"],
     "key_files": [
-        {"path": "api/routes/repo.py", "why": "Main repository endpoints"},
-        {"path": "api/agents/orchestrator.py", "why": "Agent orchestration logic"},
+        {"path": "api/routes/repo.py", "description": "Main repository endpoints"},
+        {"path": "api/agents/orchestrator.py", "description": "Agent orchestration logic"},
     ],
     "steps": [
         {

@@ -56,8 +56,8 @@ def _build_system_prompt(focus: str) -> str:
         "{\n"
         '  "summary": "string — high-level repo summary tailored to focus",\n'
         '  "architecture": "string — architecture overview from focus perspective",\n'
-        '  "setup": "string — setup instructions",\n'
-        '  "key_files": [{"path": "string", "why": "string"}],\n'
+        '  "setup_commands": ["string"],\n'
+        '  "key_files": [{"path": "string", "description": "string"}],\n'
         '  "steps": [{"title": "string", "description": "string", "files": ["string"]}]\n'
         "}\n\n"
         "Do NOT include markdown fences, comments, or any text outside the JSON object."
@@ -88,7 +88,7 @@ async def generate_onboarding_plan(
     """Async generator yielding SSE events: status updates then final plan or error.
 
     Implements exponential backoff on Pydantic validation failures.
-    Yields dicts with keys: type ("status" | "plan" | "error"), content.
+    Yields dicts with keys: type ("status" | "plan" | "error"), content/message.
     """
     yield {"type": "status", "content": f"Analyzing {focus} entry points..."}
 
@@ -157,5 +157,5 @@ async def generate_onboarding_plan(
 
     yield {
         "type": "error",
-        "content": f"Failed to generate valid onboarding plan after {MAX_ATTEMPTS} attempts: {last_error}",
+        "message": f"Failed to generate valid onboarding plan after {MAX_ATTEMPTS} attempts: {last_error}",
     }

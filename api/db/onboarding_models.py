@@ -19,7 +19,7 @@ class KeyFile(BaseModel):
     """A key file relevant to the user's focus area."""
 
     path: str = Field(description="Relative file path in the repo")
-    why: str = Field(description="Why this file matters for the focus area")
+    description: str = Field(description="Why this file matters for the focus area")
 
 
 class OnboardingStep(BaseModel):
@@ -35,7 +35,9 @@ class OnboardingPlan(BaseModel):
 
     summary: str = Field(description="High-level repo summary tailored to focus")
     architecture: str = Field(description="Architecture overview from the focus perspective")
-    setup: str = Field(description="Setup instructions for getting started")
+    setup_commands: list[str] = Field(
+        default_factory=list, description="Setup commands for getting started"
+    )
     key_files: list[KeyFile] = Field(default_factory=list, description="Key files for this focus")
     steps: list[OnboardingStep] = Field(default_factory=list, description="Guided walkthrough steps")
 
