@@ -15,3 +15,4 @@ fastapi-cache2[redis]==0.2.2
 jinja2
 transformers
 huggingface-hub
+APScheduler==3.10.4

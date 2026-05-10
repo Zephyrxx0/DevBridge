@@ -12,7 +12,9 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import json
 import asyncio
+from urllib import request
 from langchain_core.messages import HumanMessage
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from api.agents.graph import graph
 from api.core.config import settings
@@ -31,6 +33,7 @@ from api.db.models import Annotation
 from api.db.vector_store import vector_db
 from api.db.session import get_engine
 from sqlalchemy import text
+from api.core.secrets import get_github_token
 
 # psycopg async is incompatible with ProactorEventLoop on Windows.
 if sys.platform == "win32":
@@ -39,14 +42,147 @@ if sys.platform == "win32":
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+
+def _repo_slug_from_github_url(url: str | None) -> str | None:
+    if not url:
+        return None
+    clean = url.strip().rstrip("/")
+    marker = "github.com/"
+    if marker not in clean:
+        return None
+    tail = clean.split(marker, 1)[1]
+    parts = [segment for segment in tail.split("/") if segment]
+    if len(parts) < 2:
+        return None
+    return f"{parts[0]}/{parts[1]}"
+
+
+async def _github_get_json(url: str, token: str) -> dict | list:
+    def _do_request() -> dict | list:
+        req = request.Request(url)
+        req.add_header("Accept", "application/vnd.github+json")
+        req.add_header("Authorization", f"Bearer {token}")
+        req.add_header("X-GitHub-Api-Version", "2022-11-28")
+        with request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+    return await asyncio.to_thread(_do_request)
+
+
+async def _embed_issue(text_payload: str) -> list[float] | None:
+    if not vector_db._vectorstore:
+        vector_db.initialize()
+    if not vector_db._vectorstore:
+        logger.warning("Skipping issue embedding: vector store unavailable")
+        return None
+
+    try:
+        return await asyncio.to_thread(
+            vector_db._vectorstore.embedding_service.embed_query,
+            text_payload,
+        )
+    except Exception:
+        logger.exception("Failed embedding GitHub issue payload")
+        return None
+
+
+async def sync_issues() -> None:
+    """Daily GitHub issue sync into repo_github_issues table."""
+    engine = get_engine()
+    if engine is None:
+        logger.warning("Skipping issue sync: DB engine unavailable")
+        return
+
+    token = await get_github_token()
+    if not token:
+        logger.warning("Skipping issue sync: missing GitHub token")
+        return
+
+    async with engine.connect() as conn:
+        repo_rows = await conn.execute(text("SELECT id, name, github_url FROM repositories"))
+        repos = [dict(row._mapping) for row in repo_rows.fetchall()]
+
+    upsert_sql = text(
+        """
+        INSERT INTO repo_github_issues (repo_id, issue_number, title, body, embedding, updated_at)
+        VALUES (
+            CAST(:repo_id AS uuid),
+            :issue_number,
+            :title,
+            :body,
+            CAST(:embedding AS vector),
+            NOW()
+        )
+        ON CONFLICT (repo_id, issue_number) DO UPDATE
+        SET title = EXCLUDED.title,
+            body = EXCLUDED.body,
+            embedding = EXCLUDED.embedding,
+            updated_at = NOW()
+        """
+    )
+
+    synced_count = 0
+    for repo in repos:
+        repo_id = str(repo.get("id"))
+        repo_slug = _repo_slug_from_github_url(repo.get("github_url")) or repo.get("name")
+        if not repo_slug:
+            continue
+
+        issues_url = f"https://api.github.com/repos/{repo_slug}/issues?state=open&per_page=100"
+        try:
+            payload = await _github_get_json(issues_url, token)
+        except Exception:
+            logger.exception("Failed fetching issues for %s", repo_slug)
+            continue
+
+        if not isinstance(payload, list):
+            logger.warning("Unexpected issues payload for %s", repo_slug)
+            continue
+
+        async with engine.connect() as conn:
+            for issue in payload:
+                if not isinstance(issue, dict) or issue.get("pull_request"):
+                    continue
+
+                issue_number = issue.get("number")
+                title = (issue.get("title") or "").strip()
+                body = (issue.get("body") or "").strip()
+                if not issue_number or not title:
+                    continue
+
+                embedding_input = f"Issue #{issue_number}: {title}\n\n{body}"
+                embedding = await _embed_issue(embedding_input)
+                if embedding is None:
+                    continue
+
+                await conn.execute(
+                    upsert_sql,
+                    {
+                        "repo_id": repo_id,
+                        "issue_number": int(issue_number),
+                        "title": title,
+                        "body": body,
+                        "embedding": embedding,
+                    },
+                )
+                synced_count += 1
+            await conn.commit()
+
+    logger.info("GitHub issue sync completed: %s issues upserted", synced_count)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _ = app
+    scheduler = AsyncIOScheduler()
     if settings.supabase_connection_string:
         await init_db_pool(settings.supabase_connection_string)
         # Initialize caching infrastructure (D-03)
         FastAPICache.init(PostgresCacheBackend(), prefix="devbridge-cache")
+        scheduler.add_job(sync_issues, "interval", days=1, id="sync_issues", replace_existing=True)
+        scheduler.start()
     yield
+    if scheduler.running:
+        scheduler.shutdown(wait=False)
     await close_db_pool()
 
 
