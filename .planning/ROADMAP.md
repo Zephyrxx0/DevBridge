@@ -76,14 +76,16 @@
 **Goal**: AI-powered onboarding plan generator for repositories with SSE status updates and strict JSON validation.
 **Requirements**: FR-03
 **Depends on**: Phase 06 (SSE streaming)
-**Plans**: 2 plans
+**Plans**: 3 plans
 - [x] 23-01-PLAN.md — Backend: SSE endpoint, Onboarding Agent, and DB caching
 - [x] 23-02-PLAN.md — Frontend: SSE client integration and structured plan UI components
+- [x] 23-03-PLAN.md — Gap Closure: Contract alignment, retrieval path, and React fixes
 
 **Success Criteria**:
 1. Frontend receives intermediate loading states
 2. Generated plan conforms to JSON schema
 3. Retry with exponential backoff on failure
+4. Cached plans retrievable via standard GET
 
 ### Phase 24: GitHub Integration
 **Goal**: Issue-to-file mapping via pgvector, OAuth token extraction from Supabase.
@@ -133,4 +135,4 @@
 
 ---
 
-*Last updated: 2026-05-10 - Phase 23 plans generated*
+*Last updated: 2026-05-11 - Phase 23 gap closure plan added*
