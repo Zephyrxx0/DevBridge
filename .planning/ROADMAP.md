@@ -92,7 +92,7 @@
 **Requirements**: FR-04
 **Depends on**: Phase 05 (vector search)
 **Plans**: 2 plans
-- [ ] 24-01-PLAN.md — Auth, Schema, and Migration
+- [x] 24-01-PLAN.md — Auth, Schema, and Migration
 - [ ] 24-02-PLAN.md — Scheduler & Agent Tooling
 
 **Success Criteria**:
