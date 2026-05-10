@@ -10,6 +10,15 @@ from tree_sitter_language_pack import get_parser
 
 
 MAX_PARSE_BYTES = 2_000_000
+SHADOW_BLESSED_LIBRARIES = {
+    "react",
+    "fastapi",
+    "langchain",
+    "pydantic",
+    "sqlalchemy",
+    "pytest",
+    "next",
+}
 @dataclass(frozen=True)
 class SourceFile:
     file_path: str
@@ -150,8 +159,121 @@ class GraphBuilder:
         return symbol_map
 
     async def resolve_relationships(self) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
-        return [], []
+        if not self.symbol_to_file:
+            await self.discover_symbols()
+
+        files = await self._load_source_files()
+        file_paths = {f.file_path for f in files}
+        nodes: dict[str, dict[str, str]] = {}
+        edges: set[tuple[str, str, str]] = set()
+
+        for path in file_paths:
+            nodes[path] = {"id": path, "type": "file", "name": Path(path).name, "file_path": path}
+
+        for file in files:
+            ts_lang = self._ts_language(file.file_path)
+            if ts_lang is None:
+                continue
+            try:
+                if ts_lang == "python":
+                    modules, imported_symbols = self._python_import_candidates(file.content)
+                    called_symbols = self._python_call_symbols(file.content)
+                else:
+                    modules, imported_symbols = self._typescript_import_candidates(file.content)
+                    called_symbols = self._typescript_call_symbols(file.content)
+            except Exception:
+                continue
+
+            for symbol in imported_symbols:
+                target = self.symbol_to_file.get(symbol)
+                if target and target != file.file_path:
+                    edges.add((file.file_path, target, "IMPORTS"))
+
+            for module in modules:
+                module = module.strip("'\"")
+                if module.startswith(".") or module.startswith("/"):
+                    continue
+                module_root = module.split("/")[0].split(".")[0]
+                if module_root in SHADOW_BLESSED_LIBRARIES:
+                    shadow_id = self._shadow_node_id(module_root)
+                    nodes[shadow_id] = {
+                        "id": shadow_id,
+                        "type": "shadow",
+                        "name": module_root,
+                        "file_path": module_root,
+                    }
+                    edges.add((file.file_path, shadow_id, "IMPORTS"))
+                    continue
+
+                for module_path in self._module_to_paths(module):
+                    if module_path in file_paths and module_path != file.file_path:
+                        edges.add((file.file_path, module_path, "IMPORTS"))
+
+            for symbol in called_symbols:
+                target = self.symbol_to_file.get(symbol)
+                if target and target != file.file_path:
+                    edges.add((file.file_path, target, "CALLS"))
+
+        edge_docs = [{"from": fr, "to": to, "type": typ} for fr, to, typ in sorted(edges)]
+        node_docs = sorted(nodes.values(), key=lambda item: item["id"])
+        return node_docs, edge_docs
 
     async def build_graph(self) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
         await self.discover_symbols()
-        return [], []
+        return await self.resolve_relationships()
+
+    def _module_to_paths(self, module_name: str) -> set[str]:
+        if not module_name:
+            return set()
+        normalized = module_name.replace(".", "/")
+        return {f"{normalized}.py", f"{normalized}/__init__.py", f"{normalized}.ts", f"{normalized}.tsx", normalized}
+
+    def _python_import_candidates(self, source: str) -> tuple[set[str], set[str]]:
+        import_query = """
+        (import_statement name: (dotted_name) @module)
+        (import_from_statement module_name: (dotted_name) @module)
+        (import_from_statement name: (dotted_name) @symbol)
+        (import_from_statement name: (aliased_import name: (dotted_name) @symbol))
+        """
+        values = self._query_capture_texts("python", source, import_query)
+        modules: set[str] = set()
+        symbols: set[str] = set()
+        for value in values:
+            if "." in value and value[0].islower() and value.split(".")[-1][0].islower():
+                modules.add(value)
+            elif value and value[0].islower() and "/" not in value:
+                modules.add(value)
+            symbol = value.split(".")[-1]
+            if symbol:
+                symbols.add(symbol)
+        return modules, symbols
+
+    def _python_call_symbols(self, source: str) -> set[str]:
+        call_query = """
+        (call function: (identifier) @call)
+        (call function: (attribute attribute: (identifier) @call))
+        """
+        return set(self._query_capture_texts("python", source, call_query))
+
+    def _typescript_import_candidates(self, source: str) -> tuple[set[str], set[str]]:
+        module_query = """
+        (import_statement source: (string (string_fragment) @module))
+        """
+        symbol_query = """
+        (import_specifier name: (identifier) @symbol)
+        (import_specifier alias: (identifier) @symbol)
+        (namespace_import (identifier) @symbol)
+        """
+        modules = set(self._query_capture_texts("typescript", source, module_query))
+        symbols = set(self._query_capture_texts("typescript", source, symbol_query))
+        return modules, symbols
+
+    def _typescript_call_symbols(self, source: str) -> set[str]:
+        call_query = """
+        (call_expression function: (identifier) @call)
+        (call_expression function: (member_expression property: (property_identifier) @call))
+        """
+        return set(self._query_capture_texts("typescript", source, call_query))
+
+    def _shadow_node_id(self, library: str) -> str:
+        return f"shadow:{library}"
