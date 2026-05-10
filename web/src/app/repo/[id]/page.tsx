@@ -86,6 +86,7 @@ function detectLanguage(filePath: string, fallback: string): string {
 }
 
 import { useRepo } from "@/contexts/repo-context";
+import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 
 export default function RepoWorkspacePage() {
   const params = useParams<{ id: string }>();
@@ -754,35 +755,8 @@ export default function RepoWorkspacePage() {
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
           <div className="space-y-[var(--space-md)]">
             {messages.length === 0 && !isLoading ? (
-              <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-500">
-                <Avatar className="h-16 w-16 mb-4">
-                  <AvatarFallback className="bg-[var(--brand-muted)] text-[var(--brand)] text-xl">DB</AvatarFallback>
-                </Avatar>
-                <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
-                  Welcome to {repo?.name || "your repository"}
-                </h2>
-                <p className="mt-2 max-w-md text-sm text-[var(--foreground-muted)]">
-                  I&apos;m your DevBridge AI assistant. {repo?.description ? repo.description : "I'm ready to help you understand, navigate, and build upon this codebase."}
-                </p>
-                <div className="mt-8 flex flex-col gap-2 w-full max-w-sm">
-                  {repo?.lastIndexed ? (
-                    <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm">
-                      <span className="text-[var(--foreground-subtle)]">Last Indexed</span>
-                      <span className="font-medium text-[var(--foreground)]">{new Date(repo.lastIndexed).toLocaleDateString()}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm">
-                      <span className="text-yellow-600/70 dark:text-yellow-400/70">Index Status</span>
-                      <span className="font-medium text-yellow-600 dark:text-yellow-400">Not Indexed</span>
-                    </div>
-                  )}
-                  {repo?.url ? (
-                    <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm">
-                      <span className="text-[var(--foreground-subtle)]">Repository URL</span>
-                      <a href={repo.url} target="_blank" rel="noopener noreferrer" className="font-medium text-[var(--brand)] hover:underline truncate max-w-[180px]">{repo.url}</a>
-                    </div>
-                  ) : null}
-                </div>
+              <div className="flex h-full flex-col animate-in fade-in zoom-in duration-500">
+                <OnboardingGuide repoId={repoId} />
               </div>
             ) : null}
             {messages.map((message, index) => {
