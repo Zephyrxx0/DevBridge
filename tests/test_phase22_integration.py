@@ -53,7 +53,7 @@ async def test_run_ingestion_triggers_graph_build_and_save(monkeypatch):
         async def save_graph(self, repo_id, nodes, edges):
             calls["saved"] = (repo_id, nodes, edges)
 
-    async def fake_token():
+    async def fake_token(user_id=None):
         return "token"
 
     monkeypatch.setattr(repo_routes, "get_github_token", fake_token)
@@ -66,6 +66,7 @@ async def test_run_ingestion_triggers_graph_build_and_save(monkeypatch):
         job_id="job-1234-0000-0000-0000-000000000000",
         repo_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
         repo_slug="owner/repo",
+        user_id="11111111-1111-1111-1111-111111111111",
     )
 
     assert calls["builder_repo_id"] == "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
@@ -120,7 +121,7 @@ async def test_run_ingestion_graph_build_is_non_fatal(monkeypatch):
         async def save_graph(self, repo_id, nodes, edges):
             raise AssertionError("save_graph should not be called when build fails")
 
-    async def fake_token():
+    async def fake_token(user_id=None):
         return "token"
 
     monkeypatch.setattr(repo_routes, "get_github_token", fake_token)
@@ -133,4 +134,5 @@ async def test_run_ingestion_graph_build_is_non_fatal(monkeypatch):
         job_id="job-5678-0000-0000-0000-000000000000",
         repo_id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
         repo_slug="owner/repo",
+        user_id="22222222-2222-2222-2222-222222222222",
     )

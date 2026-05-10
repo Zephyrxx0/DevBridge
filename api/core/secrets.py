@@ -33,20 +33,40 @@ def get_secret_manager() -> SecretManager:
     return secrets
 
 
-async def get_github_token(user_id: UUID | None = None) -> str:
-    """Resolve GitHub token from RPC or environment fallback."""
-    if user_id is not None:
+def _normalize_user_uuid(user_id: UUID | str | None) -> UUID | None:
+    if user_id is None:
+        return None
+    if isinstance(user_id, UUID):
+        return user_id
+    try:
+        return UUID(str(user_id).strip())
+    except Exception:
+        return None
+
+
+async def get_github_token(
+    user_id: UUID | str | None = None,
+    allow_env_fallback: bool = False,
+) -> str:
+    """Resolve user-scoped GitHub token from RPC.
+
+    Environment fallback is disabled by default to avoid shared PAT usage.
+    """
+    user_uuid = _normalize_user_uuid(user_id)
+    if user_uuid is not None:
         engine = get_engine()
         if engine is not None:
             query = text(
                 "SELECT get_github_token_for_user(CAST(:user_id AS uuid)) AS provider_token"
             )
             async with engine.connect() as conn:
-                result = await conn.execute(query, {"user_id": str(user_id)})
+                result = await conn.execute(query, {"user_id": str(user_uuid)})
                 row = result.fetchone()
                 if row:
                     token = (row._mapping.get("provider_token") or "").strip()
                     if token:
                         return token
 
-    return (os.getenv("GITHUB_TOKEN") or "").strip()
+    if allow_env_fallback:
+        return (os.getenv("GITHUB_TOKEN") or "").strip()
+    return ""

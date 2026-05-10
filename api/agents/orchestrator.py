@@ -300,12 +300,12 @@ async def _github_get_json(url: str, token: str) -> dict:
     return await asyncio.to_thread(_do_request)
 
 
-async def _sync_single_issue(repo_id: str, issue_number: int) -> bool:
+async def _sync_single_issue(repo_id: str, issue_number: int, user_id: str) -> bool:
     engine = get_engine()
     if engine is None:
         return False
 
-    token = await get_github_token()
+    token = await get_github_token(user_id)
     if not token:
         logger.warning("GitHub token missing; cannot on-demand sync issue")
         return False
@@ -347,7 +347,14 @@ async def _sync_single_issue(repo_id: str, issue_number: int) -> bool:
         return False
 
     embedding_input = f"Issue #{issue_number}: {title}\n\n{body}"
-    embedding = await asyncio.to_thread(vector_db._vectorstore.embedding_service.embed_query, embedding_input)
+    try:
+        embedding = await asyncio.to_thread(
+            vector_db._vectorstore.embedding_service.embed_query,
+            embedding_input,
+        )
+    except Exception:
+        logger.exception("Failed embedding issue for on-demand sync %s#%s", repo_slug, issue_number)
+        return False
 
     upsert_sql = text(
         """
@@ -376,7 +383,7 @@ async def _sync_single_issue(repo_id: str, issue_number: int) -> bool:
 
 
 @tool
-async def map_issue_to_files(repo_id: str, issue_number: int, limit: int = 5):
+async def map_issue_to_files(repo_id: str, issue_number: int, user_id: str, limit: int = 5):
     """Map a GitHub issue to relevant code files using in-DB pgvector cosine similarity."""
     engine = get_engine()
     if engine is None:
@@ -397,8 +404,11 @@ async def map_issue_to_files(repo_id: str, issue_number: int, limit: int = 5):
         existing = await conn.execute(exists_sql, {"repo_id": repo_id, "issue_number": issue_number})
         issue_exists = existing.fetchone() is not None
 
+    if not user_id:
+        return "user_id is required to resolve GitHub OAuth token for issue mapping."
+
     if not issue_exists:
-        synced = await _sync_single_issue(repo_id, issue_number)
+        synced = await _sync_single_issue(repo_id, issue_number, user_id)
         if not synced:
             return f"Issue #{issue_number} not found and on-demand sync failed for repo {repo_id}."
 

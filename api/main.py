@@ -93,11 +93,6 @@ async def sync_issues() -> None:
         logger.warning("Skipping issue sync: DB engine unavailable")
         return
 
-    token = await get_github_token()
-    if not token:
-        logger.warning("Skipping issue sync: missing GitHub token")
-        return
-
     async with engine.connect() as conn:
         repo_rows = await conn.execute(text("SELECT id, name, github_url FROM repositories"))
         repos = [dict(row._mapping) for row in repo_rows.fetchall()]
@@ -121,23 +116,48 @@ async def sync_issues() -> None:
         """
     )
 
+    sync_user_id = (os.getenv("GITHUB_SYNC_USER_ID") or "").strip()
+    if not sync_user_id:
+        logger.info("Skipping scheduled issue sync: GITHUB_SYNC_USER_ID not configured")
+        return
+
     synced_count = 0
     for repo in repos:
+        token = await get_github_token(sync_user_id)
+        if not token:
+            logger.warning(
+                "Skipping issue sync for repo %s: missing OAuth token for configured sync user",
+                repo.get("id"),
+            )
+            continue
+
         repo_id = str(repo.get("id"))
         repo_slug = _repo_slug_from_github_url(repo.get("github_url")) or repo.get("name")
         if not repo_slug:
             continue
 
-        issues_url = f"https://api.github.com/repos/{repo_slug}/issues?state=open&per_page=100"
-        try:
-            payload = await _github_get_json(issues_url, token)
-        except Exception:
-            logger.exception("Failed fetching issues for %s", repo_slug)
-            continue
+        payload: list[dict] = []
+        page = 1
+        while True:
+            issues_url = (
+                f"https://api.github.com/repos/{repo_slug}/issues?state=open&per_page=100&page={page}"
+            )
+            try:
+                page_payload = await _github_get_json(issues_url, token)
+            except Exception:
+                logger.exception("Failed fetching issues for %s (page=%s)", repo_slug, page)
+                break
 
-        if not isinstance(payload, list):
-            logger.warning("Unexpected issues payload for %s", repo_slug)
-            continue
+            if not isinstance(page_payload, list):
+                logger.warning("Unexpected issues payload for %s (page=%s)", repo_slug, page)
+                break
+            if not page_payload:
+                break
+
+            payload.extend([issue for issue in page_payload if isinstance(issue, dict)])
+            if len(page_payload) < 100:
+                break
+            page += 1
 
         async with engine.connect() as conn:
             for issue in payload:
@@ -151,20 +171,28 @@ async def sync_issues() -> None:
                     continue
 
                 embedding_input = f"Issue #{issue_number}: {title}\n\n{body}"
-                embedding = await _embed_issue(embedding_input)
+                try:
+                    embedding = await _embed_issue(embedding_input)
+                except Exception:
+                    logger.exception("Issue embedding crashed for %s#%s", repo_slug, issue_number)
+                    continue
                 if embedding is None:
                     continue
 
-                await conn.execute(
-                    upsert_sql,
-                    {
-                        "repo_id": repo_id,
-                        "issue_number": int(issue_number),
-                        "title": title,
-                        "body": body,
-                        "embedding": embedding,
-                    },
-                )
+                try:
+                    await conn.execute(
+                        upsert_sql,
+                        {
+                            "repo_id": repo_id,
+                            "issue_number": int(issue_number),
+                            "title": title,
+                            "body": body,
+                            "embedding": embedding,
+                        },
+                    )
+                except Exception:
+                    logger.exception("Failed upserting issue %s#%s", repo_slug, issue_number)
+                    continue
                 synced_count += 1
             await conn.commit()
 

@@ -7,7 +7,7 @@ import uuid
 from typing import Any
 from urllib import request
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import text
 
@@ -22,6 +22,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["repo"])
+
+
+def _request_user_id(request: Request | None) -> str | None:
+    if request is None:
+        return None
+    value = getattr(request.state, "user_id", None)
+    if value is None:
+        return None
+    token = str(value).strip()
+    return token or None
 
 
 async def _resolve_repo(conn: Any, repo_id: str) -> dict[str, Any]:
@@ -197,7 +207,7 @@ async def get_repository(repo_id: str):
 
 
 @router.get("/repo/{repo_id}/branches")
-async def list_repository_branches(repo_id: str):
+async def list_repository_branches(repo_id: str, request: Request):
     """Return list of branches from GitHub for this repository."""
     engine = get_engine()
     if engine is None:
@@ -208,7 +218,7 @@ async def list_repository_branches(repo_id: str):
             repo_slug = _repo_from_github_url(repo.get("github_url")) or repo.get("name")
             if not repo_slug:
                 raise HTTPException(status_code=422, detail="Cannot derive GitHub slug from repository")
-            token = await get_github_token()
+            token = await get_github_token(_request_user_id(request))
             payload = await _github_get_json(
                 f"https://api.github.com/repos/{repo_slug}/branches?per_page=100",
                 token,
@@ -223,7 +233,7 @@ async def list_repository_branches(repo_id: str):
 
 
 @router.get("/repo/{repo_id}/files")
-async def list_repository_files(repo_id: str, branch: str | None = None, fresh: bool = False):
+async def list_repository_files(repo_id: str, request: Request, branch: str | None = None, fresh: bool = False):
     """Return file tree.
     - No branch param → code_chunks (indexed) first, then GitHub fallback.
     - Branch param set  → always GitHub (code_chunks are not branch-aware).
@@ -289,7 +299,7 @@ async def list_repository_files(repo_id: str, branch: str | None = None, fresh: 
 
             # ── 3. GitHub API (always for branch requests, fallback otherwise) ──
             repo_slug = _repo_from_github_url(repo_url) or repo_name
-            token = await get_github_token()
+            token = await get_github_token(_request_user_id(request))
             if not repo_slug:
                 return _materialize_tree(root)
 
@@ -429,7 +439,7 @@ async def invalidate_file_cache(repo_id: str, branch: str | None = None):
 
 
 @router.get("/repo/{repo_id}/files/{file_path:path}")
-async def get_repository_file(repo_id: str, file_path: str, branch: str | None = None):
+async def get_repository_file(repo_id: str, file_path: str, request: Request, branch: str | None = None):
     engine = get_engine()
     if engine is None:
         raise HTTPException(status_code=500, detail="Database engine not initialized")
@@ -479,7 +489,7 @@ async def get_repository_file(repo_id: str, file_path: str, branch: str | None =
 
             if not row:
                 # Fallback: load raw file from GitHub.
-                token = await get_github_token()
+                token = await get_github_token(_request_user_id(request))
                 if repo_slug:
                     from urllib.parse import quote as _quote
                     encoded_path = _quote(file_path, safe="/")
@@ -576,7 +586,7 @@ async def list_ingestion_jobs(repo_id: str, limit: int = 30):
 
 
 @router.post("/repo/{repo_id}/trigger-index")
-async def trigger_repository_index(repo_id: str, background_tasks: BackgroundTasks):
+async def trigger_repository_index(repo_id: str, background_tasks: BackgroundTasks, request: Request):
     """Trigger GitHub file ingestion into code_chunks. Returns immediately; work runs in background."""
     engine = get_engine()
     if engine is None:
@@ -603,7 +613,14 @@ async def trigger_repository_index(repo_id: str, background_tasks: BackgroundTas
             )
             await conn.commit()
 
-            background_tasks.add_task(_run_ingestion, engine, job_id, str(actual_id), repo_slug)
+            background_tasks.add_task(
+                _run_ingestion,
+                engine,
+                job_id,
+                str(actual_id),
+                repo_slug,
+                _request_user_id(request),
+            )
 
             return {
                 "status": "indexing_started",
@@ -617,9 +634,16 @@ async def trigger_repository_index(repo_id: str, background_tasks: BackgroundTas
         raise HTTPException(status_code=503, detail=f"Failed to trigger indexing: {exc}")
 
 
-async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str):
+async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str, user_id: str | None = None):
     """Background task: fetch files from GitHub and insert into code_chunks."""
-    token = await get_github_token()
+    if not user_id:
+        logger.warning("Ingestion %s: missing user_id, refusing GitHub sync without user OAuth context", job_id)
+        return
+
+    token = await get_github_token(user_id)
+    if not token:
+        logger.warning("Ingestion %s: missing OAuth token for user %s", job_id, user_id)
+        return
     logger.info(f"Ingestion {job_id}: starting for {repo_slug} (token={'yes' if token else 'NO'})")
 
     try:
@@ -633,17 +657,17 @@ async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str):
 
         # Fetch tree
         try:
-            tree_payload = await _github_get_json(
-                f"https://api.github.com/repos/{repo_slug}/git/trees/HEAD?recursive=1",
-                token or None,
-            )
+                tree_payload = await _github_get_json(
+                    f"https://api.github.com/repos/{repo_slug}/git/trees/HEAD?recursive=1",
+                    token,
+                )
         except Exception:
             try:
-                repo_info = await _github_get_json(f"https://api.github.com/repos/{repo_slug}", token or None)
+                repo_info = await _github_get_json(f"https://api.github.com/repos/{repo_slug}", token)
                 branch = repo_info.get("default_branch", "main") if isinstance(repo_info, dict) else "main"
                 tree_payload = await _github_get_json(
                     f"https://api.github.com/repos/{repo_slug}/git/trees/{branch}?recursive=1",
-                    token or None,
+                    token,
                 )
             except Exception as e:
                 logger.error(f"Ingestion {job_id}: GitHub tree fetch failed: {e}")
