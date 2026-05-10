@@ -77,7 +77,7 @@
 **Requirements**: FR-03
 **Depends on**: Phase 06 (SSE streaming)
 **Plans**: 2 plans
-- [ ] 23-01-PLAN.md — Backend: SSE endpoint, Onboarding Agent, and DB caching
+- [x] 23-01-PLAN.md — Backend: SSE endpoint, Onboarding Agent, and DB caching
 - [ ] 23-02-PLAN.md — Frontend: SSE client integration and structured plan UI components
 
 **Success Criteria**:
