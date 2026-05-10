@@ -43,6 +43,36 @@ async def _resolve_repo(conn: Any, repo_id: str) -> dict[str, Any]:
     return repo
 
 
+def _normalize_onboarding_plan_schema(plan: dict[str, Any]) -> dict[str, Any]:
+    """Map legacy onboarding plan keys to current contract."""
+    normalized = dict(plan)
+
+    if "setup_commands" not in normalized:
+        legacy_setup = normalized.get("setup")
+        if isinstance(legacy_setup, str) and legacy_setup.strip():
+            normalized["setup_commands"] = [legacy_setup.strip()]
+        else:
+            normalized["setup_commands"] = []
+
+    key_files = normalized.get("key_files")
+    if isinstance(key_files, list):
+        upgraded_key_files: list[dict[str, Any]] = []
+        for item in key_files:
+            if isinstance(item, dict):
+                upgraded = dict(item)
+                if "description" not in upgraded and isinstance(upgraded.get("why"), str):
+                    upgraded["description"] = upgraded["why"]
+                upgraded_key_files.append(upgraded)
+        normalized["key_files"] = upgraded_key_files
+
+    normalized.pop("setup", None)
+    for item in normalized.get("key_files", []):
+        if isinstance(item, dict):
+            item.pop("why", None)
+
+    return normalized
+
+
 def _repo_from_github_url(url: str | None) -> str | None:
     if not url:
         return None
@@ -817,4 +847,42 @@ async def start_here(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@router.get("/repo/{repo_id}/onboarding-plan")
+async def get_onboarding_plan(repo_id: str):
+    """Return cached onboarding plan for repository, if present."""
+    engine = get_engine()
+    if engine is None:
+        raise HTTPException(status_code=500, detail="Database engine not initialized")
+
+    try:
+        async with engine.connect() as conn:
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+
+            result = await conn.execute(
+                text(
+                    """
+                    SELECT plan
+                    FROM repo_onboarding_plans
+                    WHERE repo_id = CAST(:repo_id AS uuid)
+                    LIMIT 1
+                    """
+                ),
+                {"repo_id": actual_id},
+            )
+            row = result.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Onboarding plan not found")
+
+            plan = row._mapping.get("plan")
+            if not isinstance(plan, dict):
+                raise HTTPException(status_code=503, detail="Stored onboarding plan is invalid")
+
+            return _normalize_onboarding_plan_schema(plan)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Onboarding plan retrieval unavailable: {exc}")
 
