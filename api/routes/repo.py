@@ -12,6 +12,8 @@ from sqlalchemy import text
 
 from api.core.secrets import get_github_token
 from api.db.session import get_engine
+from api.db.graph_store import GraphStoreManager
+from api.ingestion.graph_builder import GraphBuilder
 from api.core.config import settings
 
 import logging
@@ -731,6 +733,17 @@ async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str):
                 await conn.commit()
         except Exception as cache_err:
             logger.debug(f"Cache bust after ingestion failed (non-fatal): {cache_err}")
+
+        # Build and save knowledge graph (non-fatal)
+        try:
+            builder = GraphBuilder(repo_id=repo_id, engine=engine)
+            nodes, edges = await builder.build_graph()
+
+            store = GraphStoreManager()
+            await store.save_graph(repo_id, nodes, edges)
+            logger.info(f"Graph build for {repo_id} completed.")
+        except Exception as graph_err:
+            logger.error(f"Graph build failed for {repo_id} (non-fatal): {graph_err}")
 
         logger.info(f"Ingestion {job_id}: done. {inserted} inserted, {errors} errors.")
 
