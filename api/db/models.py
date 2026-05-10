@@ -207,3 +207,14 @@ class RepoGraph:
     nodes: list[dict]
     edges: list[dict]
     updated_at: datetime
+
+
+@dataclass
+class RepoGithubIssue:
+    id: UUID
+    repo_id: UUID
+    issue_number: int
+    title: str
+    body: str | None
+    embedding: list[float] | None
+    updated_at: datetime
