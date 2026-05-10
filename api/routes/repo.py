@@ -7,7 +7,8 @@ import uuid
 from typing import Any
 from urllib import request
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy import text
 
 from api.core.secrets import get_github_token
@@ -774,4 +775,46 @@ async def _fetch_github_file(repo_slug: str, file_path: str, token: str | None) 
     except Exception as e:
         logger.debug(f"Failed to fetch {file_path}: {e}")
         return None
+
+
+@router.get("/repo/{repo_id}/start-here")
+async def start_here(
+    repo_id: str,
+    focus: str = Query(default="Exploring", description="Developer focus: Backend, Frontend, Fullstack, or Exploring"),
+):
+    """SSE endpoint that streams a personalized onboarding plan for a repository.
+
+    Accepts an optional `focus` query parameter to tailor the plan to the
+    developer's area of interest. Streams status updates followed by the
+    final JSON plan (or an error event on failure).
+    """
+    from api.agents.onboarding import generate_onboarding_plan
+
+    engine = get_engine()
+    if engine is None:
+        raise HTTPException(status_code=500, detail="Database engine not initialized")
+
+    # Validate repo exists and resolve to UUID
+    try:
+        async with engine.connect() as conn:
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Repository lookup failed: {exc}")
+
+    async def _event_stream():
+        async for event in generate_onboarding_plan(actual_id, focus=focus):
+            yield f"data: {json.dumps(event)}\n\n"
+
+    return StreamingResponse(
+        _event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
