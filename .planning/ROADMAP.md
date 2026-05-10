@@ -73,12 +73,12 @@
 3. Graph updates on repo re-index
 
 ### Phase 23: Onboarding UX Improvements
-**Goal**: Polling/SSE endpoint for plan generation with strict JSON schema validation.
+**Goal**: AI-powered onboarding plan generator for repositories with SSE status updates and strict JSON validation.
 **Requirements**: FR-03
 **Depends on**: Phase 06 (SSE streaming)
 **Plans**: 2 plans
-- [ ] 23-01-PLAN.md — `/repo/${repoId}/start-here` endpoint with progress states
-- [ ] 23-02-PLAN.md — Strict JSON schema validation for generated plan
+- [ ] 23-01-PLAN.md — Backend: SSE endpoint, Onboarding Agent, and DB caching
+- [ ] 23-02-PLAN.md — Frontend: SSE client integration and structured plan UI components
 
 **Success Criteria**:
 1. Frontend receives intermediate loading states
@@ -133,4 +133,4 @@
 
 ---
 
-*Last updated: 2026-05-10 - Phase 22 plans added*
+*Last updated: 2026-05-10 - Phase 23 plans generated*
