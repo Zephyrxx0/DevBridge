@@ -64,8 +64,8 @@
 **Requirements**: FR-02
 **Depends on**: Phase 03 (code parsing)
 **Plans**: 2 plans
-- [ ] 22-01-PLAN.md — Graph storage schema (repo_graph table with JSONB)
-- [ ] 22-02-PLAN.md — Internal symbol resolution: resolve only local definitions
+- [x] 22-01-PLAN.md — Graph storage schema (repo_graph table with JSONB)
+- [x] 22-02-PLAN.md — Internal symbol resolution: resolve only local definitions
 
 **Success Criteria**:
 1. CALLS edges only connect internal symbols
