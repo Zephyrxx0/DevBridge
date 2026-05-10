@@ -199,3 +199,11 @@ class RepoConfig:
                     review_depth=row._mapping["review_depth"],
                 )
         return cls(repo_id=UUID(str(repo_id)), review_depth=review_depth)
+
+
+@dataclass
+class RepoGraph:
+    repo_id: UUID
+    nodes: list[dict]
+    edges: list[dict]
+    updated_at: datetime
