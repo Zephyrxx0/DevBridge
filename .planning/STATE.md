@@ -36,14 +36,14 @@ Current milestone (v0.2) focuses on:
 
 - `gsd-new-milestone`: COMPLETED (initialized v0.2)
 - `gsd-plan-phase`: COMPLETED (Phase 22 planned)
-- `gsd-discuss-phase`: COMPLETED (Phase 23 context gathered)
+- `gsd-discuss-phase`: COMPLETED (Phase 24 context gathered)
 - `gsd-execute-phase`: COMPLETED (Phase 23 — Plans 01, 02, 03 complete)
 
 ## Current Focus
 
-Phase 23: Onboarding UX Improvements complete.
-Contract alignment, cached onboarding retrieval endpoint, and reusable onboarding step rendering shipped.
-Next: run `/gsd-verify-work 23` then proceed to next phase planning.
+Phase 24: GitHub Integration — Context gathered.
+Ready for planning (24-01-PLAN.md, 24-02-PLAN.md).
+Next: `/gsd-plan-phase 24`.
 
 ## Decisions
 

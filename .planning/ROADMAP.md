@@ -87,13 +87,13 @@
 3. Retry with exponential backoff on failure
 4. Cached plans retrievable via standard GET
 
-### Phase 24: GitHub Integration
+### Phase 24: GitHub Integration — IN PROGRESS
 **Goal**: Issue-to-file mapping via pgvector, OAuth token extraction from Supabase.
 **Requirements**: FR-04
 **Depends on**: Phase 05 (vector search)
 **Plans**: 2 plans
-- [ ] 24-01-PLAN.md — pgvector cosine distance for issue-to-file similarity
-- [ ] 24-02-PLAN.md — Extract `provider_token` from `auth.identities` for GitHub API
+- [ ] 24-01-PLAN.md — Auth, Schema, and Migration
+- [ ] 24-02-PLAN.md — Scheduler & Agent Tooling
 
 **Success Criteria**:
 1. Issue search returns relevant files
