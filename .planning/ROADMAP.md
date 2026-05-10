@@ -78,7 +78,7 @@
 **Depends on**: Phase 06 (SSE streaming)
 **Plans**: 2 plans
 - [x] 23-01-PLAN.md — Backend: SSE endpoint, Onboarding Agent, and DB caching
-- [ ] 23-02-PLAN.md — Frontend: SSE client integration and structured plan UI components
+- [x] 23-02-PLAN.md — Frontend: SSE client integration and structured plan UI components
 
 **Success Criteria**:
 1. Frontend receives intermediate loading states
