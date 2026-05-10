@@ -21,6 +21,7 @@ class MockEventSource {
 
 describe("useOnboarding", () => {
   const originalEventSource = global.EventSource;
+  const originalFetch = global.fetch;
 
   beforeAll(() => {
     (global as any).EventSource = MockEventSource;
@@ -28,10 +29,15 @@ describe("useOnboarding", () => {
 
   afterAll(() => {
     global.EventSource = originalEventSource;
+    global.fetch = originalFetch;
   });
 
   beforeEach(() => {
     MockEventSource.instances = [];
+    global.fetch = jest.fn(async () => ({
+      ok: false,
+      json: async () => ({}),
+    })) as unknown as typeof fetch;
   });
 
   it("should initialize correctly", () => {
@@ -42,11 +48,11 @@ describe("useOnboarding", () => {
     expect(result.current.error).toBeNull();
   });
 
-  it("should open EventSource with correct URL and focus param", () => {
+  it("should open EventSource with correct URL and focus param", async () => {
     const { result } = renderHook(() => useOnboarding("123"));
     
-    act(() => {
-      result.current.startGeneration("Backend");
+    await act(async () => {
+      await result.current.startGeneration("Backend");
     });
 
     expect(result.current.loading).toBe(true);
@@ -54,11 +60,11 @@ describe("useOnboarding", () => {
     expect(MockEventSource.instances[0].url).toBe("/api/backend/repo/123/start-here?focus=Backend");
   });
 
-  it("should update status on receiving status message", () => {
+  it("should update status on receiving status message", async () => {
     const { result } = renderHook(() => useOnboarding("123"));
     
-    act(() => {
-      result.current.startGeneration("Backend");
+    await act(async () => {
+      await result.current.startGeneration("Backend");
     });
 
     const es = MockEventSource.instances[0];
@@ -72,11 +78,11 @@ describe("useOnboarding", () => {
     expect(result.current.status[0].message).toBe("Analyzing entry points...");
   });
 
-  it("should complete loading and set plan on receiving plan message", () => {
+  it("should complete loading and set plan on receiving plan message", async () => {
     const { result } = renderHook(() => useOnboarding("123"));
     
-    act(() => {
-      result.current.startGeneration("Frontend");
+    await act(async () => {
+      await result.current.startGeneration("Frontend");
     });
 
     const es = MockEventSource.instances[0];
@@ -98,11 +104,11 @@ describe("useOnboarding", () => {
     expect(result.current.plan).toEqual(mockPlan);
   });
 
-  it("should handle error messages correctly", () => {
+  it("should handle error messages correctly", async () => {
     const { result } = renderHook(() => useOnboarding("123"));
     
-    act(() => {
-      result.current.startGeneration("Frontend");
+    await act(async () => {
+      await result.current.startGeneration("Frontend");
     });
 
     const es = MockEventSource.instances[0];
@@ -117,11 +123,11 @@ describe("useOnboarding", () => {
     expect(result.current.error).toBe("Validation failed");
   });
 
-  it("should handle connection errors", () => {
+  it("should handle connection errors", async () => {
     const { result } = renderHook(() => useOnboarding("123"));
     
-    act(() => {
-      result.current.startGeneration("Frontend");
+    await act(async () => {
+      await result.current.startGeneration("Frontend");
     });
 
     const es = MockEventSource.instances[0];
@@ -134,11 +140,11 @@ describe("useOnboarding", () => {
     expect(result.current.error).toBe("Connection lost. Please try again.");
   });
 
-  it("should clean up EventSource on unmount", () => {
+  it("should clean up EventSource on unmount", async () => {
     const { result, unmount } = renderHook(() => useOnboarding("123"));
     
-    act(() => {
-      result.current.startGeneration("Backend");
+    await act(async () => {
+      await result.current.startGeneration("Backend");
     });
 
     const es = MockEventSource.instances[0];
@@ -147,5 +153,30 @@ describe("useOnboarding", () => {
     unmount();
 
     expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it("should reuse cached onboarding plan when available", async () => {
+    const cachedPlan = {
+      summary: "Cached Summary",
+      architecture: "Cached Architecture",
+      setup_commands: ["npm install"],
+      key_files: [{ path: "README.md", description: "Entry point" }],
+      steps: [],
+    };
+
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => cachedPlan,
+    })) as unknown as typeof fetch;
+
+    const { result } = renderHook(() => useOnboarding("123"));
+
+    await act(async () => {
+      await result.current.startGeneration("Exploring");
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.plan).toEqual(cachedPlan);
+    expect(MockEventSource.instances.length).toBe(0);
   });
 });

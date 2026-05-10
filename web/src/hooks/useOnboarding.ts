@@ -26,7 +26,7 @@ interface UseOnboardingReturn {
   plan: OnboardingPlan | null;
   loading: boolean;
   error: string | null;
-  startGeneration: (focus: string) => void;
+  startGeneration: (focus: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -57,9 +57,21 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
   }, [cleanup]);
 
   const startGeneration = useCallback(
-    (focus: string) => {
+    async (focus: string) => {
       reset();
       setLoading(true);
+
+      try {
+        const existing = await fetch(`/api/backend/repo/${repoId}/onboarding-plan`);
+        if (existing.ok) {
+          const cachedPlan = (await existing.json()) as OnboardingPlan;
+          setPlan(cachedPlan);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn("Failed to load cached onboarding plan, generating a new one", err);
+      }
 
       const encodedFocus = encodeURIComponent(focus);
       const url = `/api/backend/repo/${repoId}/start-here?focus=${encodedFocus}`;
@@ -85,7 +97,7 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
             setLoading(false);
             cleanup();
           } else if (data.type === "error") {
-            setError(data.message || "An error occurred");
+            setError(data.message || data.content || "An error occurred");
             setLoading(false);
             cleanup();
           }
