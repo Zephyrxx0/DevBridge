@@ -129,7 +129,7 @@
 - [x] 26-02-PLAN.md — Frontend: Admin Dashboard UI
 
 **Wave 3 *(Gap Closure)***
-- [ ] 26-03-PLAN.md — Gap closure: strict `is_admin` enforcement (remove internal-token bypass)
+- [x] 26-03-PLAN.md — Gap closure: strict `is_admin` enforcement (remove internal-token bypass)
 
 **Success Criteria**:
 1. Dashboard shows confusion topics scoped by repository
