@@ -30,6 +30,16 @@ class PullRequestRecord:
 
 
 @dataclass
+class UserRecord:
+    id: UUID
+    org_id: UUID | None
+    email: str | None
+    display_name: str | None
+    is_admin: bool = False
+    created_at: datetime | None = None
+
+
+@dataclass
 class Annotation:
     id: UUID
     repo_id: UUID
