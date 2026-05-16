@@ -126,7 +126,7 @@
 - [x] 26-01-PLAN.md — Backend: Auth, API, Generator refactor, and security verification
 
 **Wave 2**
-- [ ] 26-02-PLAN.md — Frontend: Admin Dashboard UI
+- [x] 26-02-PLAN.md — Frontend: Admin Dashboard UI
 
 **Success Criteria**:
 1. Dashboard shows confusion topics scoped by repository
