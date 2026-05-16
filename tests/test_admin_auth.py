@@ -75,6 +75,17 @@ def test_verify_admin_allows_admin_users(monkeypatch: pytest.MonkeyPatch, tmp_pa
     assert response.status_code == 200
 
 
+def test_internal_token_cannot_bypass_admin_role(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    repo_id = str(uuid4())
+    client = _build_admin_app(tmp_path, monkeypatch, row={"is_admin": True})
+
+    response = client.get(
+        f"/admin/repo/{repo_id}/reports",
+        headers={"X-Internal-Auth": "known-token"},
+    )
+    assert response.status_code == 401
+
+
 def test_repo_reports_endpoint_returns_markdown_files(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repo_id = str(uuid4())
     client = _build_admin_app(tmp_path, monkeypatch, row={"is_admin": True})
