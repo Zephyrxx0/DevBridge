@@ -1,15 +1,19 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-test("admin dashboard scaffold placeholder", async ({ page }) => {
-  await page.goto("/admin");
+const apiBase = process.env.E2E_API_URL ?? "http://localhost:8000";
+const fakeRepoId = "11111111-1111-1111-1111-111111111111";
 
-  // Scaffold marker: replace with real assertions when admin UI exists.
-  expect(true, "Not implemented: add admin dashboard E2E assertions").toBe(false);
+test("admin endpoints require authentication", async ({ request }) => {
+  const response = await request.get(`${apiBase}/admin/repo/${fakeRepoId}/reports`);
+  expect([401, 403]).toContain(response.status());
 });
 
-test("admin dashboard blocks path traversal scaffold", async ({ page }) => {
-  await page.goto("/admin?repo=../etc/passwd");
+test("reports endpoint rejects path traversal filenames", async ({ request }) => {
+  const response = await request.get(`${apiBase}/admin/reports/..%2F..%2Fetc%2Fpasswd`, {
+    headers: {
+      "X-Internal-Auth": process.env.INTERNAL_AUTH_TOKEN ?? "",
+    },
+  });
 
-  // Scaffold marker: replace with concrete security assertions.
-  expect(true, "Not implemented: add path traversal prevention checks").toBe(false);
+  expect([400, 404]).toContain(response.status());
 });
