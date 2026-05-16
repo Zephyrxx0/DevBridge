@@ -106,7 +106,7 @@
 **Depends on**: None (new phase)
 **Plans**: 2 plans
 - [x] 25-01-PLAN.md — Infrastructure (JobStore, Scheduler, Locking logic, History table)
-- [ ] 25-02-PLAN.md — Job implementation (Sync, Cleanup, Metrics) and Reports Hub
+- [x] 25-02-PLAN.md — Job implementation (Sync, Cleanup, Metrics) and Reports Hub
 
 **Success Criteria**:
 1. Daily sync job runs without manual trigger
