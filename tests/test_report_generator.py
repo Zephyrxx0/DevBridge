@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 
 from api.jobs import reports as reports_jobs
+from api.jobs import base as jobs_base
 from api.reports import generator as reports_generator
 
 
@@ -76,6 +77,9 @@ async def test_daily_report_job_runs_for_all_active_repositories(monkeypatch: py
             return [SimpleNamespace(_mapping={"id": rid}) for rid in repo_ids]
 
     class _FakeConn:
+        async def scalar(self, *_args, **_kwargs):
+            return True
+
         async def execute(self, *_args, **_kwargs):
             return _FakeResult()
 
@@ -87,6 +91,9 @@ async def test_daily_report_job_runs_for_all_active_repositories(monkeypatch: py
             return False
 
     class _FakeEngine:
+        def begin(self):
+            return _FakeCtx()
+
         def connect(self):
             return _FakeCtx()
 
@@ -99,6 +106,9 @@ async def test_daily_report_job_runs_for_all_active_repositories(monkeypatch: py
         return f"report for {repo_id}"
 
     monkeypatch.setattr(reports_jobs, "get_engine", lambda: _FakeEngine())
+    monkeypatch.setattr(jobs_base, "get_engine", lambda: _FakeEngine())
+    monkeypatch.setattr(jobs_base, "_insert_job_history", lambda **_kwargs: asyncio.sleep(0, result="hist"))
+    monkeypatch.setattr(jobs_base, "_finalize_job_history", lambda *_args, **_kwargs: asyncio.sleep(0))
     monkeypatch.setattr(reports_jobs, "generate_daily_intelligence_report", _fake_generate)
     monkeypatch.setattr(reports_jobs, "_hub", lambda: _FakeHub())
 

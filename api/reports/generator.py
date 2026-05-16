@@ -21,7 +21,7 @@ async def _summarize_with_gemma(prompt: str) -> str:
     return "Gemma summary unavailable. Fallback summary used.\n\n" + prompt[:1500]
 
 
-async def generate_daily_intelligence_report() -> str:
+async def generate_daily_intelligence_report(repo_id: str) -> str:
     engine = get_engine()
     if engine is None:
         raise RuntimeError("Database engine not initialized")
@@ -34,12 +34,13 @@ async def generate_daily_intelligence_report() -> str:
                 SELECT question, COUNT(*) AS cnt
                 FROM questions
                 WHERE created_at >= :since
+                  AND repo_id = CAST(:repo_id AS uuid)
                 GROUP BY question
                 ORDER BY cnt DESC
                 LIMIT 10
                 """
             ),
-            {"since": since},
+            {"since": since, "repo_id": repo_id},
         )
         chat_count_result = await conn.execute(
             text(
@@ -47,9 +48,10 @@ async def generate_daily_intelligence_report() -> str:
                 SELECT COUNT(*) AS cnt
                 FROM chat_messages
                 WHERE created_at >= :since
+                  AND repo_id = CAST(:repo_id AS uuid)
                 """
             ),
-            {"since": since},
+            {"since": since, "repo_id": repo_id},
         )
 
     rows = [dict(row._mapping) for row in top_questions.fetchall()]
@@ -58,6 +60,7 @@ async def generate_daily_intelligence_report() -> str:
     prompt = (
         "Create concise daily intelligence report for intern confusion. "
         "Include key confusion topics and next actions.\n\n"
+        f"Repository: {repo_id}\n"
         f"Messages in last 24h: {chat_count}\n"
         f"Top repeated questions:\n{confusion_lines}"
     )
