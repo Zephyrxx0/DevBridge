@@ -1,9 +1,9 @@
 ---
 phase: 26
 slug: admin-dashboard
-status: draft
+status: validated
 nyquist_compliant: true
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-05-16
 ---
 
@@ -38,9 +38,9 @@ created: 2026-05-16
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 26-01-01 | 01 | 1 | FR-06 | V4 | Validates users.is_admin | unit | `pytest tests/test_admin_auth.py` | ⏳ W0 | ⬜ pending |
-| 26-01-02 | 01 | 1 | FR-06 | - | N/A | unit | `pytest tests/test_report_generator.py` | ⏳ W0 | ⬜ pending |
-| 26-01-03 | 01 | 1 | FR-06 | V5 | ReportsHub path traversal prevention | e2e | `npx playwright test tests/admin.spec.ts` | ⏳ W0 | ⬜ pending |
+| 26-01-01 | 01 | 1 | FR-06 | V4 | Validates users.is_admin | unit | `pytest tests/test_admin_auth.py` | ✅ W1 | ✅ green |
+| 26-01-02 | 01 | 1 | FR-06 | - | N/A | unit | `pytest tests/test_report_generator.py` | ✅ W1 | ✅ green |
+| 26-01-03 | 01 | 1 | FR-06 | V5 | ReportsHub path traversal prevention | e2e | `npx playwright test tests/admin.spec.ts` | ✅ W1 | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -48,10 +48,10 @@ created: 2026-05-16
 
 ## Wave 0 Requirements
 
-- [ ] `sql/migrations/0031_add_is_admin.sql`
-- [ ] `tests/test_admin_auth.py`
-- [ ] `tests/test_report_generator.py`
-- [ ] `web/tests/admin.spec.ts`
+- [x] `sql/migrations/0031_add_is_admin.sql`
+- [x] `tests/test_admin_auth.py`
+- [x] `tests/test_report_generator.py`
+- [x] `web/tests/admin.spec.ts`
 
 ---
 
@@ -72,4 +72,4 @@ created: 2026-05-16
 - [x] Feedback latency < 30s
 - [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** validated — 2026-05-16
