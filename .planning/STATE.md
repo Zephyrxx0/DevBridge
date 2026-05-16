@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: milestone
 status: ready_to_plan
-last_updated: "2026-05-16T00:00:00.000Z"
+last_updated: "2026-05-16T13:48:47.987Z"
 last_activity: 2026-05-16
 progress:
   total_phases: 7
@@ -39,16 +39,20 @@ Current milestone (v0.2) focuses on:
 - `gsd-discuss-phase`: COMPLETED (Phase 24 context gathered)
 - `gsd-execute-phase`: COMPLETED (Phase 23 — Plans 01, 02, 03 complete)
 - `gsd-execute-phase`: COMPLETED (Phase 24 — Plans 01, 02 complete)
+- `gsd-discuss-phase`: COMPLETED (Phase 25 context gathered)
 
 ## Current Focus
 
-Phase 24: GitHub Integration — COMPLETE.
-- Schema + RPC token storage (24-01) ✓
-- Background sync + pgvector issue mapping (24-02) ✓
-- OAuth user-scoped enforcement + fail-closed paths ✓
-- Post-merge tests: 79 passed, 3 skipped ✓
-- Verifier: 3/3 must-haves ✓
-Next: `/gsd-verify-work 24` or advance to next phase.
+Phase 25: Task Scheduling — READY TO PLAN.
+
+- Persistent DB-backed job store (SQLAlchemyJobStore)
+- Internal APScheduler integration in FastAPI lifespan
+- Audit Table + Retry Logic for job tracking
+- Distributed Locking (DB-based) for multi-instance safety
+- Jobs: Daily Sync, Cache Cleanup, Metrics, Report Generation
+
+Next: `/gsd:plan-phase 25`
+
 
 ## Decisions
 
