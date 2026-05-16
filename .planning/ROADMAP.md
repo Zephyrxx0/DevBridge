@@ -100,7 +100,7 @@
 2. Uses user's OAuth token, not shared PAT
 3. No VRAM spikes from large context
 
-### Phase 25: Task Scheduling
+### Phase 25: Task Scheduling — COMPLETED (2026-05-16)
 **Goal**: APScheduler for daily async jobs (sync, cleanup, metrics).
 **Requirements**: FR-05, FR-06
 **Depends on**: None (new phase)
@@ -116,14 +116,22 @@
 ### Phase 26: Admin Dashboard
 **Goal**: AI summarization of "intern confusion" topics using Gemma 4.
 **Requirements**: FR-06
-**Depends on**: Phase 21 (Fast Model available)
-**Plans**: 1 plan
-- [ ] 26-01-PLAN.md — Topic extraction and summarization dashboard
+**Depends on**: Phase 21, Phase 25
+**Plans**: 3 plans
+
+**Wave 0**
+- [ ] 26-00-PLAN.md — Test Scaffolding (Wave 0)
+
+**Wave 1**
+- [ ] 26-01-PLAN.md — Backend: Auth, API, Generator refactor, and security verification
+
+**Wave 2**
+- [ ] 26-02-PLAN.md — Frontend: Admin Dashboard UI
 
 **Success Criteria**:
-1. Dashboard shows confusion topics
-2. Gemma 4 generates summaries
-3. No pgvector clustering needed initially
+1. Dashboard shows confusion topics scoped by repository
+2. Admin access strictly enforced via `is_admin` role
+3. Markdown reports rendered correctly in the UI
 
 ---
 
@@ -137,4 +145,4 @@
 
 ---
 
-*Last updated: 2026-05-16 - Phase 25 plans added*
+*Last updated: 2026-05-16 - Phase 26 plans updated with mandatory fixes*
