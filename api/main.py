@@ -14,7 +14,6 @@ import json
 import asyncio
 from urllib import request
 from langchain_core.messages import HumanMessage
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from api.agents.graph import graph
 from api.core.config import settings
@@ -34,6 +33,7 @@ from api.db.vector_store import vector_db
 from api.db.session import get_engine
 from sqlalchemy import text
 from api.core.secrets import get_github_token
+from api.core.scheduler import SchedulerManager
 
 # psycopg async is incompatible with ProactorEventLoop on Windows.
 if sys.platform == "win32":
@@ -201,16 +201,16 @@ async def sync_issues() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _ = app
-    scheduler = AsyncIOScheduler()
+    scheduler_manager: SchedulerManager | None = None
     if settings.supabase_connection_string:
         await init_db_pool(settings.supabase_connection_string)
         # Initialize caching infrastructure (D-03)
         FastAPICache.init(PostgresCacheBackend(), prefix="devbridge-cache")
-        scheduler.add_job(sync_issues, "interval", days=1, id="sync_issues", replace_existing=True)
-        scheduler.start()
+        scheduler_manager = SchedulerManager()
+        scheduler_manager.start()
     yield
-    if scheduler.running:
-        scheduler.shutdown(wait=False)
+    if scheduler_manager is not None:
+        scheduler_manager.shutdown()
     await close_db_pool()
 
 
