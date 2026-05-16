@@ -3,6 +3,8 @@ import os
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict, BaseSettings
 
+from api.db.session import normalize_sync_url
+
 
 BIG_MODEL_PORT=8000
 FAST_MODEL_PORT=8001
@@ -28,6 +30,12 @@ class Settings(BaseSettings):
         super().__init__(**values)
         if self.env.lower() == "production" and not self.supabase_connection_string:
             raise ValueError("SUPABASE_CONNECTION_STRING must be set in production mode")
+
+    @property
+    def sync_supabase_connection_string(self) -> str:
+        if not self.supabase_connection_string:
+            return ""
+        return normalize_sync_url(self.supabase_connection_string)
 
 
 settings = Settings()
