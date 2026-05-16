@@ -18,12 +18,6 @@ _trigger_hits: dict[str, deque[float]] = defaultdict(deque)
 
 
 async def verify_admin(request: Request, x_user_id: str | None = Header(default=None, alias="X-User-Id")) -> str:
-    expected = (settings.internal_auth_token or "").strip()
-    provided = (request.headers.get("X-Internal-Auth") or "").strip()
-
-    if expected and provided == expected:
-        return "internal"
-
     user_id = (x_user_id or getattr(request.state, "user_id", None) or "").strip()
     if not user_id:
         raise HTTPException(status_code=401, detail="Unauthorized")
