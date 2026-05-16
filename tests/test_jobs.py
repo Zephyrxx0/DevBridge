@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import os
+import time
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -9,6 +12,9 @@ from api.core.config import Settings
 from api.core.scheduler import SchedulerManager
 from api.db.session import normalize_sync_url
 from api.jobs import base as jobs_base
+from api.jobs.cleanup import cleanup_job
+from api.jobs.metrics import collect_daily_metrics
+from api.jobs.sync import sync_github_and_docs_job
 
 
 def test_normalize_sync_url_for_jobstore() -> None:
@@ -112,3 +118,68 @@ def test_job_persistence(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(manager.scheduler, "add_job", fake_add_job)
     out = manager.add_job(lambda: None, trigger="interval", seconds=60, id="x")
     assert out.id == "x"
+
+
+@pytest.mark.asyncio
+async def test_sync_job_github_and_docs(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("api.jobs.sync.get_engine", lambda: None)
+    with pytest.raises(RuntimeError):
+        await sync_github_and_docs_job()
+
+
+@pytest.mark.asyncio
+async def test_cleanup_job_gcs_and_local(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    stale = tmp_path / "stale"
+    stale.mkdir(parents=True)
+    old = time.time() - (9 * 24 * 3600)
+    os.utime(stale, (old, old))
+
+    monkeypatch.setattr("api.jobs.cleanup.settings", SimpleNamespace(repo_cache_dir=str(tmp_path), gcs_bucket_name=None))
+    class LockConn:
+        async def scalar(self, *_args, **_kwargs):
+            return True
+    class LockCtx:
+        async def __aenter__(self):
+            return LockConn()
+        async def __aexit__(self, *_exc):
+            return False
+    class LockEngine:
+        def begin(self):
+            return LockCtx()
+    monkeypatch.setattr(jobs_base, "get_engine", lambda: LockEngine())
+    monkeypatch.setattr(jobs_base, "_insert_job_history", lambda **_kwargs: asyncio.sleep(0, result="hist"))
+    monkeypatch.setattr(jobs_base, "_finalize_job_history", lambda *_args, **_kwargs: asyncio.sleep(0))
+
+    result = await cleanup_job()
+    assert result["local_deleted"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_metrics_collection(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeConn:
+        async def scalar(self, stmt, _params=None):
+            query = str(stmt)
+            if "FROM questions" in query:
+                return 3
+            return 7
+
+    class FakeCtx:
+        async def __aenter__(self):
+            return FakeConn()
+
+        async def __aexit__(self, *_exc):
+            return False
+
+    class FakeEngine:
+        def begin(self):
+            return FakeCtx()
+        def connect(self):
+            return FakeCtx()
+
+    monkeypatch.setattr("api.jobs.metrics.get_engine", lambda: FakeEngine())
+    monkeypatch.setattr(jobs_base, "get_engine", lambda: FakeEngine())
+    monkeypatch.setattr(jobs_base, "_insert_job_history", lambda **_kwargs: asyncio.sleep(0, result="hist"))
+    monkeypatch.setattr(jobs_base, "_finalize_job_history", lambda *_args, **_kwargs: asyncio.sleep(0))
+    result = await collect_daily_metrics()
+    assert result == {"questions_24h": 3, "chat_messages_24h": 7}
+
