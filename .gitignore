@@ -10,6 +10,7 @@
 .github/
 .gsd/
 .entire/
+.bob/
 
 node_modules/
 graphify-out/
