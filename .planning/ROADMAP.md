@@ -123,7 +123,7 @@
 - [x] 26-00-PLAN.md — Test Scaffolding (Wave 0)
 
 **Wave 1**
-- [ ] 26-01-PLAN.md — Backend: Auth, API, Generator refactor, and security verification
+- [x] 26-01-PLAN.md — Backend: Auth, API, Generator refactor, and security verification
 
 **Wave 2**
 - [ ] 26-02-PLAN.md — Frontend: Admin Dashboard UI
