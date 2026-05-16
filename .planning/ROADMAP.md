@@ -105,7 +105,7 @@
 **Requirements**: FR-05, FR-06
 **Depends on**: None (new phase)
 **Plans**: 2 plans
-- [ ] 25-01-PLAN.md — Infrastructure (JobStore, Scheduler, Locking logic, History table)
+- [x] 25-01-PLAN.md — Infrastructure (JobStore, Scheduler, Locking logic, History table)
 - [ ] 25-02-PLAN.md — Job implementation (Sync, Cleanup, Metrics) and Reports Hub
 
 **Success Criteria**:
