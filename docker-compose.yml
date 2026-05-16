@@ -1,4 +1,14 @@
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - repo_cache_data:/app/repo_cache
+      - reports_data:/app/reports
+
   vllm-deep:
     image: rocm/vllm:latest
     user: "${UID}:${GID}"
@@ -36,3 +46,7 @@ services:
       --gpu-memory-utilization 0.20
       --max-model-len 48000
       --port 8001
+
+volumes:
+  repo_cache_data:
+  reports_data:

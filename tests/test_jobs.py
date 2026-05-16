@@ -15,6 +15,8 @@ from api.jobs import base as jobs_base
 from api.jobs.cleanup import cleanup_job
 from api.jobs.metrics import collect_daily_metrics
 from api.jobs.sync import sync_github_and_docs_job
+from api.reports.generator import generate_weekly_report
+from api.reports.hub import ReportsHub
 
 
 def test_normalize_sync_url_for_jobstore() -> None:
@@ -183,3 +185,42 @@ async def test_metrics_collection(monkeypatch: pytest.MonkeyPatch) -> None:
     result = await collect_daily_metrics()
     assert result == {"questions_24h": 3, "chat_messages_24h": 7}
 
+
+def test_reports_hub_storage(tmp_path: Path) -> None:
+    hub = ReportsHub(str(tmp_path))
+    hub.save("daily.md", "hello")
+    hub.save("weekly.json", {"ok": True})
+
+    listed = hub.list_reports()
+    names = {item["filename"] for item in listed}
+    assert {"daily.md", "weekly.json"}.issubset(names)
+    assert hub.get_report("daily.md") == "hello"
+
+
+@pytest.mark.asyncio
+async def test_weekly_report_generation(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResult:
+        def fetchall(self):
+            return [SimpleNamespace(_mapping={"day": "2026-05-10", "cnt": 4})]
+
+    class FakeConn:
+        async def execute(self, *_args, **_kwargs):
+            return FakeResult()
+
+    class FakeCtx:
+        async def __aenter__(self):
+            return FakeConn()
+
+        async def __aexit__(self, *_exc):
+            return False
+
+    class FakeEngine:
+        def connect(self):
+            return FakeCtx()
+
+    monkeypatch.setattr("api.reports.generator.get_engine", lambda: FakeEngine())
+    monkeypatch.setattr("api.reports.generator._summarize_with_gemma", lambda _prompt: asyncio.sleep(0, result="summary"))
+
+    report = await generate_weekly_report()
+    assert "# Weekly Intelligence Report" in report
+    assert "summary" in report
