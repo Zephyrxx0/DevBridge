@@ -24,7 +24,7 @@
 **Goal**: Configure single MI300X with VRAM partitioning and Docker volume for cache.
 **Requirements**: IR-01, IR-02, IR-03
 **Depends on**: None (new phase)
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 **Wave 1**
 - [x] 20-01-PLAN.md — VRAM partitioning config (0.60/0.20/0.20) and context cap enforcement
@@ -127,6 +127,9 @@
 
 **Wave 2**
 - [x] 26-02-PLAN.md — Frontend: Admin Dashboard UI
+
+**Wave 3 *(Gap Closure)***
+- [ ] 26-03-PLAN.md — Gap closure: strict `is_admin` enforcement (remove internal-token bypass)
 
 **Success Criteria**:
 1. Dashboard shows confusion topics scoped by repository
