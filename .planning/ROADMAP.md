@@ -120,7 +120,7 @@
 **Plans**: 3 plans
 
 **Wave 0**
-- [ ] 26-00-PLAN.md — Test Scaffolding (Wave 0)
+- [x] 26-00-PLAN.md — Test Scaffolding (Wave 0)
 
 **Wave 1**
 - [ ] 26-01-PLAN.md — Backend: Auth, API, Generator refactor, and security verification
