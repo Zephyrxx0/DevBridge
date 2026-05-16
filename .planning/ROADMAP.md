@@ -102,14 +102,16 @@
 
 ### Phase 25: Task Scheduling
 **Goal**: APScheduler for daily async jobs (sync, cleanup, metrics).
-**Requirements**: FR-05
+**Requirements**: FR-05, FR-06
 **Depends on**: None (new phase)
-**Plans**: 1 plan
-- [ ] 25-01-PLAN.md — APScheduler integration in FastAPI
+**Plans**: 2 plans
+- [ ] 25-01-PLAN.md — Infrastructure (JobStore, Scheduler, Locking logic, History table)
+- [ ] 25-02-PLAN.md — Job implementation (Sync, Cleanup, Metrics) and Reports Hub
 
 **Success Criteria**:
 1. Daily sync job runs without manual trigger
 2. Cache cleanup job prevents disk bloat
+3. Reports Hub serves intelligence reports
 
 ### Phase 26: Admin Dashboard
 **Goal**: AI summarization of "intern confusion" topics using Gemma 4.
@@ -135,4 +137,4 @@
 
 ---
 
-*Last updated: 2026-05-11 - Phase 23 gap closure plan added*
+*Last updated: 2026-05-16 - Phase 25 plans added*
