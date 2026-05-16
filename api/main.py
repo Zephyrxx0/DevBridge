@@ -27,6 +27,7 @@ from api.routes import pr
 from api.routes import repo
 from api.routes import questions
 from api.routes import chats
+from api.routes import admin
 from api.routes.chats import stream_graph_events
 from api.db.models import Annotation
 from api.db.vector_store import vector_db
@@ -34,6 +35,10 @@ from api.db.session import get_engine
 from sqlalchemy import text
 from api.core.secrets import get_github_token
 from api.core.scheduler import SchedulerManager
+from api.jobs.cleanup import cleanup_job
+from api.jobs.metrics import collect_daily_metrics
+from api.jobs.reports import run_daily_report_job, run_weekly_report_job
+from api.jobs.sync import sync_github_and_docs_job
 
 # psycopg async is incompatible with ProactorEventLoop on Windows.
 if sys.platform == "win32":
@@ -207,10 +212,53 @@ async def lifespan(app: FastAPI):
         # Initialize caching infrastructure (D-03)
         FastAPICache.init(PostgresCacheBackend(), prefix="devbridge-cache")
         scheduler_manager = SchedulerManager()
+        scheduler_manager.add_job(
+            sync_github_and_docs_job,
+            trigger="cron",
+            hour=2,
+            minute=0,
+            id="sync_issues",
+            replace_existing=True,
+        )
+        scheduler_manager.add_job(
+            cleanup_job,
+            trigger="cron",
+            hour=3,
+            minute=0,
+            id="cache_cleanup",
+            replace_existing=True,
+        )
+        scheduler_manager.add_job(
+            collect_daily_metrics,
+            trigger="cron",
+            hour=4,
+            minute=0,
+            id="metrics_collection",
+            replace_existing=True,
+        )
+        scheduler_manager.add_job(
+            run_daily_report_job,
+            trigger="cron",
+            hour=5,
+            minute=0,
+            id="daily_report",
+            replace_existing=True,
+        )
+        scheduler_manager.add_job(
+            run_weekly_report_job,
+            trigger="cron",
+            day_of_week="sun",
+            hour=6,
+            minute=0,
+            id="weekly_report",
+            replace_existing=True,
+        )
         scheduler_manager.start()
+        app.state.scheduler_manager = scheduler_manager
     yield
     if scheduler_manager is not None:
         scheduler_manager.shutdown()
+        app.state.scheduler_manager = None
     await close_db_pool()
 
 
@@ -262,6 +310,7 @@ app.include_router(pr.router)
 app.include_router(repo.router)
 app.include_router(questions.router)
 app.include_router(chats.router)
+app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 
 class ChatRequest(BaseModel):
     message: str

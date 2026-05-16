@@ -224,3 +224,27 @@ async def test_weekly_report_generation(monkeypatch: pytest.MonkeyPatch) -> None
     report = await generate_weekly_report()
     assert "# Weekly Intelligence Report" in report
     assert "summary" in report
+
+
+@pytest.mark.asyncio
+async def test_admin_manual_trigger(monkeypatch: pytest.MonkeyPatch) -> None:
+    from fastapi.testclient import TestClient
+    from api.main import app
+
+    class FakeScheduler:
+        def get_job(self, job_id: str):
+            return SimpleNamespace(id=job_id)
+
+        def modify_job(self, *_args, **_kwargs):
+            return None
+
+        def wakeup(self):
+            return None
+
+    app.state.scheduler_manager = SimpleNamespace(scheduler=FakeScheduler())
+    monkeypatch.setattr("api.routes.admin.settings", SimpleNamespace(internal_auth_token="token", reports_dir="/tmp"))
+
+    client = TestClient(app)
+    response = client.post("/admin/jobs/sync_issues/run", headers={"X-Internal-Auth": "token"})
+    assert response.status_code == 200
+    assert response.json()["status"] == "queued"
