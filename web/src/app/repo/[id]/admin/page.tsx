@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type ReportMeta = {
@@ -58,6 +60,7 @@ export default function RepoAdminPage() {
 
   const [state, setState] = useState<AccessState>("loading");
   const [reports, setReports] = useState<ReportContent[]>([]);
+  const [query, setQuery] = useState("");
 
   const apiBase = "/api/backend";
 
@@ -135,16 +138,39 @@ export default function RepoAdminPage() {
     return `${reports.length} Report${reports.length === 1 ? "" : "s"}`;
   }, [reports.length, state]);
 
+  const filteredReports = useMemo(() => {
+    if (!query.trim()) return reports;
+    const lowered = query.toLowerCase();
+    return reports.filter((report) =>
+      report.filename.toLowerCase().includes(lowered) || report.content.toLowerCase().includes(lowered)
+    );
+  }, [query, reports]);
+
   return (
-    <div className="w-full min-h-screen bg-background text-foreground px-6 py-8">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <div className="flex items-center justify-between">
+    <div className="w-full min-h-screen bg-background text-foreground px-[var(--space-lg)] py-[var(--space-xl)]">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-[var(--space-lg)]">
+        <div className="flex flex-col gap-[var(--space-sm)] md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Intern Confusion Reports</h1>
-            <p className="text-sm text-muted-foreground">Repository: {repoId}</p>
+            <h1 className="text-[var(--text-heading)] font-semibold tracking-tight">Intern Confusion Reports</h1>
+            <p className="text-[var(--text-label)] text-muted-foreground">Repository: {repoId}</p>
           </div>
-          <Badge variant="neutral">{headerBadge}</Badge>
+          <Badge variant="secondary">{headerBadge}</Badge>
         </div>
+
+        <Card>
+          <CardHeader className="pb-[var(--space-sm)]">
+            <CardTitle className="text-[var(--text-body)]">Report Search</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-[var(--space-sm)] sm:flex-row">
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Filter by filename or content"
+              aria-label="Filter reports"
+            />
+            <Button type="button" variant="outline" onClick={() => setQuery("")}>Clear</Button>
+          </CardContent>
+        </Card>
 
         {state === "loading" && (
           <div className="space-y-4">
@@ -196,9 +222,9 @@ export default function RepoAdminPage() {
           </Card>
         )}
 
-        {state === "ready" && reports.length > 0 && (
+        {state === "ready" && filteredReports.length > 0 && (
           <div className="space-y-4 overflow-y-auto pr-1">
-            {reports.map((report) => (
+            {filteredReports.map((report) => (
               <Card key={report.filename}>
                 <CardHeader>
                   <CardTitle className="text-base">{report.filename}</CardTitle>
@@ -209,6 +235,17 @@ export default function RepoAdminPage() {
               </Card>
             ))}
           </div>
+        )}
+
+        {state === "ready" && reports.length > 0 && filteredReports.length === 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>No reports match your filter</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Try a different keyword.
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

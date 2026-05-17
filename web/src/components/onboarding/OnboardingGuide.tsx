@@ -7,6 +7,7 @@ import { SetupGuide } from "./SetupGuide";
 import { OnboardingStepCard } from "./OnboardingStepCard";
 
 import { Onboarding } from "@/components/ui/onboarding";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface OnboardingGuideProps {
   repoId: string;
@@ -37,7 +38,14 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
   if (flowState === "IDLE") {
     return (
       <div className="h-full flex items-center justify-center p-8">
-        <OnboardingTrigger onClick={handleStart} />
+        <Card className="w-full max-w-xl border-[var(--border)] bg-[var(--surface-1)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--text-heading)]">Ready to start a conversation?</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <OnboardingTrigger onClick={handleStart} />
+          </CardContent>
+        </Card>
       </div>
     );
   }
