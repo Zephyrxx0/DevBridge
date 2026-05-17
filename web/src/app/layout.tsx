@@ -28,9 +28,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn(geist.variable, geistMono.variable)}>
+    <html lang="en" suppressHydrationWarning className={cn("h-full", geist.variable, geistMono.variable)}>
       <head />
-      <body className="min-h-full antialiased">
+      <body className="min-h-screen antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} disableTransitionOnChange>
           <LayoutTransition>{children}</LayoutTransition>
         </ThemeProvider>
