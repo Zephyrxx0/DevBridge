@@ -168,7 +168,26 @@
 **Goal**: Revitalize the frontend user experience with a modern, cohesive design across the landing page, chat interface, and dashboard components.
 **Requirements**: FR-07 (New: UI Polishing)
 **Depends on**: Phase 15, Phase 26
-**Plans**: 0 plans
+**Plans**: 7 plans
+
+**Wave 0**
+- [ ] 28-00-PLAN.md — Test Scaffolding & AI Elements Init
+
+**Wave 1**
+- [ ] 28-01-PLAN.md — Global Layout, Theme & Design Tokens
+- [ ] 28-02-PLAN.md — Landing Page Overhaul (Premium Polish)
+
+**Wave 2**
+- [ ] 28-03-PLAN.md — Chat Interface: Modular Component Decomposition
+
+**Wave 3**
+- [ ] 28-04-PLAN.md — Chat Interface: AI Elements Stream & Input integration
+
+**Wave 4**
+- [ ] 28-05-PLAN.md — Chat Interface: Advanced Agent Feedback & Artifacts
+
+**Wave 5**
+- [ ] 28-06-PLAN.md — Global Polishing & Mobile Optimization
 
 **Success Criteria**:
 1. Landing page redesigned with modern aesthetics and clear value proposition.
@@ -178,4 +197,4 @@
 
 ---
 
-*Last updated: 2026-05-18 - Phase 27 plans created*
+*Last updated: 2026-05-18 - Phase 28 plans created*
