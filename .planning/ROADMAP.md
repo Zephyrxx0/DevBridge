@@ -171,7 +171,7 @@
 **Plans**: 7 plans
 
 **Wave 0**
-- [ ] 28-00-PLAN.md — Test Scaffolding & AI Elements Init
+- [x] 28-00-PLAN.md — Test Scaffolding & AI Elements Init
 
 **Wave 1**
 - [ ] 28-01-PLAN.md — Global Layout, Theme & Design Tokens
