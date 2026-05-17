@@ -1,16 +1,9 @@
  
 import Link from "next/link";
-import {
-  ArrowRight,
-  Bookmark,
-  Code2,
-  MessageSquareText,
-  Sparkles,
-  Target,
-} from "lucide-react";
+import { ArrowRight, Code2, MessageSquareText, Sparkles, Target } from "lucide-react";
 
 import { FloatingHeader } from "@/components/floating-header";
-import { HeroDitheringCard } from "@/components/hero-dithering-card";
+import { HeroSection } from "@/components/landing/HeroSection";
 import { DitheringBackground } from "@/components/dithering-background";
 import { BackgroundEffects } from "@/components/background-effects";
 import { Footer } from "@/components/footer";
@@ -159,11 +152,6 @@ function FeatureGrid() {
       body: "Visualize hotspots, annotation density, and file relationships.",
     },
     {
-      icon: <Bookmark className="size-5" />,
-      title: "Human annotations",
-      body: "Capture tribal knowledge and keep context attached to the source.",
-    },
-    {
       icon: <Target className="size-5" />,
       title: "Grounded answers",
       body: "Every response links to file paths and line ranges for trust.",
@@ -181,18 +169,18 @@ function FeatureGrid() {
       </SectionReveal>
       <div className="mx-auto mt-10 w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
         <div className="grid gap-4 md:grid-cols-2">
-          {features.map((f, idx) => (
-            <SectionReveal key={f.title} animation="fade-up" delay={idx * 100}>
+          {features.map((feature, idx) => (
+            <SectionReveal key={feature.title} animation="fade-up" delay={idx * 100}>
               <Card className="group relative overflow-hidden">
                 <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                   <div className="absolute inset-0 bg-[var(--brand-glow)] opacity-10" />
                 </div>
                 <CardHeader className="p-6">
                   <div className="grid size-10 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--brand)]">
-                    {f.icon}
+                    {feature.icon}
                   </div>
-                  <CardTitle className="pt-3">{f.title}</CardTitle>
-                  <CardDescription>{f.body}</CardDescription>
+                  <CardTitle className="pt-3">{feature.title}</CardTitle>
+                  <CardDescription>{feature.body}</CardDescription>
                 </CardHeader>
               </Card>
             </SectionReveal>
@@ -316,7 +304,7 @@ export default function HomePage() {
       <div className="relative pt-6">
         <FloatingHeader />
       </div>
-      <HeroDitheringCard />
+      <HeroSection />
 
       <TrustStrip />
 
