@@ -8,6 +8,24 @@ import { cn } from "@/lib/utils";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { Message as ElementsMessage, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
+import { Shimmer } from "@/components/ai-elements/shimmer";
+import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
+import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "@/components/ai-elements/tool";
+import {
+  InlineCitation,
+  InlineCitationText,
+  InlineCitationCard,
+  InlineCitationCardTrigger,
+  InlineCitationCardBody,
+  InlineCitationCarousel,
+  InlineCitationCarouselContent,
+  InlineCitationCarouselItem,
+  InlineCitationCarouselHeader,
+  InlineCitationCarouselPrev,
+  InlineCitationCarouselNext,
+  InlineCitationCarouselIndex,
+  InlineCitationSource,
+} from "@/components/ai-elements/inline-citation";
 import type { Message, SourceReference, SnippetChip } from "./types";
 
 interface ChatStreamProps {
@@ -50,10 +68,35 @@ export function ChatStream({
               </div>
             ) : null}
             {messages.map((message, index) => {
+              const messageMeta = message as Message & {
+                reasoning?: string;
+                toolCalls?: Array<{
+                  id?: string;
+                  type?: string;
+                  state?:
+                    | "approval-requested"
+                    | "approval-responded"
+                    | "input-available"
+                    | "input-streaming"
+                    | "output-available"
+                    | "output-denied"
+                    | "output-error";
+                  input?: unknown;
+                  output?: unknown;
+                  errorText?: string;
+                  toolName?: string;
+                }>;
+              };
+
               const isUser = message.role === "user";
               if (!isUser && message.content.trim() === "") return null;
               const hasSources = !isUser && Boolean(message.sources?.length);
               const isSourceOpen = expandedSources.has(index);
+              const hasPendingToolCall = Boolean(
+                messageMeta.toolCalls?.some((tool) =>
+                  ["input-streaming", "input-available", "approval-requested"].includes(tool.state || "")
+                )
+              );
 
               return (
                 <ElementsMessage key={`${message.role}-${index}`} from={message.role}>
@@ -87,6 +130,47 @@ export function ChatStream({
                         )}
                       </MessageContent>
 
+                      {!isUser && messageMeta.reasoning ? (
+                        <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2">
+                          <Reasoning defaultOpen={false} isStreaming={isLoading}>
+                            <ReasoningTrigger />
+                            <ReasoningContent>{messageMeta.reasoning}</ReasoningContent>
+                          </Reasoning>
+                        </div>
+                      ) : null}
+
+                      {!isUser && messageMeta.toolCalls?.length ? (
+                        <div className="mt-2 space-y-2">
+                          {messageMeta.toolCalls.map((tool, toolIndex) => (
+                            <Tool key={tool.id ?? `${index}-${toolIndex}`}>
+                              {tool.type === "dynamic-tool" ? (
+                                <ToolHeader
+                                  type="dynamic-tool"
+                                  state={tool.state || "input-available"}
+                                  toolName={tool.toolName || "unknown"}
+                                />
+                              ) : (
+                                <ToolHeader
+                                  type={tool.type?.startsWith("tool-") ? (tool.type as `tool-${string}`) : "tool-unknown"}
+                                  state={tool.state || "input-available"}
+                                />
+                              )}
+                              <ToolContent>
+                                {tool.input ? <ToolInput input={tool.input as never} /> : null}
+                                {tool.output || tool.errorText ? (
+                                  <ToolOutput output={tool.output as never} errorText={tool.errorText as never} />
+                                ) : null}
+                              </ToolContent>
+                            </Tool>
+                          ))}
+                          {hasPendingToolCall ? (
+                            <p className="text-xs text-[var(--foreground-subtle)]">
+                              <Shimmer>Agent running tools…</Shimmer>
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+
                       {isUser && message.artifacts?.length ? (
                         <div className="pt-2">
                           <div className="flex flex-wrap gap-2">
@@ -117,17 +201,49 @@ export function ChatStream({
                           </button>
 
                           {isSourceOpen ? (
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {message.sources?.map((source, sourceIndex) => (
-                                <button
-                                  type="button"
-                                  key={`${source.file_path}-${sourceIndex}`}
-                                  onClick={() => onSelectSource(source)}
-                                  className="rounded-md border border-border bg-(--surface-2) px-2 py-1 font-mono text-(length:--text-xs) text-(--foreground-muted) transition-colors hover:border-(--brand-muted) hover:text-(--brand)"
-                                >
-                                  {source.file_path}:{source.start_line}
-                                </button>
-                              ))}
+                            <div className="mt-2 space-y-2">
+                              <div className="flex flex-wrap gap-2">
+                                {message.sources?.map((source, sourceIndex) => (
+                                  <button
+                                    type="button"
+                                    key={`${source.file_path}-${sourceIndex}`}
+                                    onClick={() => onSelectSource(source)}
+                                    className="rounded-md border border-border bg-(--surface-2) px-2 py-1 font-mono text-(length:--text-xs) text-(--foreground-muted) transition-colors hover:border-(--brand-muted) hover:text-(--brand)"
+                                  >
+                                    {source.file_path}:{source.start_line}
+                                  </button>
+                                ))}
+                              </div>
+
+                              <InlineCitation className="block">
+                                <InlineCitationText className="text-xs text-[var(--foreground-subtle)]">
+                                  Source citations
+                                </InlineCitationText>
+                                <InlineCitationCard>
+                                  <InlineCitationCardTrigger
+                                    sources={(message.sources || []).map((source) => `https://local.dev/${source.file_path}`)}
+                                  />
+                                  <InlineCitationCardBody>
+                                    <InlineCitationCarousel>
+                                      <InlineCitationCarouselHeader>
+                                        <InlineCitationCarouselPrev />
+                                        <InlineCitationCarouselIndex />
+                                        <InlineCitationCarouselNext />
+                                      </InlineCitationCarouselHeader>
+                                      <InlineCitationCarouselContent>
+                                        {(message.sources || []).map((source, sourceIndex) => (
+                                          <InlineCitationCarouselItem key={`${source.file_path}-${sourceIndex}-card`}>
+                                            <InlineCitationSource
+                                              title={source.file_path}
+                                              description={`L${source.start_line}-L${source.end_line}${source.function_name ? ` • ${source.function_name}` : ""}`}
+                                            />
+                                          </InlineCitationCarouselItem>
+                                        ))}
+                                      </InlineCitationCarouselContent>
+                                    </InlineCitationCarousel>
+                                  </InlineCitationCardBody>
+                                </InlineCitationCard>
+                              </InlineCitation>
                             </div>
                           ) : null}
                         </div>
