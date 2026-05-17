@@ -16,3 +16,4 @@ jinja2
 transformers
 huggingface-hub
 APScheduler==3.10.4
+google-genai>=1.33.0
