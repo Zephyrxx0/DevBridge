@@ -4,6 +4,7 @@ import { ArrowRight, Code2, MessageSquareText, Sparkles, Target } from "lucide-r
 
 import { FloatingHeader } from "@/components/floating-header";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { DitheringBackground } from "@/components/dithering-background";
 import { BackgroundEffects } from "@/components/background-effects";
 import { Footer } from "@/components/footer";
@@ -137,60 +138,6 @@ function HowItWorks() {
   );
 }
 
-/* ── Feature Grid ── */
-
-function FeatureGrid() {
-  const features = [
-    {
-      icon: <Code2 className="size-5" />,
-      title: "Repo workspace",
-      body: "Chat + code viewer + citations in a single flow for rapid onboarding.",
-    },
-    {
-      icon: <Sparkles className="size-5" />,
-      title: "Knowledge map",
-      body: "Visualize hotspots, annotation density, and file relationships.",
-    },
-    {
-      icon: <Target className="size-5" />,
-      title: "Grounded answers",
-      body: "Every response links to file paths and line ranges for trust.",
-    },
-  ];
-
-  return (
-    <section className="py-[var(--space-4xl)]">
-      <SectionReveal>
-        <SectionHeading
-          eyebrow="Features"
-          title="Built for onboarding developers."
-          body="Everything centers on fast understanding of real repositories with evidence."
-        />
-      </SectionReveal>
-      <div className="mx-auto mt-10 w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
-        <div className="grid gap-4 md:grid-cols-2">
-          {features.map((feature, idx) => (
-            <SectionReveal key={feature.title} animation="fade-up" delay={idx * 100}>
-              <Card className="group relative overflow-hidden">
-                <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  <div className="absolute inset-0 bg-[var(--brand-glow)] opacity-10" />
-                </div>
-                <CardHeader className="p-6">
-                  <div className="grid size-10 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--brand)]">
-                    {feature.icon}
-                  </div>
-                  <CardTitle className="pt-3">{feature.title}</CardTitle>
-                  <CardDescription>{feature.body}</CardDescription>
-                </CardHeader>
-              </Card>
-            </SectionReveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ── Codebase Graph Section ── */
 
 function CodebaseGraphSection() {
@@ -279,9 +226,9 @@ function FinalCTA() {
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Link href="/dashboard">
+                <Link href="/repo/demo">
                   <Button size="lg" className="w-full rounded-full sm:w-auto">
-                    Go to Dashboard
+                    Start Building
                     <ArrowRight className="size-4" />
                   </Button>
                 </Link>
@@ -318,7 +265,10 @@ export default function HomePage() {
         <div className="h-px w-full bg-border" />
       </div>
 
-      <FeatureGrid />
+      <FeaturesSection
+        title="Built for onboarding developers."
+        body="Everything centers on fast understanding of real repositories with evidence."
+      />
 
       <div className="mx-auto w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
         <div className="h-px w-full bg-border" />
