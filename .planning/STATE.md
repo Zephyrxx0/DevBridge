@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: milestone
 status: milestone_complete
-last_updated: "2026-05-17T14:38:07.140Z"
+last_updated: "2026-05-17T20:15:00.000Z"
 progress:
   total_phases: 7
   completed_phases: 7
@@ -16,7 +16,7 @@ progress:
 
 **Active Milestone**: v0.2 - Implement AMD-AUDIT-SPEC.md Refinements
 
-**Status**: Phase 28 execution in progress. Plans 28-00, 28-01, 28-02, 28-03, and 28-04 complete.
+**Status**: Phase 28 execution in progress. Plans 28-00, 28-01, 28-02, 28-03, 28-04, and 28-05 complete.
 
 ## Milestone Context
 
@@ -48,7 +48,7 @@ Phase 28: UI Overhaul: Landing Page, Chat Interface, and Global Polishing
 - Integration of Vercel AI Elements for advanced chat interactions.
 - Apply "Modern Premium Polish" aesthetic globally.
 
-Next: `/gsd:execute-phase 28` (continue with 28-05)
+Next: `/gsd:execute-phase 28` (continue with 28-06)
 
 ## Decisions
 
@@ -62,6 +62,8 @@ Next: `/gsd:execute-phase 28` (continue with 28-05)
 - Sidebar primitives committed with `AppSidebar` to guarantee collapsible behavior works end-to-end.
 - Extracted types to a shared types.ts file to break circular dependencies between ChatStream, ChatInput, and the Page.
 - Substituted Playwright e2e checks with static typechecks (tsc --noEmit) and linting to avoid test loops on constraints.
+- Mapped advanced tool progress feedback in ChatStream to `Tool` + `Shimmer` ai-elements primitives.
+- Added sanitized JSX artifact preview path (`sanitizeJsx` before `JSXPreview`) for trust-boundary mitigation.
 
 ## Accumulated Context
 

@@ -184,7 +184,7 @@
 - [x] 28-04-PLAN.md — Chat Interface: AI Elements Stream & Input integration
 
 **Wave 4**
-- [ ] 28-05-PLAN.md — Chat Interface: Advanced Agent Feedback & Artifacts
+- [x] 28-05-PLAN.md — Chat Interface: Advanced Agent Feedback & Artifacts
 
 **Wave 5**
 - [ ] 28-06-PLAN.md — Global Polishing & Mobile Optimization
