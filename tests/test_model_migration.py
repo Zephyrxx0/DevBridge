@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from api.agents.utils import llm as llm_module
+from api.core.config import Settings
 
 
 def test_scaffold_google_genai_import_surface() -> None:
@@ -19,3 +20,21 @@ def test_scaffold_client_can_be_monkeypatched(monkeypatch) -> None:
     monkeypatch.setattr(llm_module, "genai", SimpleNamespace(Client=FakeClient), raising=False)
     llm_module.genai.Client(api_key="test")
     assert calls == ["init"]
+
+
+def test_settings_loads_gemini_api_key_from_env(monkeypatch) -> None:
+    monkeypatch.setenv("GEMINI_API_KEY", "gem-key-123")
+    settings = Settings()
+    assert settings.gemini_api_key == "gem-key-123"
+
+
+def test_get_model_big_uses_gemini_flash_with_auto_thinking() -> None:
+    model = llm_module.get_model(is_fast=False)
+    assert getattr(model, "model_name", None) == "gemini-2.5-flash"
+    assert getattr(model, "thinking_budget", None) == -1
+
+
+def test_get_model_fast_uses_gemma_high_thinking() -> None:
+    model = llm_module.get_model(is_fast=True)
+    assert getattr(model, "model_name", None) == "gemma-4-26b-a4b-it"
+    assert getattr(model, "thinking_level", None) == "HIGH"
