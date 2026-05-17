@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { LayoutTransition } from "@/components/layout/LayoutTransition";
+import { ResilienceHandler } from "@/components/ui/ResilienceHandler";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -31,7 +32,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={cn("h-full", geist.variable, geistMono.variable)}>
       <head />
       <body className="min-h-screen antialiased">
+        <a
+          href="#main-content"
+          className="skip-link"
+        >
+          Skip to Content
+        </a>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} disableTransitionOnChange>
+          <ResilienceHandler />
           <LayoutTransition>{children}</LayoutTransition>
         </ThemeProvider>
       </body>

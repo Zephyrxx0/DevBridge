@@ -261,6 +261,32 @@
   animation: glow-pulse 3s ease-in-out infinite;
 }
 
+.skip-link {
+  position: fixed;
+  top: -120px;
+  left: var(--space-md);
+  z-index: 80;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  color: var(--foreground);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-label);
+  font-weight: 600;
+  transition: top var(--transition-soft-duration) var(--transition-soft-ease);
+}
+
+.skip-link:focus-visible {
+  top: var(--space-md);
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+:where(a, button, input, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
 .soft-ui-transition {
   transition: var(--transition-soft);
 }

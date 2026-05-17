@@ -245,7 +245,7 @@ function FinalCTA() {
 
 export default function HomePage() {
   return (
-    <main className="min-h-dvh text-[var(--foreground)]">
+    <main id="main-content" className="min-h-dvh text-[var(--foreground)]">
       <BackgroundEffects />
       <DitheringBackground />
       <div className="relative pt-6">

@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
-import { Dithering } from "@paper-design/shaders-react";
 
 import { Button } from "@/components/ui/button";
+
+const Dithering = dynamic(
+  () => import("@paper-design/shaders-react").then((mod) => mod.Dithering),
+  { ssr: false }
+);
 
 export function HeroSection() {
   return (
