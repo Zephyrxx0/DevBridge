@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: milestone
 status: milestone_complete
-last_updated: "2026-05-17T12:46:00Z"
+last_updated: "2026-05-17T13:53:00Z"
 progress:
   total_phases: 7
   completed_phases: 7
@@ -16,7 +16,7 @@ progress:
 
 **Active Milestone**: v0.2 - Implement AMD-AUDIT-SPEC.md Refinements
 
-**Status**: Phase 28 execution started. Plan 28-00 complete.
+**Status**: Phase 28 execution in progress. Plans 28-00 and 28-01 complete.
 
 ## Milestone Context
 
@@ -48,7 +48,7 @@ Phase 28: UI Overhaul: Landing Page, Chat Interface, and Global Polishing
 - Integration of Vercel AI Elements for advanced chat interactions.
 - Apply "Modern Premium Polish" aesthetic globally.
 
-Next: `/gsd:execute-phase 28` (continue with 28-01)
+Next: `/gsd:execute-phase 28` (continue with 28-02)
 
 ## Decisions
 
@@ -57,6 +57,9 @@ Next: `/gsd:execute-phase 28` (continue with 28-01)
 - Full purge of local AMD/vLLM dependencies to simplify stack.
 - AI Elements registry naming drift handled with URL-based shadcn installs.
 - For this environment, `tool-call/progress` mapped to `tool/shimmer` components.
+- For Phase 28-01, Playwright checks skipped by hard constraint; used lint/type/static verification instead.
+- Kept existing `LayoutTransition` wrapper as the soft transition infrastructure baseline.
+- Sidebar primitives committed with `AppSidebar` to guarantee collapsible behavior works end-to-end.
 
 ## Accumulated Context
 

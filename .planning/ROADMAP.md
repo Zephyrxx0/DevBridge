@@ -174,7 +174,7 @@
 - [x] 28-00-PLAN.md — Test Scaffolding & AI Elements Init
 
 **Wave 1**
-- [ ] 28-01-PLAN.md — Global Layout, Theme & Design Tokens
+- [x] 28-01-PLAN.md — Global Layout, Theme & Design Tokens
 - [ ] 28-02-PLAN.md — Landing Page Overhaul (Premium Polish)
 
 **Wave 2**
