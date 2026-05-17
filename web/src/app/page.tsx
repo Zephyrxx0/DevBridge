@@ -1,4 +1,5 @@
  
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Code2, MessageSquareText, Sparkles, Target } from "lucide-react";
 
@@ -14,6 +15,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { SectionReveal } from "@/components/ui/section-reveal";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
+
+export const metadata: Metadata = {
+  title: "DevBridge — Grounded Repository Onboarding",
+  description:
+    "Onboard developers faster with grounded chat, code citations, and a living codebase map.",
+  openGraph: {
+    title: "DevBridge — Grounded Repository Onboarding",
+    description:
+      "Onboard developers faster with grounded chat, code citations, and a living codebase map.",
+    images: ["/og/devbridge-landing.png"],
+  },
+};
 
 /* ── Shared Section Heading ── */
 
