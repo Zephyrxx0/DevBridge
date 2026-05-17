@@ -18,36 +18,12 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 
-type SourceReference = {
-  file_path: string;
-  function_name?: string;
-  start_line: number;
-  end_line: number;
-  similarity?: number;
-};
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  fallback?: boolean;
-  sources?: SourceReference[];
-  artifacts?: SnippetChip[];
-}
-
 import { HistorySidebar, type ChatSession } from "@/components/chat/HistorySidebar";
 import { FileExplorer, type FileNode, type BranchInfo } from "@/components/chat/FileExplorer";
 import { ChatLayout } from "@/components/chat/ChatLayout";
-
-type SnippetChip = {
-  id: string;
-  filePath: string;
-  startLine: number;
-  endLine: number;
-  code: string;
-  kind?: "snippet" | "file" | "folder";
-};
-
-
+import { ChatStream } from "@/components/chat/ChatStream";
+import { ChatInput } from "@/components/chat/ChatInput";
+import type { Message, SourceReference, SnippetChip } from "@/components/chat/types";
 
 type FileContent = {
   content: string;
@@ -98,7 +74,6 @@ export default function RepoWorkspacePage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [snippetChips, setSnippetChips] = useState<SnippetChip[]>([]);
-  const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
   const [selectedSource, setSelectedSource] = useState<SourceReference | null>(null);
 
   const [fileTree, setFileTree] = useState<FileNode | null>(null);
@@ -121,8 +96,6 @@ export default function RepoWorkspacePage() {
   );
   const editorRef = useRef<import("monaco-editor").editor.IStandaloneCodeEditor | null>(null);
   const selectionRef = useRef<import("monaco-editor").Selection | null>(null);
-
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const apiUrl = "/api/backend";
   const branchStorageKey = `repo:${repoId}:selectedBranch`;
@@ -219,11 +192,6 @@ export default function RepoWorkspacePage() {
     if (!activeSessionId) return;
     localStorage.setItem(`repo:${repoId}:activeSessionId`, activeSessionId);
   }, [activeSessionId, repoId]);
-
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages]);
 
   // Fetch branches list once
   useEffect(() => {
@@ -369,18 +337,6 @@ export default function RepoWorkspacePage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [branchIndexing, apiUrl, repoId, refreshRepo]);
-
-  const toggleSourceSection = (messageIndex: number) => {
-    setExpandedSources((prev) => {
-      const next = new Set(prev);
-      if (next.has(messageIndex)) {
-        next.delete(messageIndex);
-      } else {
-        next.add(messageIndex);
-      }
-      return next;
-    });
-  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -768,155 +724,23 @@ export default function RepoWorkspacePage() {
           />
         }
         chatArea={
-          <div className="flex min-h-0 h-full flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_88%,transparent)] p-2.5">
-            <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
-              <div className="space-y-[var(--space-md)]">
-                {messages.length === 0 && !isLoading ? (
-                  <div className="flex h-full flex-col animate-in fade-in zoom-in duration-500">
-                    <OnboardingGuide repoId={repoId} />
-                  </div>
-                ) : null}
-                {messages.map((message, index) => {
-                  const isUser = message.role === "user";
-                  if (!isUser && message.content.trim() === "") return null;
-                  const hasSources = !isUser && Boolean(message.sources?.length);
-                  const isSourceOpen = expandedSources.has(index);
-
-                  return (
-                    <div key={`${message.role}-${index}`} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
-                      <div className={cn("flex max-w-[74%] gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}>
-                        <Avatar className="mt-1 shrink-0">
-                          <AvatarFallback className={cn(isUser ? "bg-[var(--surface-3)]" : "bg-[var(--brand-muted)] text-[var(--brand)]")}>
-                            {isUser ? "U" : "DB"}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className="min-w-0">
-                          {!isUser ? (
-                            <div className="mb-1 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]">
-                              <span>DevBridge</span>
-                              {message.fallback ? (
-                                <Badge className="border-yellow-500/20 bg-yellow-500/10 text-yellow-600">Fast Mode</Badge>
-                              ) : null}
-                            </div>
-                          ) : null}
-                          <div
-                            className={cn(
-                               "rounded-xl border px-4 py-3 text-[var(--text-body)] leading-[1.62]",
-                              isUser
-                                ? "border-[var(--border)] bg-[var(--surface-3)] text-[var(--foreground)]"
-                                : "border-[var(--brand-muted)] bg-[var(--surface-1)] text-[var(--foreground)]"
-                            )}
-                          >
-                            <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                          </div>
-
-                          {isUser && message.artifacts?.length ? (
-                            <div className="pt-2">
-                              <div className="flex flex-wrap gap-2">
-                                {message.artifacts.map((artifact) => (
-                                  <button
-                                    type="button"
-                                    key={artifact.id}
-                                    onClick={() => openArtifact(artifact)}
-                                    className="rounded-md border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-2 py-1 font-mono text-[var(--text-xs)] text-[var(--brand)] hover:opacity-90"
-                                  >
-                                    {artifact.kind === "folder" ? "Folder" : artifact.kind === "file" ? "File" : "Snippet"}: {artifact.filePath}
-                                    {artifact.kind === "snippet" ? `:${artifact.startLine}-${artifact.endLine}` : ""}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-
-                          {hasSources ? (
-                            <div className="pt-2">
-                              <button
-                                type="button"
-                                onClick={() => toggleSourceSection(index)}
-                                className="inline-flex items-center gap-1 text-(length:--text-xs) font-medium tracking-[0.08em] uppercase text-(--foreground-subtle) hover:text-(--foreground-muted)"
-                              >
-                                {isSourceOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-                                Sources ({message.sources?.length})
-                              </button>
-
-                              {isSourceOpen ? (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  {message.sources?.map((source, sourceIndex) => (
-                                    <button
-                                      type="button"
-                                      key={`${source.file_path}-${sourceIndex}`}
-                                      onClick={() => setSelectedSource(source)}
-                                      className="rounded-md border border-border bg-(--surface-2) px-2 py-1 font-mono text-(length:--text-xs) text-(--foreground-muted) transition-colors hover:border-(--brand-muted) hover:text-(--brand)"
-                                    >
-                                      {source.file_path}:{source.start_line}
-                                    </button>
-                                  ))}
-                                </div>
-                              ) : null}
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {isLoading ? (
-                  <div className="flex justify-start">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback className="bg-[var(--brand-muted)] text-[var(--brand)]">DB</AvatarFallback>
-                      </Avatar>
-                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-1)] px-[var(--space-lg)] py-[var(--space-md)]">
-                        <div className="flex gap-1.5">
-                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:0ms]" />
-                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:150ms]" />
-                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:300ms]" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="mt-2.5 shrink-0 border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_92%,transparent)] pt-2.5">
-              <div
-                className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_94%,transparent)] p-2"
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={handleDropSnippet}
-              >
-                {snippetChips.length > 0 ? (
-                  <div className="flex flex-wrap gap-2 px-1">
-                    {snippetChips.map((chip) => (
-                      <button
-                        key={chip.id}
-                        type="button"
-                        onClick={() => removeSnippetChip(chip.id)}
-                        className="rounded-full border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-3 py-1 text-[var(--text-xs)] text-[var(--brand)]"
-                        title="Click to remove snippet"
-                      >
-                        {chip.filePath}:{chip.startLine}-{chip.endLine}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-                <div className="flex items-center gap-[var(--space-sm)]">
-                  <Input
-                    type="text"
-                    value={input}
-                    onChange={(event) => setInput(event.target.value)}
-                    disabled={isLoading}
-                    placeholder="Ask about your code or drop snippet here..."
-                    className="h-11 border-transparent bg-transparent focus-visible:border-transparent focus-visible:ring-0"
-                  />
-                  <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-                    <ArrowUp className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            </form>
+          <div className="flex min-h-0 h-full flex-col overflow-hidden">
+            <ChatStream 
+              messages={messages} 
+              isLoading={isLoading} 
+              repoId={repoId} 
+              onOpenArtifact={openArtifact}
+              onSelectSource={setSelectedSource}
+            />
+            <ChatInput 
+              input={input}
+              setInput={setInput}
+              isLoading={isLoading}
+              snippetChips={snippetChips}
+              onRemoveSnippet={removeSnippetChip}
+              onDropSnippet={handleDropSnippet}
+              onSubmit={handleSubmit}
+            />
           </div>
         }
         rightPanel={
