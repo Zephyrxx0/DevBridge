@@ -34,12 +34,9 @@ interface Message {
   artifacts?: SnippetChip[];
 }
 
-type ChatSession = {
-  id: string;
-  title: string;
-  updated_at: string;
-  last_message?: string;
-};
+import { HistorySidebar, type ChatSession } from "@/components/chat/HistorySidebar";
+import { FileExplorer, type FileNode, type BranchInfo } from "@/components/chat/FileExplorer";
+import { ChatLayout } from "@/components/chat/ChatLayout";
 
 type SnippetChip = {
   id: string;
@@ -50,22 +47,12 @@ type SnippetChip = {
   kind?: "snippet" | "file" | "folder";
 };
 
-type FileNode = {
-  name: string;
-  path: string;
-  type: "file" | "directory";
-  children?: FileNode[];
-};
+
 
 type FileContent = {
   content: string;
   language: string;
   line_count: number;
-};
-
-type BranchInfo = {
-  name: string;
-  is_default?: boolean;
 };
 
 function countTreeFiles(node: FileNode | null): number {
@@ -768,294 +755,246 @@ export default function RepoWorkspacePage() {
   };
 
   return (
-    <section className="flex h-[calc(100vh-1rem)] min-h-0 flex-1 gap-0 overflow-hidden px-2 py-2">
-      <div className="flex min-h-0 h-full flex-[3.5] flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_88%,transparent)] p-2.5">
-        <div className="mb-2 shrink-0 flex items-center gap-2 overflow-x-auto border-b border-[var(--border)] pb-2 relative">
-          <Button type="button" variant="outline" size="sm" onClick={() => void createSession()}>
-            <Plus className="size-4" />
-            New Chat
-          </Button>
-          {sessions.map((session) => (
-            <ContextMenu key={session.id}>
-              <ContextMenuTrigger className={cn("inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs cursor-context-menu", activeSessionId === session.id ? "border-[var(--brand)] bg-[var(--brand-muted)] text-[var(--brand)]" : "border-[var(--border)] text-[var(--foreground-muted)]")}>
-                <button type="button" onClick={() => setActiveSessionId(session.id)} className="max-w-[220px] truncate cursor-default">{session.title || "New chat"}</button>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem onClick={() => renameChat(session.id)}>Rename</ContextMenuItem>
-                <ContextMenuItem onClick={() => deleteChat(session.id)} className="text-red-500">Delete</ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
-          ))}
-          <div className="ml-auto pr-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Toggle theme"
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="h-9 w-9 border border-[var(--border)] text-[var(--foreground-muted)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)]"
-            >
-              <Sun className="hidden size-4 dark:block" />
-              <Moon className="block size-4 dark:hidden" />
-            </Button>
-          </div>
-        </div>
-        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
-          <div className="space-y-[var(--space-md)]">
-            {messages.length === 0 && !isLoading ? (
-              <div className="flex h-full flex-col animate-in fade-in zoom-in duration-500">
-                <OnboardingGuide repoId={repoId} />
-              </div>
-            ) : null}
-            {messages.map((message, index) => {
-              const isUser = message.role === "user";
-              if (!isUser && message.content.trim() === "") return null;
-              const hasSources = !isUser && Boolean(message.sources?.length);
-              const isSourceOpen = expandedSources.has(index);
+    <div className="p-2 h-screen overflow-hidden">
+      <ChatLayout 
+        sidebar={
+          <HistorySidebar 
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            onSelectSession={setActiveSessionId}
+            onCreateSession={createSession}
+            onRenameSession={renameChat}
+            onDeleteSession={deleteChat}
+          />
+        }
+        chatArea={
+          <div className="flex min-h-0 h-full flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_88%,transparent)] p-2.5">
+            <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="space-y-[var(--space-md)]">
+                {messages.length === 0 && !isLoading ? (
+                  <div className="flex h-full flex-col animate-in fade-in zoom-in duration-500">
+                    <OnboardingGuide repoId={repoId} />
+                  </div>
+                ) : null}
+                {messages.map((message, index) => {
+                  const isUser = message.role === "user";
+                  if (!isUser && message.content.trim() === "") return null;
+                  const hasSources = !isUser && Boolean(message.sources?.length);
+                  const isSourceOpen = expandedSources.has(index);
 
-              return (
-                <div key={`${message.role}-${index}`} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
-                  <div className={cn("flex max-w-[74%] gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}>
-                    <Avatar className="mt-1 shrink-0">
-                      <AvatarFallback className={cn(isUser ? "bg-[var(--surface-3)]" : "bg-[var(--brand-muted)] text-[var(--brand)]")}>
-                        {isUser ? "U" : "DB"}
-                      </AvatarFallback>
-                    </Avatar>
+                  return (
+                    <div key={`${message.role}-${index}`} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+                      <div className={cn("flex max-w-[74%] gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}>
+                        <Avatar className="mt-1 shrink-0">
+                          <AvatarFallback className={cn(isUser ? "bg-[var(--surface-3)]" : "bg-[var(--brand-muted)] text-[var(--brand)]")}>
+                            {isUser ? "U" : "DB"}
+                          </AvatarFallback>
+                        </Avatar>
 
-                    <div className="min-w-0">
-                      {!isUser ? (
-                        <div className="mb-1 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]">
-                          <span>DevBridge</span>
-                          {message.fallback ? (
-                            <Badge className="border-yellow-500/20 bg-yellow-500/10 text-yellow-600">Fast Mode</Badge>
+                        <div className="min-w-0">
+                          {!isUser ? (
+                            <div className="mb-1 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]">
+                              <span>DevBridge</span>
+                              {message.fallback ? (
+                                <Badge className="border-yellow-500/20 bg-yellow-500/10 text-yellow-600">Fast Mode</Badge>
+                              ) : null}
+                            </div>
                           ) : null}
-                        </div>
-                      ) : null}
-                      <div
-                        className={cn(
-                           "rounded-xl border px-4 py-3 text-[var(--text-body)] leading-[1.62]",
-                          isUser
-                            ? "border-[var(--border)] bg-[var(--surface-3)] text-[var(--foreground)]"
-                            : "border-[var(--brand-muted)] bg-[var(--surface-1)] text-[var(--foreground)]"
-                        )}
-                      >
-                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                      </div>
+                          <div
+                            className={cn(
+                               "rounded-xl border px-4 py-3 text-[var(--text-body)] leading-[1.62]",
+                              isUser
+                                ? "border-[var(--border)] bg-[var(--surface-3)] text-[var(--foreground)]"
+                                : "border-[var(--brand-muted)] bg-[var(--surface-1)] text-[var(--foreground)]"
+                            )}
+                          >
+                            <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                          </div>
 
-                      {isUser && message.artifacts?.length ? (
-                        <div className="pt-2">
-                          <div className="flex flex-wrap gap-2">
-                            {message.artifacts.map((artifact) => (
+                          {isUser && message.artifacts?.length ? (
+                            <div className="pt-2">
+                              <div className="flex flex-wrap gap-2">
+                                {message.artifacts.map((artifact) => (
+                                  <button
+                                    type="button"
+                                    key={artifact.id}
+                                    onClick={() => openArtifact(artifact)}
+                                    className="rounded-md border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-2 py-1 font-mono text-[var(--text-xs)] text-[var(--brand)] hover:opacity-90"
+                                  >
+                                    {artifact.kind === "folder" ? "Folder" : artifact.kind === "file" ? "File" : "Snippet"}: {artifact.filePath}
+                                    {artifact.kind === "snippet" ? `:${artifact.startLine}-${artifact.endLine}` : ""}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+
+                          {hasSources ? (
+                            <div className="pt-2">
                               <button
                                 type="button"
-                                key={artifact.id}
-                                onClick={() => openArtifact(artifact)}
-                                className="rounded-md border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-2 py-1 font-mono text-[var(--text-xs)] text-[var(--brand)] hover:opacity-90"
+                                onClick={() => toggleSourceSection(index)}
+                                className="inline-flex items-center gap-1 text-(length:--text-xs) font-medium tracking-[0.08em] uppercase text-(--foreground-subtle) hover:text-(--foreground-muted)"
                               >
-                                {artifact.kind === "folder" ? "Folder" : artifact.kind === "file" ? "File" : "Snippet"}: {artifact.filePath}
-                                {artifact.kind === "snippet" ? `:${artifact.startLine}-${artifact.endLine}` : ""}
+                                {isSourceOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+                                Sources ({message.sources?.length})
                               </button>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
 
-                      {hasSources ? (
-                        <div className="pt-2">
-                          <button
-                            type="button"
-                            onClick={() => toggleSourceSection(index)}
-                            className="inline-flex items-center gap-1 text-(length:--text-xs) font-medium tracking-[0.08em] uppercase text-(--foreground-subtle) hover:text-(--foreground-muted)"
-                          >
-                            {isSourceOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-                            Sources ({message.sources?.length})
-                          </button>
-
-                          {isSourceOpen ? (
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {message.sources?.map((source, sourceIndex) => (
-                                <button
-                                  type="button"
-                                  key={`${source.file_path}-${sourceIndex}`}
-                                  onClick={() => setSelectedSource(source)}
-                                  className="rounded-md border border-border bg-(--surface-2) px-2 py-1 font-mono text-(length:--text-xs) text-(--foreground-muted) transition-colors hover:border-(--brand-muted) hover:text-(--brand)"
-                                >
-                                  {source.file_path}:{source.start_line}
-                                </button>
-                              ))}
+                              {isSourceOpen ? (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {message.sources?.map((source, sourceIndex) => (
+                                    <button
+                                      type="button"
+                                      key={`${source.file_path}-${sourceIndex}`}
+                                      onClick={() => setSelectedSource(source)}
+                                      className="rounded-md border border-border bg-(--surface-2) px-2 py-1 font-mono text-(length:--text-xs) text-(--foreground-muted) transition-colors hover:border-(--brand-muted) hover:text-(--brand)"
+                                    >
+                                      {source.file_path}:{source.start_line}
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : null}
                             </div>
                           ) : null}
                         </div>
-                      ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {isLoading ? (
+                  <div className="flex justify-start">
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback className="bg-[var(--brand-muted)] text-[var(--brand)]">DB</AvatarFallback>
+                      </Avatar>
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-1)] px-[var(--space-lg)] py-[var(--space-md)]">
+                        <div className="flex gap-1.5">
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:0ms]" />
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:150ms]" />
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:300ms]" />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-
-            {isLoading ? (
-              <div className="flex justify-start">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback className="bg-[var(--brand-muted)] text-[var(--brand)]">DB</AvatarFallback>
-                  </Avatar>
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-1)] px-[var(--space-lg)] py-[var(--space-md)]">
-                    <div className="flex gap-1.5">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:0ms]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:150ms]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:300ms]" />
-                    </div>
-                  </div>
-                </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="mt-2.5 shrink-0 border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_92%,transparent)] pt-2.5">
-          <div
-            className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_94%,transparent)] p-2"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={handleDropSnippet}
-          >
-            {snippetChips.length > 0 ? (
-              <div className="flex flex-wrap gap-2 px-1">
-                {snippetChips.map((chip) => (
-                  <button
-                    key={chip.id}
-                    type="button"
-                    onClick={() => removeSnippetChip(chip.id)}
-                    className="rounded-full border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-3 py-1 text-[var(--text-xs)] text-[var(--brand)]"
-                    title="Click to remove snippet"
-                  >
-                    {chip.filePath}:{chip.startLine}-{chip.endLine}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            <div className="flex items-center gap-[var(--space-sm)]">
-              <Input
-                type="text"
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                disabled={isLoading}
-                placeholder="Ask about your code or drop snippet here..."
-                className="h-11 border-transparent bg-transparent focus-visible:border-transparent focus-visible:ring-0"
-              />
-              <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-                <ArrowUp className="size-4" />
-              </Button>
             </div>
-          </div>
-        </form>
-      </div>
 
-      <aside className="hidden min-h-0 h-full flex-[1.7] overflow-hidden pl-2.5 md:flex md:flex-col">
-        {selectedSource || selectedFilePath ? (
-          <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-1)]">
-            <div className="border-b border-[var(--border)] px-[var(--space-lg)] py-[var(--space-md)]">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSource(null);
-                  setSelectedFilePath(null);
-                }}
-                className="mb-2 inline-flex items-center gap-1 text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+            <form onSubmit={handleSubmit} className="mt-2.5 shrink-0 border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_92%,transparent)] pt-2.5">
+              <div
+                className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_94%,transparent)] p-2"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={handleDropSnippet}
               >
-                <ChevronLeft className="size-3.5" /> Back
-              </button>
-              <p className="text-[var(--text-xs)] font-medium uppercase tracking-[0.08em] text-[var(--foreground-subtle)]">{selectedSource ? "Cited Source" : "File Viewer"}</p>
-              <p className="font-mono text-[var(--text-sm)] text-[var(--foreground)]">{activeViewerPath}</p>
-              {selectedSource ? (
-                <p className="text-[var(--text-xs)] text-[var(--foreground-muted)]">
-                  L{selectedSource.start_line}-L{selectedSource.end_line}
-                  {selectedSource.function_name ? ` • ${selectedSource.function_name}` : ""}
-                  {typeof selectedSource.similarity === "number" ? ` • ${Math.round(selectedSource.similarity * 100)}% match` : ""}
-                </p>
-              ) : null}
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col gap-4 p-[var(--space-lg)]">
-              <div className="h-full min-h-0 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-2)]">
-                {loadingFileContent ? (
-                  <div className="h-full animate-pulse bg-[var(--surface-3)]" />
-                ) : (
-                  <Editor
-                    language={selectedLanguage}
-                    value={fileContent?.content || ""}
-                    onMount={handleEditorMount}
-                    theme={editorTheme}
-                    options={{
-                      readOnly: true,
-                      minimap: { enabled: false },
-                      scrollBeyondLastLine: false,
-                      lineNumbersMinChars: 4,
-                      wordWrap: "off",
-                      automaticLayout: true,
-                    }}
+                {snippetChips.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 px-1">
+                    {snippetChips.map((chip) => (
+                      <button
+                        key={chip.id}
+                        type="button"
+                        onClick={() => removeSnippetChip(chip.id)}
+                        className="rounded-full border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-3 py-1 text-[var(--text-xs)] text-[var(--brand)]"
+                        title="Click to remove snippet"
+                      >
+                        {chip.filePath}:{chip.startLine}-{chip.endLine}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="flex items-center gap-[var(--space-sm)]">
+                  <Input
+                    type="text"
+                    value={input}
+                    onChange={(event) => setInput(event.target.value)}
+                    disabled={isLoading}
+                    placeholder="Ask about your code or drop snippet here..."
+                    className="h-11 border-transparent bg-transparent focus-visible:border-transparent focus-visible:ring-0"
                   />
-                )}
+                  <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                    <ArrowUp className="size-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Select lines, then add snippet to chat.</p>
-                <Button type="button" variant="outline" size="sm" onClick={addCurrentSelectionToChat}>Add selection</Button>
-              </div>
-            </div>
+            </form>
           </div>
-        ) : (
-          <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_90%,transparent)] p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5">
-                <GitBranch className="h-3.5 w-3.5 text-[var(--foreground-subtle)]" />
-                <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]">Files</p>
-              </div>
-              <div className="relative">
-                <select
-                  value={selectedBranch}
-                  onChange={(e) => {
-                    const nextBranch = e.target.value;
-                    setSelectedBranch(nextBranch);
-                    if (nextBranch) {
-                      localStorage.setItem(branchStorageKey, nextBranch);
-                    } else {
-                      localStorage.removeItem(branchStorageKey);
-                    }
+        }
+        rightPanel={
+          selectedSource || selectedFilePath ? (
+            <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-1)]">
+              <div className="border-b border-[var(--border)] px-[var(--space-lg)] py-[var(--space-md)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSource(null);
+                    setSelectedFilePath(null);
                   }}
-                  className="appearance-none rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2.5 py-1 pr-6 text-[10px] text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)] cursor-pointer"
+                  className="mb-2 inline-flex items-center gap-1 text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
                 >
-                  <option value="">{defaultBranchName ? `default (${defaultBranchName})` : "default"}</option>
-                  {branches.map((b) => (
-                    <option key={b.name} value={b.name}>{b.name}</option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--foreground-subtle)]" />
+                  <ChevronLeft className="size-3.5" /> Back
+                </button>
+                <p className="text-[var(--text-xs)] font-medium uppercase tracking-[0.08em] text-[var(--foreground-subtle)]">{selectedSource ? "Cited Source" : "File Viewer"}</p>
+                <p className="font-mono text-[var(--text-sm)] text-[var(--foreground)]">{activeViewerPath}</p>
+                {selectedSource ? (
+                  <p className="text-[var(--text-xs)] text-[var(--foreground-muted)]">
+                    L{selectedSource.start_line}-L{selectedSource.end_line}
+                    {selectedSource.function_name ? ` • ${selectedSource.function_name}` : ""}
+                    {typeof selectedSource.similarity === "number" ? ` • ${Math.round(selectedSource.similarity * 100)}% match` : ""}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col gap-4 p-[var(--space-lg)]">
+                <div className="h-full min-h-0 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-2)]">
+                  {loadingFileContent ? (
+                    <div className="h-full animate-pulse bg-[var(--surface-3)]" />
+                  ) : (
+                    <Editor
+                      language={selectedLanguage}
+                      value={fileContent?.content || ""}
+                      onMount={handleEditorMount}
+                      theme={editorTheme}
+                      options={{
+                        readOnly: true,
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                        lineNumbersMinChars: 4,
+                        wordWrap: "off",
+                        automaticLayout: true,
+                      }}
+                    />
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Select lines, then add snippet to chat.</p>
+                  <Button type="button" variant="outline" size="sm" onClick={addCurrentSelectionToChat}>Add selection</Button>
+                </div>
               </div>
             </div>
-
-            {branchLoadError ? (
-              <p className="mt-1 text-[10px] text-amber-500">Branch fetch warning: {branchLoadError}</p>
-            ) : null}
-
-            {branchIndexMsg ? (
-              <p className="mt-1.5 flex items-center gap-1 text-[10px] text-[var(--foreground-subtle)]">
-                <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-[var(--brand)]" />
-                {branchIndexMsg}
-              </p>
-            ) : null}
-
-            <div className="mt-3 min-h-0 flex-1 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-2">
-              {loadingFiles ? <p className="px-2 py-1 text-xs text-[var(--foreground-subtle)]">Loading files…</p> : null}
-              {!loadingFiles && fileTree ? renderTreeNode(fileTree) : null}
-              {!loadingFiles && !fileTree ? (
-                <p className="px-2 py-1 text-xs text-[var(--foreground-subtle)]">
-                  {selectedBranch
-                    ? `No files found for branch "${selectedBranch}".`
-                    : "No files indexed yet. Use the sidebar to index."}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        )}
-      </aside>
-    </section>
+          ) : (
+            <FileExplorer 
+              fileTree={fileTree}
+              expandedFolders={expandedFolders}
+              toggleFolder={toggleFolder}
+              loadingFiles={loadingFiles}
+              selectedFilePath={selectedFilePath}
+              onSelectFile={(path) => {
+                setSelectedSource(null);
+                setSelectedFilePath(path);
+              }}
+              branches={branches}
+              selectedBranch={selectedBranch}
+              setSelectedBranch={(b) => {
+                setSelectedBranch(b);
+                if (b) localStorage.setItem(branchStorageKey, b);
+                else localStorage.removeItem(branchStorageKey);
+              }}
+              branchIndexMsg={branchIndexMsg}
+              branchLoadError={branchLoadError}
+              defaultBranchName={defaultBranchName}
+            />
+          )
+        }
+      />
+    </div>
   );
 }
