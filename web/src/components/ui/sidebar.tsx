@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 type SidebarContextValue = {
   collapsed: boolean
   setCollapsed: React.Dispatch<React.SetStateAction<boolean>>
+  isMobile: boolean
 }
 
 const SidebarContext = React.createContext<SidebarContextValue | null>(null)
@@ -21,8 +22,22 @@ export function SidebarProvider({
   children: React.ReactNode
 }) {
   const [collapsed, setCollapsed] = React.useState(defaultCollapsed)
+  const [isMobile, setIsMobile] = React.useState(false)
 
-  return <SidebarContext.Provider value={{ collapsed, setCollapsed }}>{children}</SidebarContext.Provider>
+  React.useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)")
+    const sync = () => {
+      const mobile = media.matches
+      setIsMobile(mobile)
+      setCollapsed((prev) => (mobile ? true : prev))
+    }
+
+    sync()
+    media.addEventListener("change", sync)
+    return () => media.removeEventListener("change", sync)
+  }, [])
+
+  return <SidebarContext.Provider value={{ collapsed, setCollapsed, isMobile }}>{children}</SidebarContext.Provider>
 }
 
 export function useSidebar() {
@@ -32,7 +47,32 @@ export function useSidebar() {
 }
 
 export function Sidebar({ className, children }: React.ComponentProps<"aside">) {
-  const { collapsed } = useSidebar()
+  const { collapsed, isMobile, setCollapsed } = useSidebar()
+
+  if (isMobile) {
+    return (
+      <>
+        {!collapsed ? (
+          <button
+            type="button"
+            aria-label="Close sidebar"
+            className="fixed inset-0 z-30 bg-black/45"
+            onClick={() => setCollapsed(true)}
+          />
+        ) : null}
+        <aside
+          className={cn(
+            "fixed inset-y-0 left-0 z-40 flex w-[min(85vw,20rem)] flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar)] text-[var(--sidebar-foreground)] shadow-xl soft-ui-transition",
+            collapsed ? "-translate-x-full" : "translate-x-0",
+            className,
+          )}
+        >
+          {children}
+        </aside>
+      </>
+    )
+  }
+
   return (
     <aside
       className={cn(
@@ -66,7 +106,7 @@ export function SidebarTrigger({ className }: { className?: string }) {
       type="button"
       variant="ghost"
       size="icon"
-      className={cn("h-8 w-8 text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]", className)}
+      className={cn("h-11 w-11 text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]", className)}
       onClick={() => setCollapsed((prev) => !prev)}
       aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       title={collapsed ? "Expand sidebar" : "Collapse sidebar"}

@@ -41,7 +41,7 @@ export function HistorySidebar({
 
   return (
     <Sidebar className="border-r border-[var(--border)] bg-[var(--surface-1)]">
-      <SidebarHeader className="border-b border-[var(--border)] p-4 flex flex-row items-center justify-between">
+      <SidebarHeader className="flex flex-row items-center justify-between border-b border-[var(--border)] p-4">
         <span className="font-semibold text-[var(--foreground)]">Chats</span>
         <Button
           type="button"
@@ -49,15 +49,15 @@ export function HistorySidebar({
           size="icon-sm"
           aria-label="Toggle theme"
           onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          className="h-8 w-8 text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+          className="h-11 w-11 text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
         >
           <Sun className="hidden size-4 dark:block" />
           <Moon className="block size-4 dark:hidden" />
         </Button>
       </SidebarHeader>
       
-      <SidebarContent className="p-3 space-y-2">
-        <Button type="button" variant="outline" className="w-full justify-start gap-2" onClick={onCreateSession}>
+      <SidebarContent className="space-y-2 p-3">
+        <Button type="button" variant="outline" className="min-h-11 w-full justify-start gap-2" onClick={onCreateSession}>
           <Plus className="size-4" />
           New Chat
         </Button>
@@ -67,7 +67,7 @@ export function HistorySidebar({
             <ContextMenu key={session.id}>
               <ContextMenuTrigger 
                 className={cn(
-                  "w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm text-left transition-colors cursor-context-menu",
+                  "flex min-h-11 w-full cursor-context-menu items-center gap-2 rounded-md px-3 py-2 text-left text-[var(--text-label)] transition-colors",
                   activeSessionId === session.id
                     ? "bg-[var(--brand-muted)] text-[var(--brand)] font-medium"
                     : "text-[var(--foreground-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"

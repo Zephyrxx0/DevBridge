@@ -49,11 +49,11 @@ function AppSidebarContent() {
           <Clock3 className="h-4 w-4 text-[var(--brand)]" />
           {!collapsed ? <span className="truncate text-sm font-medium">Thread History</span> : null}
         </div>
-        <SidebarTrigger />
+        <SidebarTrigger className="h-11 w-11" />
       </SidebarHeader>
 
       <SidebarContent>
-        <Button className="mb-3 w-full justify-start gap-2" variant="secondary" size="sm" aria-label="Create new thread">
+        <Button className="mb-3 min-h-11 w-full justify-start gap-2" variant="secondary" size="sm" aria-label="Create new thread">
           <Plus className="h-4 w-4" />
           {!collapsed ? "New thread" : null}
         </Button>

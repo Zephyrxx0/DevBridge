@@ -54,10 +54,10 @@ function TrustStrip() {
 
   return (
     <SectionReveal animation="fade-up">
-      <section className="px-[1.25rem] py-10 md:px-[2.5rem]">
+      <section className="px-[var(--space-md)] py-[var(--space-xl)] md:px-[var(--space-xl)] md:py-[var(--space-2xl)]">
         <div className="mx-auto w-full max-w-[1200px]">
           <div className="rounded-2xl border border-border bg-[color-mix(in_oklab,var(--surface-1)_85%,transparent)] backdrop-blur-md p-6 md:p-8 shadow-sm">
-            <div className="grid gap-6 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-3 md:gap-6">
               {stats.map((stat) => (
                 <div key={stat.label} className="flex items-center gap-4">
                   <div className="grid size-10 shrink-0 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--brand)]">
@@ -109,8 +109,8 @@ function HowItWorks() {
           body="Connect a repo, ask questions, and navigate the codebase with visual cues and citations."
         />
       </SectionReveal>
-      <div className="mx-auto mt-10 w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
-        <div className="grid gap-4 md:grid-cols-3">
+      <div className="mx-auto mt-10 w-full max-w-[1200px] px-[var(--space-md)] md:px-[var(--space-xl)]">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {steps.map((s, idx) => (
             <SectionReveal key={s.title} animation="fade-up" delay={idx * 120}>
               <Card className="group relative overflow-hidden">
@@ -173,15 +173,15 @@ function CodebaseGraphSection() {
               <CardContent className="px-6 pb-6 pt-0 space-y-3">
                 <div className="flex items-center justify-between rounded-xl border border-border bg-[var(--surface-2)] p-3">
                   <p className="text-sm font-medium">Hotspot clusters</p>
-                  <Badge variant="neutral">12</Badge>
+                  <Badge variant="secondary">12</Badge>
                 </div>
                 <div className="flex items-center justify-between rounded-xl border border-border bg-[var(--surface-2)] p-3">
                   <p className="text-sm font-medium">Annotated files</p>
-                  <Badge variant="neutral">46</Badge>
+                  <Badge variant="secondary">46</Badge>
                 </div>
                 <div className="flex items-center justify-between rounded-xl border border-border bg-[var(--surface-2)] p-3">
                   <p className="text-sm font-medium">PR-linked nodes</p>
-                  <Badge variant="neutral">18</Badge>
+                  <Badge variant="secondary">18</Badge>
                 </div>
               </CardContent>
             </Card>

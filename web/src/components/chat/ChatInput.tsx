@@ -41,7 +41,7 @@ export function ChatInput({
                 key={chip.id}
                 type="button"
                 onClick={() => onRemoveSnippet(chip.id)}
-                className="rounded-full border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-3 py-1 text-[var(--text-xs)] text-[var(--brand)] hover:opacity-80 transition-opacity"
+                className="min-h-11 rounded-full border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-3 py-1 text-[var(--text-xs)] text-[var(--brand)] transition-opacity hover:opacity-80"
                 title="Click to remove snippet"
               >
                 {chip.filePath}:{chip.startLine}-{chip.endLine}
@@ -76,7 +76,7 @@ export function ChatInput({
             />
             <PromptInputSubmit 
               disabled={isLoading || !input.trim()}
-              className="mb-1 mr-1 size-8 shrink-0 bg-[var(--brand)] hover:bg-[var(--brand)]/90 text-white rounded-md"
+              className="mb-1 mr-1 size-11 shrink-0 rounded-md bg-[var(--brand)] text-white hover:bg-[var(--brand)]/90"
             >
               <ArrowUp className="size-4" />
             </PromptInputSubmit>

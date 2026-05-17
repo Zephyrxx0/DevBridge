@@ -689,7 +689,7 @@ export default function RepoWorkspacePage() {
           setSelectedFilePath(node.path);
         }}
         className={cn(
-          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-[var(--foreground-muted)] hover:bg-[var(--surface-2)]",
+          "flex min-h-11 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[var(--text-label)] text-[var(--foreground-muted)] hover:bg-[var(--surface-2)]",
           selectedFilePath === node.path ? "bg-[var(--surface-3)] text-[var(--foreground)]" : "",
         )}
         style={{ paddingLeft: `${depth * 12}px` }}
@@ -711,7 +711,7 @@ export default function RepoWorkspacePage() {
   };
 
   return (
-    <div className="p-2 h-screen overflow-hidden">
+    <div className="h-dvh overflow-hidden p-1 sm:p-2">
       <ChatLayout 
         sidebar={
           <HistorySidebar 
