@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     external_doc_urls: str = Field(default="", validation_alias="EXTERNAL_DOC_URLS")
     internal_auth_token: str | None = Field(default=None, validation_alias="INTERNAL_AUTH_TOKEN")
     report_summary_model: str = Field(default="gemma-4-9b-it", validation_alias="REPORT_SUMMARY_MODEL")
+    gemini_api_key: str | None = Field(default=None, validation_alias="GEMINI_API_KEY")
 
     def __init__(self, **values):
         super().__init__(**values)

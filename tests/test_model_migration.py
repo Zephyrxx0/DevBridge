@@ -29,12 +29,14 @@ def test_settings_loads_gemini_api_key_from_env(monkeypatch) -> None:
 
 
 def test_get_model_big_uses_gemini_flash_with_auto_thinking() -> None:
+    llm_module.settings.gemini_api_key = "gem-key-123"
     model = llm_module.get_model(is_fast=False)
     assert getattr(model, "model_name", None) == "gemini-2.5-flash"
     assert getattr(model, "thinking_budget", None) == -1
 
 
 def test_get_model_fast_uses_gemma_high_thinking() -> None:
+    llm_module.settings.gemini_api_key = "gem-key-123"
     model = llm_module.get_model(is_fast=True)
     assert getattr(model, "model_name", None) == "gemma-4-26b-a4b-it"
     assert getattr(model, "thinking_level", None) == "HIGH"
