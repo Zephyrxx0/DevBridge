@@ -178,7 +178,7 @@
 - [x] 28-02-PLAN.md — Landing Page Overhaul (Premium Polish)
 
 **Wave 2**
-- [ ] 28-03-PLAN.md — Chat Interface: Modular Component Decomposition
+- [x] 28-03-PLAN.md — Chat Interface: Modular Component Decomposition
 
 **Wave 3**
 - [ ] 28-04-PLAN.md — Chat Interface: AI Elements Stream & Input integration
