@@ -175,7 +175,7 @@
 
 **Wave 1**
 - [x] 28-01-PLAN.md — Global Layout, Theme & Design Tokens
-- [ ] 28-02-PLAN.md — Landing Page Overhaul (Premium Polish)
+- [x] 28-02-PLAN.md — Landing Page Overhaul (Premium Polish)
 
 **Wave 2**
 - [ ] 28-03-PLAN.md — Chat Interface: Modular Component Decomposition
