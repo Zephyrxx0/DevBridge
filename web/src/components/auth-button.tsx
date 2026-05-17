@@ -4,7 +4,15 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { LogIn, LogOut, Moon, Sun, User as UserIcon, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { User } from "@supabase/supabase-js";
@@ -63,12 +71,14 @@ export function AuthButton({ showThemeToggle = false }: { showThemeToggle?: bool
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 border-white/10 bg-background/95 backdrop-blur-md" align="end">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || "User"}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-          </div>
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || "User"}</p>
+              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            </div>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator className="bg-white/10" />
         <DropdownMenuItem render={<Link href="/dashboard" />} className="focus:bg-white/5 cursor-pointer">
           <UserIcon className="mr-2 h-4 w-4" />
