@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from api.agents.utils import llm as llm_module
 from api.core.config import Settings
+from api.utils import tokenizer as tokenizer_module
 
 
 def test_scaffold_google_genai_import_surface() -> None:
@@ -40,3 +41,21 @@ def test_get_model_fast_uses_gemma_high_thinking() -> None:
     model = llm_module.get_model(is_fast=True)
     assert getattr(model, "model_name", None) == "gemma-4-26b-a4b-it"
     assert getattr(model, "thinking_level", None) == "HIGH"
+
+
+def test_tokenizer_uses_sdk_count_tokens(monkeypatch) -> None:
+    tokenizer_module._get_client.cache_clear()
+    tokenizer_module.settings.gemini_api_key = "gem-key-123"
+
+    class FakeModels:
+        @staticmethod
+        def count_tokens(*, model, contents):
+            assert model == "gemini-2.5-flash"
+            assert contents == "hello world"
+            return SimpleNamespace(total_tokens=77)
+
+    class FakeClient:
+        models = FakeModels()
+
+    monkeypatch.setattr(tokenizer_module.genai, "Client", lambda api_key: FakeClient())
+    assert tokenizer_module._count_tokens("hello world", "qwen") == 77

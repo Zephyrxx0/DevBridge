@@ -1,18 +1,26 @@
 import logging
 from functools import lru_cache
 
-from transformers import AutoTokenizer
+from google import genai
+
+from api.core.config import settings
 
 LOGGER = logging.getLogger(__name__)
 
-QWEN_MODEL = "Qwen/Qwen2.5-72B-Instruct-AWQ"
-GEMMA_MODEL = "google/gemma-4-9b-it"
+BIG_MODEL = "gemini-2.5-flash"
+FAST_MODEL = "gemma-4-26b-a4b-it"
 
 
-@lru_cache(maxsize=2)
-def _get_tokenizer(model_type: str):
-    model_name = QWEN_MODEL if model_type.lower() == "qwen" else GEMMA_MODEL
-    return AutoTokenizer.from_pretrained(model_name)
+@lru_cache(maxsize=1)
+def _get_client() -> genai.Client | None:
+    if not settings.gemini_api_key:
+        return None
+    return genai.Client(api_key=settings.gemini_api_key)
+
+
+def _resolve_model_name(model_type: str) -> str:
+    lowered = (model_type or "").lower()
+    return FAST_MODEL if lowered in {"gemma", "fast"} else BIG_MODEL
 
 
 def _message_to_text(message: dict) -> str:
@@ -22,8 +30,13 @@ def _message_to_text(message: dict) -> str:
 
 
 def _count_tokens(text: str, model_type: str) -> int:
-    tokenizer = _get_tokenizer(model_type)
-    return len(tokenizer.encode(text, add_special_tokens=False))
+    client = _get_client()
+    if client is None:
+        return len((text or "").split())
+
+    model_name = _resolve_model_name(model_type)
+    response = client.models.count_tokens(model=model_name, contents=text)
+    return int(getattr(response, "total_tokens", 0))
 
 
 def enforce_cap(
