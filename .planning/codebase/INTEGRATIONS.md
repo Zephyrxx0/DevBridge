@@ -1,81 +1,83 @@
 # External Integrations
 
-**Analysis Date:** 2026-04-28
+**Analysis Date:** 2025-05-15
 
 ## APIs & External Services
 
-**AI / LLM:**
-- Vertex AI (Google Cloud) - Used for embeddings and chat generation
-  - SDK/Client: `langchain_google_vertexai`
-  - Auth: Google Cloud default credentials (`GOOGLE_CLOUD_PROJECT` in `api/core/config.py`)
+**LLM & AI Services:**
+- Google Vertex AI - Used for text embeddings (`text-embedding-004`) and potentially report summarization (`gemma-4-9b-it`).
+  - SDK/Client: `langchain-google-vertexai`
+  - Auth: `GOOGLE_CLOUD_PROJECT` (ADC expected)
+- OpenAI API (Compatible) - Agent routing expects local or compatible LLM servers at `localhost:8000/8001`.
+  - SDK/Client: `langchain-openai` (optional/fallback)
+  - Auth: `local-dev` (api_key)
 
 **Source Control:**
-- Git Repositories / GitHub - Pull request review and annotations
-  - Handled via incoming webhooks in `api/routes/webhooks.py` and `api.agents.pr_reviewer`
+- GitHub API - Used for fetching PR details, issue synchronization, and OAuth token resolution.
+  - SDK/Client: Manual `urllib` requests in `api/main.py` and `api/agents/orchestrator.py`.
+  - Auth: `GITHUB_WEBHOOK_SECRET`, `GITHUB_TOKEN`, and per-user tokens resolved via DB RPC `get_github_token_for_user`.
 
 ## Data Storage
 
 **Databases:**
-- PostgreSQL (Supabase)
-  - Connection: `supabase_connection_string` via `.env`
-  - Client: `sqlalchemy` (API), `@supabase/ssr` (Web)
-  - Vector Store: Used for storing code chunks (via `api/db/vector_store.py`)
+- Supabase (PostgreSQL) - Primary relational and vector storage.
+  - Connection: `SUPABASE_CONNECTION_STRING`
+  - Client: `SQLAlchemy`, `asyncpg`, `psycopg`
+  - Extensions: `pgvector` for similarity search.
 
 **File Storage:**
-- Google Cloud Storage (GCS)
-  - SDK: `google.cloud.storage` (found in `api/ingest/trigger.py`)
+- Google Cloud Storage (GCS) - Used for storing reports or other large assets.
+  - Service: GCP Bucket
+  - Config: `GCS_BUCKET_NAME`
 
 **Caching:**
-- PostgreSQL Cache Backend
-  - Implementation: `fastapi-cache` with `PostgresCacheBackend` (`api/main.py`)
+- In-Database Cache - Custom PostgreSQL-backed cache using `FastAPICache`.
+  - Implementation: `api/db/cache.py`
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- Supabase Auth
-  - Implementation: Next.js middleware and server/browser clients (`web/utils/supabase/`)
-- Custom Internal Auth:
-  - Implementation: API middleware checking `X-Internal-Auth` token and proxy IP whitelist (`api/main.py`)
+- Custom / Proxy-based - Relies on `X-User-Id` and `X-Internal-Auth` headers from a trusted proxy.
+  - Implementation: `inject_user_context` middleware in `api/main.py`.
+- GitHub OAuth - User-scoped tokens stored in Supabase and retrieved via RPC.
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- Native logging
-  - Implementation: Python `logging` module in API
+- Python Logging - Standard logging configured in `api/main.py` and modules.
 
 **Logs:**
-- Console logging configured in FastApi endpoints
+- Standard Output/Error - Captured by container runtime (e.g., Cloud Run).
 
 ## CI/CD & Deployment
 
 **Hosting:**
-- Google Cloud Run for API and Ingestion Jobs (configured in `infra/cloudrun/`)
+- Google Cloud Run - Targeted by `Procfile` and `Dockerfile`.
+- Vercel - Configured via `web/vercel.json` for the frontend.
 
-**Messaging / Async:**
-- Google Cloud Pub/Sub
-  - Configured via Terraform in `infra/pubsub/`
+**CI Pipeline:**
+- GitHub Actions - (Implicit based on `.github` directory mentioned in file list).
 
 ## Environment Configuration
 
 **Required env vars:**
-- `supabase_connection_string`
-- `INTERNAL_AUTH_TOKEN`
-- `GOOGLE_CLOUD_PROJECT`
-- `CORS_ALLOW_ORIGINS`
+- `SUPABASE_CONNECTION_STRING` - Database access.
+- `GOOGLE_CLOUD_PROJECT` - GCP resource access.
+- `GITHUB_WEBHOOK_SECRET` - GitHub webhook validation.
+- `INTERNAL_AUTH_TOKEN` - Secure internal communication.
+- `EMBEDDING_MODEL` - Defaults to `text-embedding-004`.
 
 **Secrets location:**
-- `.env` file (local)
-- API relies on `api.core.config.settings` to access variables
+- Managed via Environment Variables or Google Secret Manager (facade in `api/core/secrets.py`).
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-- PR / Repository Webhooks
-  - Endpoints configured in `api/routes/webhooks.py`
+- `/webhooks/github` - Handles GitHub webhook events (PRs, issues).
 
 **Outgoing:**
-- None detected
+- None detected (primarily reactive to incoming requests/webhooks).
 
 ---
 
-*Integration audit: 2026-04-28*
+*Integration audit: 2025-05-15*

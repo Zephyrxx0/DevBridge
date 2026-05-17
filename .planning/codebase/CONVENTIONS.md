@@ -1,92 +1,100 @@
 # Coding Conventions
 
-**Analysis Date:** 2024-05-18
+**Analysis Date:** 2026-05-24
 
 ## Naming Patterns
 
 **Files:**
-- Frontend: `kebab-case.tsx` for components (e.g., `web/src/components/ui/button.tsx`, `web/src/components/add-repo-modal.tsx`) and Next.js special files (`page.tsx`, `layout.tsx`).
-- Backend (Python): `snake_case.py` for modules (e.g., `api/db/vector_store.py`, `api/db/session.py`).
+- Python: `snake_case.py` (e.g., `api/main.py`, `api/agents/orchestrator.py`)
+- TypeScript/React: `kebab-case.tsx` or `kebab-case.ts` (e.g., `web/src/components/hero-dithering-card.tsx`, `web/src/hooks/useOnboarding.ts`)
+- Tests: `test_*.py` for Python, `*.test.ts` or `*.spec.ts` for TypeScript.
 
 **Functions:**
-- Python: `snake_case` (e.g., `init_db_pool`, `_conninfo_to_url`).
-- TypeScript (Frontend): `PascalCase` for React components (`Button`, `CodebaseGraph`), `camelCase` for utilities.
+- Python: `snake_case` (e.g., `sync_issues`, `_repo_slug_from_github_url`)
+- React Components: `PascalCase` (e.g., `HomePage`, `SectionHeading`)
+- TypeScript Helpers/Hooks: `camelCase` (e.g., `useOnboarding`, `getGithubToken`)
 
 **Variables:**
-- Python: `snake_case`.
-- TypeScript: `camelCase`.
+- Python: `snake_case` (e.g., `allowed_origins`, `client_is_trusted`)
+- TypeScript: `camelCase` (e.g., `cachedPlan`, `mockPlan`)
+- Constants: `UPPER_CASE` (e.g., `BIG_MODEL_PORT` in `api/core/config.py`)
 
 **Types:**
-- Python: Uses standard library typing and Pydantic models (`PascalCase` like `ChatRequest`).
-- TypeScript: `PascalCase` for Interfaces and Types.
+- Python (Pydantic): `PascalCase` (e.g., `ChatRequest`, `Settings`)
+- TypeScript: `PascalCase` for Interfaces and Types (e.g., `interface StatusStep` in `useOnboarding.ts`)
 
 ## Code Style
 
 **Formatting:**
-- Backend: Ruff (inferred via `.ruff_cache` in the directory). Uses standard Python formatting with type hints.
-- Frontend: ESLint, Prettier (implied by standard Next.js setups). Tailored styling with Tailwind CSS v4.
+- Python: Ruff (indicated by `.ruff_cache`)
+- Frontend: Prettier (implied by Next.js defaults and `package.json`)
 
 **Linting:**
-- Backend: Ruff (caching observed).
-- Frontend: ESLint (via `web/eslint.config.mjs`) extending `eslint-config-next/core-web-vitals` and `typescript`.
-- Automated Analysis: `fallow` runs automatically via `scripts/hooks/post-analysis` to check dead code, complexity, and duplication.
+- Python: Ruff
+- Frontend: ESLint with `eslint-config-next` (configured in `web/eslint.config.mjs`)
 
 ## Import Organization
 
-**Order:**
-- Python: 
-  1. `__future__` imports
-  2. Standard library (`os`, `json`, `asyncio`, `logging`)
-  3. Third-party (`fastapi`, `langchain`, `sqlalchemy`)
-  4. Internal modules (`api.db.models`, `api.core.config`)
-- Frontend:
-  1. React/Next.js imports (`next/link`)
-  2. Third-party UI/Icons (`lucide-react`, `@base-ui/react`)
-  3. Internal Components (`@/components/...`)
-  4. Utilities (`@/lib/utils`)
+**Order (Python):**
+1. Standard library imports
+2. Third-party library imports
+3. Local module imports (using `api.*` prefix)
+
+**Order (TypeScript):**
+1. External React/Next.js imports
+2. Third-party libraries (e.g., `lucide-react`, `motion`)
+3. Internal components (`@/components/...`)
+4. UI primitives (`@/components/ui/...`)
+5. Internal hooks/utils (`@/hooks/...`, `@/utils/...`)
 
 **Path Aliases:**
-- Frontend: Uses `@/` prefix to resolve paths relative to `web/src`.
-- Backend: Absolute imports from root (e.g., `from api.db.session import...`).
+- `@/*` maps to `web/src/*` (configured in `web/tsconfig.json`)
 
 ## Error Handling
 
 **Patterns:**
-- Backend: Raises explicit standard exceptions like `ValueError` or `RuntimeError` internally. FastAPI route endpoints catch errors and raise `HTTPException(status_code=..., detail=...)`.
-- Frontend: Relying on standard React patterns, API route fetches handle errors conditionally based on responses.
+- Backend: Use `logger.exception("...")` for internal errors and raise `fastapi.HTTPException` for client-facing errors.
+- Frontend: Use try/catch blocks within hooks and async functions, setting local `error` states to display in the UI.
 
 ## Logging
 
-**Framework:** `logging` standard Python library.
+**Framework:** `logging` (Standard Python library)
 
 **Patterns:**
-- Instantiated at the module level: `logger = logging.getLogger(__name__)`.
-- Used extensively for info/warnings/errors (`logger.info(...)`, `logger.exception(...)`).
+- Use module-level loggers: `logger = logging.getLogger(__name__)`.
+- Log exceptions with stack traces using `logger.exception()`.
+- Use `logger.info()` and `logger.warning()` for significant lifecycle events.
 
 ## Comments
 
 **When to Comment:**
-- Docstrings are used for major classes/methods (e.g., `"""Placeholder tests for..."""`).
-- Inline comments used primarily for complex logic explanation or marking future work (`# TODO(phase-02): replace with real AsyncEngine`).
-- `fallow` enforces low complexity and readable code, keeping inline comments minimal and focused on "why".
+- Use docstrings for major functions and background jobs (e.g., `api/main.py`'s `sync_issues`).
+- Use block comments for major sections in large files (e.g., `web/src/app/page.tsx`).
 
 **JSDoc/TSDoc:**
-- Used sparingly on React components or configuration objects (e.g., `web/playwright.config.ts`).
+- Minimal usage, primarily relying on TypeScript types for documentation.
 
 ## Function Design
 
-**Size:** Enforced by `fallow` complexity checks; methods are typically single-responsibility and lean.
+**Size:** React components are often modularized into smaller sub-components within the same file or moved to `src/components`.
 
-**Parameters:** 
-- Python: Strict type hints required (`def _conninfo_to_url(connection_string: str) -> str:`).
-- TypeScript: Strongly typed component props extending primitive types when applicable.
+**Parameters:**
+- Python: Extensive use of Type Hinting and Pydantic models for request bodies.
+- TypeScript: Use of object destructuring for component props with explicit type definitions.
+
+**Return Values:**
+- Python: Type-hinted return values, often `dict`, `StreamingResponse`, or Pydantic models.
 
 ## Module Design
 
-**Exports:** 
-- Python: Direct import from module (`from api.db.session import init_db_pool`). No strict barrel files.
-- TypeScript: Direct named exports or default exports for Next.js route components. Barrel pattern not strictly enforced.
+**Exports:**
+- React: Prefer `export default function Name()` for the main component of a file.
+- TypeScript: Named exports for utilities and constants.
+- Python: Direct imports from modules, using `__init__.py` (if present) to manage package visibility.
+
+**Barrel Files:**
+- Limited usage (e.g., `api/routes/__init__.py` might exist but routes are often imported individually in `api/main.py`).
 
 ---
 
-*Convention analysis: 2024-05-18*
+*Convention analysis: 2026-05-24*

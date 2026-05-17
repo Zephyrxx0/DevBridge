@@ -1,105 +1,96 @@
 # Codebase Concerns
 
-**Analysis Date:** 2024-10-24
+**Analysis Date:** 2024-05-18
 
 ## Tech Debt
 
-**Error Handling & Stubs:**
-- Issue: Numerous empty returns (`return {}`, `return []`) and `pass` statements where exceptions should probably be logged or handled. For instance, `api/ingest/trigger.py` explicitly ignores tracking update failures.
-- Files: `api/core/config.py`, `api/db/models.py`, `api/db/vector_store.py`, `api/ingest/trigger.py`
-- Impact: Silent failures and swallowed errors make debugging difficult and can lead to inconsistent state.
-- Fix approach: Implement proper error logging. Use structured exception handling instead of silently returning empty collections or passing.
+**Legacy Orchestrator:**
+- Issue: `api/agents/orchestrator.py` is marked as a "Legacy orchestrator module" in the docstring. It uses a `MockLLM` by default and contains hardcoded logic that has been superseded by the `api/agents/graph.py` implementation.
+- Files: `api/agents/orchestrator.py`
+- Impact: Maintenance burden and potential confusion for developers. Tests still reference this module, creating a dependency on legacy code.
+- Fix approach: Migrate all tests and tools to use the `api.agents.graph` system and remove the legacy module.
 
-**React Hydration Workarounds:**
-- Issue: Widespread use of `if (!mounted) return null;` in frontend components.
-- Files: `web/src/app/repo/[id]/annotations/page.tsx`, `web/src/app/repo/[id]/files/[...path]/page.tsx`, `web/src/app/repo/[id]/files/page.tsx`, `web/src/app/repo/[id]/map/page.tsx`, `web/src/app/repo/[id]/pr/page.tsx`, `web/src/app/repo/[id]/search/page.tsx`
-- Impact: Delays rendering on the client side and indicates a systemic issue with SSR/hydration mismatches.
-- Fix approach: Resolve hydration mismatches by ensuring consistent initial state between server and client or using proper Next.js dynamic imports with `ssr: false`.
+**Hardcoded LLM Infrastructure:**
+- Issue: LLM model ports, base URLs, and model names are partially hardcoded in the codebase instead of being purely configuration-driven.
+- Files: `api/agents/utils/llm.py`, `api/core/config.py`
+- Impact: Difficult to deploy in environments where ports 8000/8001 are occupied or where model names differ. Hardcoding `localhost` prevents easy containerization/scaling of the model server.
+- Fix approach: Move all model server settings (base URL, ports, specific model names) into `.env` and `api/core/config.py` with no local-only defaults.
 
-**Monolithic Files:**
-- Issue: Exceptionally large files containing multiple responsibilities. `page.tsx` files are over 10-15k characters. `orchestrator.py` is nearly 14k characters.
-- Files: `web/src/app/repo/[id]/page.tsx`, `web/src/app/repo/[id]/annotations/page.tsx`, `web/src/app/repo/[id]/search/page.tsx`, `api/agents/orchestrator.py`
-- Impact: Hard to maintain, test, and understand. Increased merge conflicts.
-- Fix approach: Refactor and extract smaller, reusable components (UI) and modularize agent logic (API).
-
-## Known Bugs
-
-**Not detected:**
-- Symptoms: No explicit bug reports found in comments, though silent failures are likely given the empty returns.
-- Files: N/A
-- Trigger: N/A
-- Workaround: N/A
+**Simplified Intent Classification:**
+- Issue: The router uses a very basic string-based classification ("FAST" or "DEEP") which may not be robust enough for complex queries.
+- Files: `api/agents/nodes/router.py`
+- Impact: Queries might be routed to the wrong worker, leading to either slow responses for simple queries or poor analysis for complex ones.
+- Fix approach: Implement a more robust classifier using structured output (Pydantic) or a few-shot prompting strategy.
 
 ## Security Considerations
 
-**Internal Authentication Mechanism:**
-- Risk: The API relies on a custom middleware check in `api/main.py` using `X-Internal-Auth` compared against `INTERNAL_AUTH_TOKEN` and trusting specific proxy IPs (`TRUSTED_PROXY_IPS`).
-- Files: `api/main.py`, `api/routes/annotations.py`
-- Current mitigation: Basic token comparison and IP allowlisting.
-- Recommendations: Consider using standard JWTs or a robust service mesh for internal authentication rather than custom header passing.
+**Header-based User Context:**
+- Risk: The API trusts the `X-User-Id` header if an `INTERNAL_AUTH_TOKEN` is present and the client IP is in a trusted list.
+- Files: `api/main.py`
+- Current mitigation: Basic check of `INTERNAL_AUTH_TOKEN` and `TRUSTED_PROXY_IPS`.
+- Recommendations: Implement a more robust JWT-based authentication for user identity or ensure strict network-level isolation (e.g., VPC) if relying on header injection.
 
-**Database Connection String Parsing:**
-- Risk: Custom parsing logic for database connection strings and passwords.
-- Files: `api/db/session.py`
-- Current mitigation: URL encoding (`quote(password, safe="")`) is applied.
-- Recommendations: Use an established library like `psycopg` or `SQLAlchemy`'s built-in URL parsing instead of manual string manipulation.
-
-**Token Management:**
-- Risk: GitHub tokens are fetched from Google Cloud Secret Manager or environment variables.
-- Files: `api/ingestion/history.py`
-- Current mitigation: Proper secret manager client used.
-- Recommendations: Ensure tokens have least-privilege scopes and handle token rotation/expiration gracefully.
+**Hardcoded Local API Keys:**
+- Risk: Using `api_key="local-dev"` in production-like configurations.
+- Files: `api/agents/utils/llm.py`
+- Current mitigation: None.
+- Recommendations: Ensure all API keys are loaded from environment variables and never have "dev" defaults in production mode.
 
 ## Performance Bottlenecks
 
-**Heavy Database Queries:**
-- Problem: `hybrid_search` in vector store performs complex semantic and keyword searches which may degrade as data grows.
-- Files: `api/db/vector_store.py`
-- Cause: Text search and vector similarity combined.
-- Improvement path: Ensure proper indices (HNSW/IVFFlat for pgvector) are in place and tuned.
+**Sequential Issue Sync:**
+- Problem: The GitHub issue sync process iterates through all repositories and all issues sequentially, performing embeddings one by one.
+- Files: `api/main.py` (sync_issues)
+- Cause: Lack of batching in embedding generation and sequential processing.
+- Improvement path: Implement batch embedding calls and use `asyncio.gather` for repository-level parallelism.
 
-**Custom Postgres Cache Backend:**
-- Problem: Caching implemented via Postgres (`api/db/cache.py`).
-- Files: `api/db/cache.py`, `api/main.py`
-- Cause: Relational databases are generally slower than in-memory stores for caching.
-- Improvement path: Migrate caching layer to Redis or Memcached if performance becomes a bottleneck.
+**Blocking Embedding Calls:**
+- Problem: Embedding generation is a CPU/network intensive task called synchronously within an async environment.
+- Files: `api/db/vector_store.py`
+- Cause: `self._vectorstore.embedding_service.embed_query` is synchronous.
+- Improvement path: Use a truly async embedding client or move the calls to a dedicated worker pool with `asyncio.to_thread` (already partially done, but should be consistent).
+
+**Large Frontend Component:**
+- Problem: The main repository workspace page is a single large component (~800 lines) handling chat, file tree, file viewing, and branch management.
+- Files: `web/src/app/repo/[id]/page.tsx`
+- Cause: Consolidation of too many responsibilities in one component.
+- Improvement path: Decompose into smaller, focused components (e.g., `ChatContainer`, `FileTreeSidebar`, `SourceViewer`).
 
 ## Fragile Areas
 
-**Pub/Sub Ingestion Trigger:**
-- Files: `api/ingest/trigger.py`
-- Why fragile: Handles GCS events and relies on specific object naming conventions (`owner/repo/path/to/file`). Malformed paths fallback to `"default"`.
-- Safe modification: Add robust validation for incoming Pub/Sub payloads.
-- Test coverage: Ensure integration tests cover malformed messages.
+**Database Normalization Logic:**
+- Files: `api/db/session.py`
+- Why fragile: Complex regex and string manipulation for connection strings (`_normalize_connection_string`, `_conninfo_to_url`) are prone to edge-case failures.
+- Safe modification: Add exhaustive unit tests for various connection string formats (Supabase, local PG, PgBouncer).
+- Test coverage: Partially covered in `tests/test_db_session_normalization.py`.
+
+**Vector Store Initialization:**
+- Files: `api/db/vector_store.py`
+- Why fragile: Uses `loop.create_task` for table creation during initialization, which could allow the app to start accepting requests before the schema is ready.
+- Safe modification: Ensure initialization is fully awaited before the API starts accepting traffic.
+- Test coverage: Gaps in startup race condition testing.
 
 ## Scaling Limits
 
-**Vector Database:**
-- Current capacity: Unknown, depends on Postgres sizing.
-- Limit: pgvector index build times and query latency degrade with millions of rows if not properly partitioned.
-- Scaling path: Consider horizontal scaling or dedicated vector DBs (e.g., Pinecone, Milvus) if data volume outgrows Postgres.
-
-## Dependencies at Risk
-
-**Not detected:**
-- Risk: Need deeper analysis to identify outdated packages.
-- Impact: Potential vulnerability exposure.
-- Migration plan: Automated dependency updates (e.g., Dependabot).
-
-## Missing Critical Features
-
-**Robust Error Tracking:**
-- Problem: Relying heavily on `logger.error` and `logger.warning`.
-- Blocks: Hard to proactively monitor and triage issues in production.
+**Postgres Cache Backend:**
+- Current capacity: Limited by DB storage and single-table performance.
+- Limit: Large volumes of chat history and cached responses will eventually slow down the `cache_entries` table.
+- Scaling path: Implement a TTL-based cleanup job (already exists in `api/jobs/cleanup.py`) and consider Redis for high-throughput caching if DB load becomes a bottleneck.
 
 ## Test Coverage Gaps
 
-**Unknown Error Paths:**
-- What's not tested: The extent of coverage for edge cases (e.g., failed DB transactions, malformed GCS events).
-- Files: `api/ingest/trigger.py`, `api/db/vector_store.py`
-- Risk: Unhandled exceptions might crash workers or leave database in an inconsistent state.
+**Streaming Response Errors:**
+- What's not tested: Failure modes of SSE (Server-Sent Events) when the LLM stream is interrupted.
+- Files: `api/main.py` (`chat_stream`), `web/src/app/repo/[id]/page.tsx`
+- Risk: UI might hang or show incomplete states if the stream breaks.
 - Priority: Medium
+
+**Branch Indexing Race Conditions:**
+- What's not tested: Rapid switching between branches while indexing is in progress.
+- Files: `web/src/app/repo/[id]/page.tsx`
+- Risk: File tree might show inconsistent states or data from the wrong branch.
+- Priority: High
 
 ---
 
-*Concerns audit: 2024-10-24*
+*Concerns audit: 2024-05-18*

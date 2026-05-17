@@ -1,118 +1,164 @@
 # Testing Patterns
 
-**Analysis Date:** 2024-05-18
+**Analysis Date:** 2026-05-24
 
 ## Test Framework
 
 **Runner:**
-- Backend: `pytest` (v9.x) with `pytest-asyncio`. Configured via `pytest.ini`.
-- Frontend/E2E: `Playwright` (v1.59.1). Configured via `web/playwright.config.ts`.
+- Backend: `pytest` 8.x (configured in `pytest.ini`)
+- Frontend: `Jest` (for unit tests, configured in `web/jest.config.js`) and `Playwright` (for E2E tests, configured in `web/playwright.config.ts`)
 
 **Assertion Library:**
-- Backend: Built-in `assert`.
-- Frontend: `@playwright/test` `expect`.
+- Python: Built-in `assert`
+- TypeScript: `expect` (Jest/Playwright)
 
 **Run Commands:**
 ```bash
-# Backend
-pytest                      # Run all non-E2E tests (if markers configured)
-pytest -m "not e2e"         # Exclude E2E tests explicitly
-pytest -m e2e               # Run E2E tests
-
-# Frontend
-cd web && npm run test:e2e  # Run Playwright E2E tests
+pytest                  # Run backend tests
+pytest -m e2e           # Run backend E2E tests
+npm test                # Run frontend unit tests (Jest)
+npm run test:e2e        # Run frontend E2E tests (Playwright)
 ```
 
 ## Test File Organization
 
 **Location:**
-- Backend: Separate `tests/` directory at the project root.
-- Frontend: Separate `web/tests/` directory for Playwright specs.
+- Backend: `tests/` directory at root (e.g., `tests/test_annotations.py`).
+- Frontend Unit: Co-located with implementation (e.g., `web/src/hooks/useOnboarding.test.ts`).
+- Frontend E2E: `web/tests/` (e.g., `web/tests/admin.spec.ts`).
 
 **Naming:**
-- Backend: `test_*.py` (e.g., `tests/test_vector_db.py`, `tests/test_webhooks.py`).
-- Frontend: `*.spec.ts` (e.g., `web/tests/ingestion_loop.spec.ts`).
+- Backend: `test_*.py`
+- Frontend Unit: `*.test.ts` or `*.test.tsx`
+- Frontend E2E: `*.spec.ts`
 
 **Structure:**
 ```
 [project-root]/
-├── tests/                 # Backend and API tests
-│   ├── e2e/               # E2E specific Python tests
-│   └── test_*.py
+├── tests/              # Backend tests
+│   ├── e2e/            # Backend E2E
+│   └── conftest.py     # Pytest fixtures
 └── web/
-    └── tests/             # Frontend Playwright specs
-        └── *.spec.ts
+    ├── src/
+    │   └── hooks/
+    │       └── name.test.ts  # Co-located unit tests
+    └── tests/          # Frontend E2E tests
 ```
 
 ## Test Structure
 
 **Suite Organization:**
-- Python: Flat functions prefixed with `test_` or grouped in classes.
-- TypeScript: Uses `test.describe('...', () => { test('...', async () => {}) })`.
+```python
+# Backend (pytest)
+@pytest.mark.asyncio
+async def test_feature_name(monkeypatch):
+    # Setup
+    # Execute
+    # Assert
+```
+
+```typescript
+// Frontend (Jest)
+describe("ComponentOrHook", () => {
+  it("should do something", () => {
+    // Setup
+    // Execute
+    // Assert
+  });
+});
+```
 
 **Patterns:**
-- Python Setup/Teardown: Uses `pytest` fixtures with `yield` for setup/teardown (e.g., `@pytest.fixture`).
-- TypeScript Setup/Teardown: `test.beforeAll` and `test.afterAll` hooks (often invoking python CLI scripts like `scripts/cleanup_e2e.py`).
+- **Async Testing:** Use `@pytest.mark.asyncio` in Python and `async/await` with `act` in React.
+- **Setup:** Use `beforeEach` in Jest and `conftest.py` or direct setup in pytest functions.
 
 ## Mocking
 
-**Framework:** `pytest` built-in `monkeypatch`.
+**Framework:**
+- Python: `monkeypatch` (pytest fixture).
+- TypeScript: `jest.fn()` and manual class mocks.
 
 **Patterns:**
 ```python
-@pytest.fixture
-def webhook_secret(monkeypatch):
-    secret = "test_secret"
-    monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", secret)
-    # Mocking settings config
-    from api.core.config import settings
-    monkeypatch.setattr(settings, "github_webhook_secret", secret)
-    return secret
+# Backend: Mocking DB engine in routes
+def test_something(monkeypatch):
+    conn = FakeConnection()
+    monkeypatch.setattr(annotation_routes, "get_engine", lambda: FakeEngine(conn))
+```
+
+```typescript
+// Frontend: Mocking global EventSource
+class MockEventSource { ... }
+beforeAll(() => {
+  (global as any).EventSource = MockEventSource;
+});
 ```
 
 **What to Mock:**
+- Database connections (`FakeConnection`).
+- External APIs (GitHub, EventSource).
 - Environment variables.
-- External API calls (e.g., GitHub webhooks, LLM integrations like Vertex AI fallback mock).
+
+**What NOT to Mock:**
+- Pydantic models and data structures.
+- Internal utility functions (unless they hit network/disk).
 
 ## Fixtures and Factories
 
 **Test Data:**
-- Simple payloads mocked inline:
 ```python
-payload = {"action": "opened", "pull_request": {"number": 1}}
+# Manual creation of dicts/models in tests
+created = await annotation_routes.create_annotation(
+    annotation_routes.AnnotationCreate(
+        repo_id=str(uuid4()),
+        file_path="api/main.py",
+        comment="Test",
+    ),
+    request=make_request("user-123"),
+)
 ```
 
 **Location:**
-- Root `tests/conftest.py` and `tests/e2e/conftest.py` are utilized for shared fixtures.
+- Backend fixtures often in `tests/conftest.py` (though currently sparse).
 
 ## Coverage
 
-**Requirements:** None enforced explicitly in the files viewed, though `.fallow` handles codebase health metrics automatically on commit.
+**Requirements:** Not strictly enforced in visible configs, but `fallow` is used for general health checks.
+
+**View Coverage:**
+```bash
+pytest --cov=api tests/
+```
 
 ## Test Types
 
 **Unit Tests:**
-- Heavy focus on individual API modules (e.g., `tests/test_webhooks.py`). Uses FastAPI `TestClient` for endpoint unit testing.
+- Backend: Testing route handlers and logic with faked dependencies.
+- Frontend: Testing hooks (`renderHook`) and utility functions.
 
 **Integration Tests:**
-- Database tests verify connection string parsing and configurations without executing network I/O (`tests/test_vector_db.py`).
+- Backend: Testing model interactions and complex flows (e.g., `test_assemble_context_includes_annotations`).
 
 **E2E Tests:**
-- Python: Uses `@pytest.mark.e2e`. URL and repo configured in `pytest.ini` (`e2e_api_url`, `e2e_test_repo`).
-- Frontend: Playwright tests (`web/tests/ingestion_loop.spec.ts`) execute full browser automation, triggering real python worker scripts and verifying Next.js UI updates.
+- Playwright: Testing API endpoints and UI flows from a browser perspective.
+- Backend E2E: Markers used in pytest for network-heavy or long-running tests.
 
 ## Common Patterns
 
 **Async Testing:**
-- Playwright uses `async`/`await` extensively.
-- Python tests use `pytest.mark.asyncio` when testing async backend operations or FastAPI endpoints.
-
-**E2E Script Coordination:**
-- The Playwright tests coordinate with Python CLI tools directly via `child_process.execSync` to seed data or perform cleanup operations.
 ```typescript
-execSync(`python ${path.join(rootDir, 'scripts/cleanup_e2e.py')} --repo ${repoName}`);
+await act(async () => {
+  await result.current.startGeneration("Backend");
+});
+```
+
+**Error Testing:**
+```python
+with pytest.raises(HTTPException) as exc:
+    await annotation_routes.update_annotation(...)
+assert exc.value.status_code == 403
 ```
 
 ---
 
-*Testing analysis: 2024-05-18*
+*Testing analysis: 2026-05-24*

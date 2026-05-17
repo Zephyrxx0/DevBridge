@@ -1,119 +1,124 @@
 # Codebase Structure
 
-**Analysis Date:** 2024-05-24
+**Analysis Date:** 2026-05-18
 
 ## Directory Layout
 
 ```
 [project-root]/
 ├── api/             # Python FastAPI backend service
-│   ├── agents/      # LLM orchestration and LangChain logic
-│   ├── core/        # Central configurations and secrets
-│   ├── db/          # Database connection, caching, and ORM models
-│   ├── ingest/      # Queue and worker logic for chunking tasks
-│   ├── ingestion/   # Code extraction and Tree-sitter chunking pipeline
-│   ├── routes/      # FastAPI endpoint definitions
-│   └── tests/       # Backend automated testing
-├── config/          # Global application or agent configuration
-├── infra/           # Terraform configurations
-│   ├── cloudrun/    # Infrastructure for Google Cloud Run
-│   ├── gcs/         # Infrastructure for Google Cloud Storage
-│   └── pubsub/      # Infrastructure for Google Pub/Sub
-├── scripts/         # Bash/Python scripts for git hooks, testing, and CI
-├── sql/             # Database schemas and setup scripts
-│   └── migrations/  # Supabase/PostgreSQL schema migrations
-├── supabase/        # Supabase local development configuration
-├── tests/           # Integration and End-to-End tests (often shared or pytest based)
-│   └── e2e/         # End to end workflows testing ingestion to search
+│   ├── agents/      # LangGraph multi-agent orchestration
+│   │   ├── nodes/   # Individual graph nodes (router, workers)
+│   │   └── utils/   # Agent-specific helpers (LLM config)
+│   ├── core/        # Configuration, secrets, and scheduler
+│   ├── db/          # Database models, session management, vector store
+│   ├── ingest/      # Legacy ingestion logic
+│   ├── ingestion/   # Modern Tree-sitter chunking pipeline
+│   ├── jobs/        # Background scheduled tasks (reports, sync)
+│   ├── reports/     # Logic for generating automated reports
+│   ├── routes/      # FastAPI endpoint routers (repo, chats, admin)
+│   └── utils/       # Shared backend utilities
+├── infra/           # Google Cloud infrastructure configurations
+│   ├── cloudrun/    # Cloud Run service definitions
+│   ├── gcs/         # Cloud Storage buckets
+│   └── pubsub/      # Pub/Sub topics for events
+├── scripts/         # Dev scripts and git hooks
+├── sql/             # Database migrations and raw SQL functions
+│   └── migrations/  # Versioned schema updates
+├── tests/           # Root-level integration and E2E tests
 └── web/             # Next.js frontend application
-    ├── public/      # Static assets and icons
-    ├── src/         # Frontend React source code
-    │   ├── app/     # Next.js App Router pages and layouts
-    │   ├── components/# Reusable React components (shadcn/ui, Layouts)
-    │   ├── contexts/# React Context providers
-    │   └── lib/     # Frontend utilities
-    └── tests/       # Playwright or frontend specific tests
+    ├── public/      # Static assets
+    └── src/         # Frontend source code
+        ├── app/     # App Router (pages and layouts)
+        ├── components/# React UI components
+        ├── contexts/  # Context API providers
+        ├── hooks/     # Custom React hooks
+        ├── lib/       # API clients and shared logic
+        └── utils/     # Frontend helper functions
 ```
 
 ## Directory Purposes
 
-**`api/`:**
-- Purpose: Contains the primary backend intelligence logic.
-- Contains: FastAPI app, LangGraph agents, vector store integration, code ingestion logic.
-- Key files: `api/main.py`, `api/agents/orchestrator.py`, `api/db/vector_store.py`
+**`api/agents/`:**
+- Purpose: Modern agentic brain of the system.
+- Contains: LangGraph graph definitions and specialized agent nodes.
+- Key files: `api/agents/graph.py`, `api/agents/nodes/router.py`, `api/agents/state.py`
 
-**`web/`:**
-- Purpose: Contains the customer-facing interface and visual codebase map.
-- Contains: Next.js App router features, Tailwind stylesheets, React components.
-- Key files: `web/src/app/page.tsx`, `web/src/app/layout.tsx`
+**`api/db/`:**
+- Purpose: All persistence and retrieval logic.
+- Contains: SQLAlchemy models and the pgvector-powered vector store manager.
+- Key files: `api/db/vector_store.py`, `api/db/models.py`, `api/db/session.py`
 
-**`infra/`:**
-- Purpose: Infrastructure as Code (IaC).
-- Contains: Terraform `.tf` files defining Google Cloud resources.
-- Key files: `infra/cloudrun/ingestion-job.tf`
+**`api/routes/`:**
+- Purpose: API surface area.
+- Contains: Endpoint definitions for the frontend.
+- Key files: `api/routes/chats.py`, `api/routes/repo.py`, `api/routes/admin.py`
+
+**`web/src/app/`:**
+- Purpose: Frontend routing and UI structure.
+- Contains: Next.js pages organized by directory structure.
+- Key files: `web/src/app/repo/[id]/page.tsx`, `web/src/app/layout.tsx`
 
 **`sql/`:**
-- Purpose: Core persistence schematics.
-- Contains: pgvector setup scripts, SQL functions for hybrid search.
-- Key files: `sql/hybrid_search.sql`, `sql/migrations/0017_create_ingestion_jobs.sql`
+- Purpose: Database-side logic and schema.
+- Contains: Hybrid search SQL function and migration history.
+- Key files: `sql/hybrid_search.sql`, `sql/setup_vector_store.sql`
 
 ## Key File Locations
 
 **Entry Points:**
-- `api/main.py`: Main FastAPI application initialization.
-- `web/src/app/page.tsx`: Landing page and Next.js initialization.
+- `api/main.py`: Backend FastAPI startup.
+- `web/src/app/page.tsx`: Frontend landing page.
 
 **Configuration:**
-- `api/core/config.py`: Backend Pydantic settings loading env variables.
-- `web/next.config.ts`: Next.js web build and routing configurations.
+- `api/core/config.py`: Centralized environment variable management.
+- `web/next.config.ts`: Next.js build and routing config.
 
 **Core Logic:**
-- `api/agents/orchestrator.py`: Configures the LLM, the system prompt, and connects external tools to LangGraph.
-- `api/ingestion/pipeline.py`: Orchestrates reading raw code and generating parseable semantic chunks.
+- `api/agents/graph.py`: Main LangGraph orchestration flow.
+- `api/ingestion/pipeline.py`: Codebase ingestion and chunking logic.
 
 **Testing:**
-- `tests/`: Contains root-level backend integrations (`test_batch_ingestion.py`, `test_vector_db.py`).
-- `web/tests/`: E2E frontend specifications via Playwright (`ingestion_loop.spec.ts`).
+- `tests/test_phase21_e2e.py`: End-to-end integration test for agent flow.
+- `web/tests/`: Playwright frontend tests.
 
 ## Naming Conventions
 
 **Files:**
-- Backend uses `snake_case.py` (e.g., `vector_store.py`, `tree_sitter_chunker.py`).
-- Frontend uses `kebab-case.tsx` (e.g., `add-repo-modal.tsx`, `auth-button.tsx`) or `kebab-case.ts`.
+- Backend: `snake_case.py` (e.g., `orchestrator_history.py`).
+- Frontend: `kebab-case.tsx` or `kebab-case.ts`.
 
 **Directories:**
-- Use `kebab-case` or simple singular/plural words (e.g., `agents`, `cloudrun`, `components`).
+- Use singular or plural nouns, `kebab-case` if multiple words.
 
 ## Where to Add New Code
 
-**New Frontend Feature:**
-- Primary code: Add a new route directory in `web/src/app/[feature]/page.tsx`
-- Components: `web/src/components/[feature]-component.tsx`
+**New Agent Capability:**
+- Implement the node in `api/agents/nodes/`.
+- Add to the graph in `api/agents/graph.py`.
+- Define state changes in `api/agents/state.py`.
 
-**New API Endpoint:**
-- Router: Add a router file in `api/routes/[feature].py`
-- Registration: Include router in `api/main.py`
-- Implementation Logic: Keep business logic inside `api/core/` or `api/agents/`.
+**New Database Table:**
+- Create migration in `sql/migrations/`.
+- Define model in `api/db/models.py`.
 
-**New AI Tool / Capability:**
-- Agent modification: Add a tool decorator function inside `api/agents/[agent].py` (like `orchestrator.py`) and bind it to the toolset array.
+**New Frontend Page:**
+- Add directory to `web/src/app/`.
+- Add shared components to `web/src/components/`.
 
-**Database Schema Changes:**
-- Migrations: Add sequential SQL files to `sql/migrations/` and apply via Supabase.
-- ORM: Update models in `api/db/models.py`.
+**New Background Job:**
+- Define job in `api/jobs/`.
+- Register in `SchedulerManager` within `api/main.py` (lifespan).
 
 ## Special Directories
 
-**`scripts/hooks/`:**
-- Purpose: Pre-commit, post-commit hooks triggering `entire`, `fallow`, and `graphify` agents.
-- Generated: No
-- Committed: Yes
+**`api/ingestion/` vs `api/ingest/`:**
+- `api/ingestion/` is the active pipeline for tree-sitter based chunking.
+- `api/ingest/` contains legacy or secondary ingestion components.
 
 **`graphify-out/`:**
-- Purpose: Knowledge graph output created automatically for context awareness.
-- Generated: Yes
-- Committed: No (often ignored)
+- Contains the generated knowledge graph used by dev tools (do not edit manually).
 
 ---
 
-*Structure analysis: 2024-05-24*
+*Structure analysis: 2026-05-18*
