@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: milestone
 status: milestone_complete
-last_updated: "2026-05-17T14:22:16.283Z"
+last_updated: "2026-05-17T14:38:07.140Z"
 progress:
   total_phases: 7
   completed_phases: 7
@@ -16,7 +16,7 @@ progress:
 
 **Active Milestone**: v0.2 - Implement AMD-AUDIT-SPEC.md Refinements
 
-**Status**: Phase 28 execution in progress. Plans 28-00, 28-01, and 28-02 complete.
+**Status**: Phase 28 execution in progress. Plans 28-00, 28-01, 28-02, 28-03, and 28-04 complete.
 
 ## Milestone Context
 
@@ -48,7 +48,7 @@ Phase 28: UI Overhaul: Landing Page, Chat Interface, and Global Polishing
 - Integration of Vercel AI Elements for advanced chat interactions.
 - Apply "Modern Premium Polish" aesthetic globally.
 
-Next: `/gsd:execute-phase 28` (continue with 28-03)
+Next: `/gsd:execute-phase 28` (continue with 28-05)
 
 ## Decisions
 
@@ -60,6 +60,8 @@ Next: `/gsd:execute-phase 28` (continue with 28-03)
 - For Phase 28-01, Playwright checks skipped by hard constraint; used lint/type/static verification instead.
 - Kept existing `LayoutTransition` wrapper as the soft transition infrastructure baseline.
 - Sidebar primitives committed with `AppSidebar` to guarantee collapsible behavior works end-to-end.
+- Extracted types to a shared types.ts file to break circular dependencies between ChatStream, ChatInput, and the Page.
+- Substituted Playwright e2e checks with static typechecks (tsc --noEmit) and linting to avoid test loops on constraints.
 
 ## Accumulated Context
 
