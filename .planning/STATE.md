@@ -67,6 +67,11 @@ Next: `/gsd:plan-phase 25`
 
 - [Phase 26]: Use explicit failing test placeholders for Phase 26 scaffolds to satisfy Nyquist while preventing false-positive pass results. — Scaffold plan requires test artifacts without implemented behavior.
 
+## Accumulated Context
+
+### Roadmap Evolution
+- Phase 27 added: Model Migration: Replace Qwen with Google AI Studio (Gemini) and Clean Up Local Dependencies
+
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |

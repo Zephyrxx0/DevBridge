@@ -22,7 +22,6 @@ export function ChoicePoll({ onSubmit }: ChoicePollProps) {
   return (
     <div className="mx-auto max-w-lg p-6 rounded-xl border border-[var(--border)] bg-[var(--surface-1)] shadow-sm">
       <UIChoicePoll.Root 
-        name="focus-poll" 
         value={selected} 
         onValueChange={(val) => setSelected(val as string)}
       >

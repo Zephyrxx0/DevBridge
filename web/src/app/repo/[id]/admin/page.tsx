@@ -143,7 +143,7 @@ export default function RepoAdminPage() {
             <h1 className="text-2xl font-semibold tracking-tight">Intern Confusion Reports</h1>
             <p className="text-sm text-muted-foreground">Repository: {repoId}</p>
           </div>
-          <Badge variant="secondary">{headerBadge}</Badge>
+          <Badge variant="neutral">{headerBadge}</Badge>
         </div>
 
         {state === "loading" && (

@@ -146,6 +146,18 @@
 - [ ] **Phase 14: Design website pages** — Landing, code browser, PR dashboard
 - [ ] **Phase 16: Premium SaaS Redesign** — Complete UI polish
 
+### Phase 27: Model Migration: Replace Qwen with Google AI Studio (Gemini) and Clean Up Local Dependencies
+**Goal**: Transition model inference from local Qwen models (running on AMD GPUs) to Google AI Studio (Gemini) while maintaining Gemma integration for testing and development.
+**Requirements**: MR-01 (Refactored), MR-04 (New: Google AI Studio Integration)
+**Depends on**: Phase 21
+**Plans**: 0 plans
+
+**Success Criteria**:
+1. Qwen model dependencies and configuration removed from orchestrator and docker setup.
+2. Google AI Studio (Gemini) integrated as the primary "Big Model" reasoning engine.
+3. Application fully functional using external Google AI Studio API.
+4. Gemma integration preserved as local or API-based fallback/fast-path.
+
 ---
 
 *Last updated: 2026-05-16 - Phase 26 plans updated with mandatory fixes*

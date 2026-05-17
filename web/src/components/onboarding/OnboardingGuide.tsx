@@ -7,7 +7,6 @@ import { SetupGuide } from "./SetupGuide";
 import { OnboardingStepCard } from "./OnboardingStepCard";
 
 import { Onboarding } from "@/components/ui/onboarding";
-import { IntroDisclosure } from "@/components/ui/intro-disclosure";
 
 interface OnboardingGuideProps {
   repoId: string;
@@ -71,7 +70,7 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
     
     return (
       <div className="mx-auto max-w-4xl p-6 h-full flex flex-col animate-in slide-in-from-bottom-4 duration-500">
-        <Onboarding.Root totalSteps={totalSteps} className="flex-1 overflow-hidden flex flex-col border-[var(--border)] bg-[var(--surface-1)]">
+        <Onboarding totalSteps={totalSteps} className="flex-1 overflow-hidden flex flex-col border-[var(--border)] bg-[var(--surface-1)]">
           <div className="mb-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
             <Onboarding.StepIndicator className="w-full sm:w-auto" variant="pills" />
           </div>
@@ -91,11 +90,11 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
                 description="High-level structure and patterns." 
               />
               <div className="mt-8">
-                <IntroDisclosure title="View Architecture Details">
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-4">
                   <div className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">
                     {plan.architecture}
                   </div>
-                </IntroDisclosure>
+                </div>
               </div>
             </Onboarding.Step>
 
@@ -127,7 +126,7 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
           <div className="mt-4 pt-4 border-t border-[var(--border)]">
             <Onboarding.Navigation />
           </div>
-        </Onboarding.Root>
+        </Onboarding>
       </div>
     );
   }
