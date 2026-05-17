@@ -26,6 +26,7 @@ import {
   InlineCitationCarouselIndex,
   InlineCitationSource,
 } from "@/components/ai-elements/inline-citation";
+import { ArtifactViewer } from "./ArtifactViewer";
 import type { Message, SourceReference, SnippetChip } from "./types";
 
 interface ChatStreamProps {
@@ -44,6 +45,17 @@ export function ChatStream({
   onSelectSource,
 }: ChatStreamProps) {
   const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
+
+  const extractCodeBlocks = (content: string): Array<{ language: string; code: string }> => {
+    const matches = [...content.matchAll(/```([a-zA-Z0-9_-]+)?\n([\s\S]*?)```/g)];
+    return matches.map((match) => ({
+      language: (match[1] || "markdown").toLowerCase(),
+      code: match[2] || "",
+    }));
+  };
+
+  const isJsxLanguage = (language: string) =>
+    ["jsx", "tsx", "react", "typescriptreact", "javascriptreact"].includes(language);
 
   const toggleSourceSection = (messageIndex: number) => {
     setExpandedSources((prev) => {
@@ -92,6 +104,7 @@ export function ChatStream({
               if (!isUser && message.content.trim() === "") return null;
               const hasSources = !isUser && Boolean(message.sources?.length);
               const isSourceOpen = expandedSources.has(index);
+              const codeBlocks = !isUser ? extractCodeBlocks(message.content) : [];
               const hasPendingToolCall = Boolean(
                 messageMeta.toolCalls?.some((tool) =>
                   ["input-streaming", "input-available", "approval-requested"].includes(tool.state || "")
@@ -168,6 +181,20 @@ export function ChatStream({
                               <Shimmer>Agent running tools…</Shimmer>
                             </p>
                           ) : null}
+                        </div>
+                      ) : null}
+
+                      {!isUser && codeBlocks.length ? (
+                        <div className="mt-2 space-y-3">
+                          {codeBlocks.map((block, blockIndex) => (
+                            <ArtifactViewer
+                              key={`${index}-artifact-${blockIndex}`}
+                              title={`Artifact ${blockIndex + 1}`}
+                              code={block.code}
+                              language={block.language}
+                              isJsxPreview={isJsxLanguage(block.language)}
+                            />
+                          ))}
                         </div>
                       ) : null}
 
