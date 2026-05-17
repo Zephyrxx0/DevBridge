@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { LayoutTransition } from "@/components/layout/LayoutTransition";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -30,8 +31,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={cn(geist.variable, geistMono.variable)}>
       <head />
       <body className="min-h-full antialiased">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
-          {children}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} disableTransitionOnChange>
+          <LayoutTransition>{children}</LayoutTransition>
         </ThemeProvider>
       </body>
     </html>
