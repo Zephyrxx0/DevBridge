@@ -150,7 +150,13 @@
 **Goal**: Transition model inference from local Qwen models (running on AMD GPUs) to Google AI Studio (Gemini) while maintaining Gemma integration for testing and development.
 **Requirements**: MR-01 (Refactored), MR-04 (New: Google AI Studio Integration)
 **Depends on**: Phase 21
-**Plans**: 0 plans
+**Plans**: 2 plans
+
+**Wave 1**
+- [ ] 27-01-PLAN.md — Google AI Studio Integration (SDK, Config, and Orchestrator update)
+
+**Wave 2**
+- [ ] 27-02-PLAN.md — Infrastructure Cleanup (Docker, VRAM removal, Weights purge)
 
 **Success Criteria**:
 1. Qwen model dependencies and configuration removed from orchestrator and docker setup.
@@ -160,4 +166,4 @@
 
 ---
 
-*Last updated: 2026-05-16 - Phase 26 plans updated with mandatory fixes*
+*Last updated: 2026-05-18 - Phase 27 plans created*

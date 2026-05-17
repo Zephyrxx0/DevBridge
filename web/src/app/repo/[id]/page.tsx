@@ -63,6 +63,17 @@ type FileContent = {
   line_count: number;
 };
 
+type BranchInfo = {
+  name: string;
+  is_default?: boolean;
+};
+
+function countTreeFiles(node: FileNode | null): number {
+  if (!node) return 0;
+  if (node.type === "file") return 1;
+  return (node.children || []).reduce((sum, child) => sum + countTreeFiles(child), 0);
+}
+
 const languageMap: Record<string, string> = {
   ts: "typescript",
   tsx: "typescript",
@@ -109,16 +120,25 @@ export default function RepoWorkspacePage() {
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<FileContent | null>(null);
   const [loadingFileContent, setLoadingFileContent] = useState(false);
-  const [branches, setBranches] = useState<{ name: string }[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string>("");
+  const [branches, setBranches] = useState<BranchInfo[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(`repo:${repoId}:selectedBranch`) || "";
+  });
   const [branchIndexing, setBranchIndexing] = useState(false);
   const [branchIndexMsg, setBranchIndexMsg] = useState("");
+  const [branchLoadError, setBranchLoadError] = useState("");
+  const defaultBranchName = useMemo(
+    () => branches.find((b) => b.is_default)?.name || branches.find((b) => b.name === "main")?.name || branches.find((b) => b.name === "master")?.name || "",
+    [branches]
+  );
   const editorRef = useRef<import("monaco-editor").editor.IStandaloneCodeEditor | null>(null);
   const selectionRef = useRef<import("monaco-editor").Selection | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const apiUrl = "/api/backend";
+  const branchStorageKey = `repo:${repoId}:selectedBranch`;
 
   const createSession = useCallback(async () => {
     const response = await fetch(`${apiUrl}/repo/${repoId}/chats`, {
@@ -222,16 +242,32 @@ export default function RepoWorkspacePage() {
   useEffect(() => {
     async function loadBranches() {
       try {
+        setBranchLoadError("");
         const res = await fetch(`${apiUrl}/repo/${repoId}/branches`);
-        if (!res.ok) return;
-        const data = (await res.json()) as { name: string }[];
+        if (!res.ok) {
+          let detail = "Branch list unavailable";
+          try {
+            const payload = (await res.json()) as { detail?: string };
+            if (payload?.detail) detail = payload.detail;
+          } catch {
+            // ignore json parsing errors
+          }
+          setBranchLoadError(detail);
+          setBranches([]);
+          return;
+        }
+        const data = (await res.json()) as BranchInfo[];
         setBranches(data);
+        if (selectedBranch && !data.some((b) => b.name === selectedBranch)) {
+          setSelectedBranch("");
+          localStorage.removeItem(branchStorageKey);
+        }
       } catch {
         // silent — branches are non-critical
       }
     }
     loadBranches();
-  }, [apiUrl, repoId]);
+  }, [apiUrl, repoId, selectedBranch, branchStorageKey]);
 
   // Load file tree whenever branch changes; auto-trigger indexing for unindexed branches
   useEffect(() => {
@@ -262,11 +298,24 @@ export default function RepoWorkspacePage() {
           }
         }
 
-        const branchParam = selectedBranch ? `?branch=${encodeURIComponent(selectedBranch)}` : "";
+        const effectiveBranch = selectedBranch || defaultBranchName;
+        const branchParam = effectiveBranch ? `?branch=${encodeURIComponent(effectiveBranch)}` : "";
         const response = await fetch(`${apiUrl}/repo/${repoId}/files${branchParam}`);
-        if (!response.ok || cancelled) return;
-        const data = await response.json();
-        if (!cancelled) setFileTree(data as FileNode);
+        if (!response.ok || cancelled) {
+          setBranchIndexMsg(`Unable to load ${effectiveBranch ? `branch \"${effectiveBranch}\"` : "files"}.`);
+          return;
+        }
+        let data = (await response.json()) as FileNode;
+        if (!effectiveBranch && countTreeFiles(data) < 5) {
+          const retry = await fetch(`${apiUrl}/repo/${repoId}/files?fresh=true`);
+          if (retry.ok) {
+            data = (await retry.json()) as FileNode;
+          }
+        }
+        if (!cancelled) {
+          setFileTree(data);
+          setBranchIndexMsg("");
+        }
       } finally {
         if (!cancelled) {
           setLoadingFiles(false);
@@ -277,14 +326,13 @@ export default function RepoWorkspacePage() {
 
     loadFileTree();
     return () => { cancelled = true; };
-  }, [apiUrl, repoId, selectedBranch]);
+  }, [apiUrl, repoId, selectedBranch, defaultBranchName]);
 
   useEffect(() => {
     setFileTree(null);
     setSelectedFilePath(null);
     setFileContent(null);
     setSelectedBranch("");
-    setBranches([]);
     setBranchIndexMsg("");
   }, [repoId]);
 
@@ -960,27 +1008,32 @@ export default function RepoWorkspacePage() {
                 <GitBranch className="h-3.5 w-3.5 text-[var(--foreground-subtle)]" />
                 <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]">Files</p>
               </div>
-              {branches.length > 0 ? (
-                <div className="relative">
-                  <select
-                    value={selectedBranch}
-                    onChange={(e) => {
-                      setSelectedBranch(e.target.value);
-                      setFileTree(null);
-                    }}
-                    className="appearance-none rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2.5 py-1 pr-6 text-[10px] text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)] cursor-pointer"
-                  >
-                    <option value="">default</option>
-                    {branches.map((b) => (
-                      <option key={b.name} value={b.name}>{b.name}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--foreground-subtle)]" />
-                </div>
-              ) : (
-                <p className="text-[10px] text-[var(--foreground-subtle)]">Drag files into chat</p>
-              )}
+              <div className="relative">
+                <select
+                  value={selectedBranch}
+                  onChange={(e) => {
+                    const nextBranch = e.target.value;
+                    setSelectedBranch(nextBranch);
+                    if (nextBranch) {
+                      localStorage.setItem(branchStorageKey, nextBranch);
+                    } else {
+                      localStorage.removeItem(branchStorageKey);
+                    }
+                  }}
+                  className="appearance-none rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2.5 py-1 pr-6 text-[10px] text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)] cursor-pointer"
+                >
+                  <option value="">{defaultBranchName ? `default (${defaultBranchName})` : "default"}</option>
+                  {branches.map((b) => (
+                    <option key={b.name} value={b.name}>{b.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--foreground-subtle)]" />
+              </div>
             </div>
+
+            {branchLoadError ? (
+              <p className="mt-1 text-[10px] text-amber-500">Branch fetch warning: {branchLoadError}</p>
+            ) : null}
 
             {branchIndexMsg ? (
               <p className="mt-1.5 flex items-center gap-1 text-[10px] text-[var(--foreground-subtle)]">

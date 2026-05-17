@@ -210,6 +210,17 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
             Last indexed: {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "never"}
           </p>
 
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          >
+            {theme === "light" ? <Moon className="size-4 mr-2" /> : <Sun className="size-4 mr-2" />}
+            {theme === "light" ? "Dark mode" : "Light mode"}
+          </Button>
+
           {indexingState === "running" ? (
             <div className="rounded-lg border border-[var(--brand-muted)] bg-[var(--brand-muted)] p-3">
               <div className="flex items-center gap-2">
@@ -253,6 +264,16 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label="Toggle theme"
+          onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          className="fixed bottom-4 right-4 z-40 h-10 w-10 rounded-full border-[var(--border)] bg-[var(--surface-1)] md:hidden"
+        >
+          {theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+        </Button>
         <main className="flex min-h-0 flex-1">{children}</main>
       </div>
     </div>

@@ -3,8 +3,7 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: milestone
 status: milestone_complete
-last_updated: "2026-05-17T08:44:20.876Z"
-last_activity: 2026-05-16
+last_updated: "2026-05-17T09:02:35.888Z"
 progress:
   total_phases: 7
   completed_phases: 7
@@ -17,7 +16,7 @@ progress:
 
 **Active Milestone**: v0.2 - Implement AMD-AUDIT-SPEC.md Refinements
 
-**Status**: Phase 24 complete. All plans executed. OAuth user-scoped token flow enforced. Verifier passed 3/3.
+**Status**: Phase 26 complete. Phase 27 planned.
 
 ## Milestone Context
 
@@ -29,55 +28,33 @@ Current milestone (v0.2) focuses on:
 - Multi-agent orchestration with dual-model routing
 - Knowledge graph with internal symbol resolution
 - Onboarding UX (plan generation)
-- GitHub integration (issues, OAuth) ✓
+- GitHub integration (issues, OAuth)
 - Admin dashboard with AI summarization
+- Model Migration (Qwen to Gemini)
 
 ## GSD Workflow State
 
 - `gsd-new-milestone`: COMPLETED (initialized v0.2)
-- `gsd-plan-phase`: COMPLETED (Phase 22 planned)
-- `gsd-discuss-phase`: COMPLETED (Phase 24 context gathered)
-- `gsd-execute-phase`: COMPLETED (Phase 23 — Plans 01, 02, 03 complete)
-- `gsd-execute-phase`: COMPLETED (Phase 24 — Plans 01, 02 complete)
-- `gsd-discuss-phase`: COMPLETED (Phase 25 context gathered)
+- `gsd-plan-phase`: COMPLETED (Phase 27 planned)
+- `gsd-discuss-phase`: COMPLETED (Phase 27 context gathered)
+- `gsd-execute-phase`: COMPLETED (Phase 26 complete)
 
 ## Current Focus
 
-Phase 25: Task Scheduling — READY TO PLAN.
+Phase 27: Model Migration: Replace Qwen with Google AI Studio (Gemini) and Clean Up Local Dependencies
 
-- Persistent DB-backed job store (SQLAlchemyJobStore)
-- Internal APScheduler integration in FastAPI lifespan
-- Audit Table + Retry Logic for job tracking
-- Distributed Locking (DB-based) for multi-instance safety
-- Jobs: Daily Sync, Cache Cleanup, Metrics, Report Generation
+- Transition model inference to Google AI Studio (Gemini 2.5 Flash, Gemma 4).
+- Decommission local vLLM containers and purge model weights.
+- SDK migration to `google-genai`.
 
-Next: `/gsd:plan-phase 25`
+Next: `/gsd:execute-phase 27`
 
 ## Decisions
 
-- Async generator SSE pattern for onboarding streaming (consistent with Phase 21)
-- Exponential backoff delays: 1s, 2s for max 3 attempts
-- Focus-specific code_search queries mapped per role category
-- Legacy onboarding keys (`setup`, `why`) normalized on retrieval to preserve backwards compatibility
-- Frontend checks cached onboarding plan before opening SSE generation stream
+- Gemini 2.5 Flash for Big Model (Chat) with thinking_budget=-1.
+- Gemma 4 for Analysis Model with thinking_level=HIGH.
+- Full purge of local AMD/vLLM dependencies to simplify stack.
 
 ---
 
-*Updated: 2026-05-16*
-
-- [Phase 26]: Use explicit failing test placeholders for Phase 26 scaffolds to satisfy Nyquist while preventing false-positive pass results. — Scaffold plan requires test artifacts without implemented behavior.
-
-## Accumulated Context
-
-### Roadmap Evolution
-
-- Phase 27 added: Model Migration: Replace Qwen with Google AI Studio (Gemini) and Clean Up Local Dependencies
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260510-x3h | update the 23rd phase plan files in a systematic format | 2026-05-10 | 70fe66d | [.planning/quick/260510-x3h-update-the-23rd-phase-plan-files-in-a-sy/](./quick/260510-x3h-update-the-23rd-phase-plan-files-in-a-sy/) |
-| 260516-x4k | phase 24 execution complete — github integration | 2026-05-16 | 059fc6f | [.planning/phases/24-GitHub-Integration/](./phases/24-GitHub-Integration/) |
-
-Last activity: 2026-05-16
+*Updated: 2026-05-18*

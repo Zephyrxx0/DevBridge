@@ -36,6 +36,7 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const settledRef = useRef(false);
 
   const cleanup = useCallback(() => {
     if (eventSourceRef.current) {
@@ -50,6 +51,7 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
 
   const reset = useCallback(() => {
     cleanup();
+    settledRef.current = false;
     setStatus([]);
     setPlan(null);
     setLoading(false);
@@ -93,10 +95,12 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
               },
             ]);
           } else if (data.type === "plan") {
+            settledRef.current = true;
             setPlan(data.content);
             setLoading(false);
             cleanup();
           } else if (data.type === "error") {
+            settledRef.current = true;
             setError(data.message || data.content || "An error occurred");
             setLoading(false);
             cleanup();
@@ -107,6 +111,11 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
       };
 
       es.onerror = (err) => {
+        const isClosedState = typeof es.readyState === "number" && es.readyState === EventSource.CLOSED;
+        if (settledRef.current || isClosedState) {
+          cleanup();
+          return;
+        }
         console.error("SSE error", err);
         setError("Connection lost. Please try again.");
         setLoading(false);

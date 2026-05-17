@@ -208,24 +208,93 @@ async def get_repository(repo_id: str):
 
 @router.get("/repo/{repo_id}/branches")
 async def list_repository_branches(repo_id: str, request: Request):
-    """Return list of branches from GitHub for this repository."""
+    """Return list of branches from GitHub for this repository.
+
+    If GitHub API is rate-limited, gracefully falls back to cached/local branch hints.
+    """
     engine = get_engine()
     if engine is None:
         raise HTTPException(status_code=500, detail="Database engine not initialized")
     try:
         async with engine.connect() as conn:
             repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
             repo_slug = _repo_from_github_url(repo.get("github_url")) or repo.get("name")
             if not repo_slug:
                 raise HTTPException(status_code=422, detail="Cannot derive GitHub slug from repository")
-            token = await get_github_token(_request_user_id(request))
-            payload = await _github_get_json(
-                f"https://api.github.com/repos/{repo_slug}/branches?per_page=100",
-                token,
-            )
-            if not isinstance(payload, list):
-                raise HTTPException(status_code=502, detail="Unexpected GitHub response")
-            return [{"name": b["name"], "sha": b["commit"]["sha"]} for b in payload if isinstance(b, dict) and "name" in b]
+            token = await get_github_token(_request_user_id(request), allow_env_fallback=True)
+
+            default_branch = "main"
+            try:
+                repo_payload = await _github_get_json(
+                    f"https://api.github.com/repos/{repo_slug}",
+                    token,
+                )
+                if isinstance(repo_payload, dict):
+                    candidate = repo_payload.get("default_branch")
+                    if isinstance(candidate, str) and candidate.strip():
+                        default_branch = candidate.strip()
+            except Exception:
+                # Non-fatal: we can still list branches without explicit default marker.
+                pass
+
+            try:
+                payload = await _github_get_json(
+                    f"https://api.github.com/repos/{repo_slug}/branches?per_page=100",
+                    token,
+                )
+                if not isinstance(payload, list):
+                    raise HTTPException(status_code=502, detail="Unexpected GitHub response")
+                branches = []
+                for b in payload:
+                    if not isinstance(b, dict) or "name" not in b:
+                        continue
+                    name = b.get("name")
+                    if not isinstance(name, str):
+                        continue
+                    branches.append({
+                        "name": name,
+                        "sha": (b.get("commit") or {}).get("sha", "") if isinstance(b.get("commit"), dict) else "",
+                        "is_default": name == default_branch,
+                    })
+                return branches
+            except Exception as exc:
+                message = str(exc).lower()
+                if "rate limit" not in message and "403" not in message:
+                    raise
+
+                logger.warning("GitHub branches API rate-limited for %s, using fallback list", repo_slug)
+
+                cached_rows = await conn.execute(
+                    text(
+                        """
+                        SELECT DISTINCT branch
+                        FROM repo_file_cache
+                        WHERE repo_id = CAST(:repo_id AS uuid)
+                          AND branch IS NOT NULL
+                          AND branch <> ''
+                        ORDER BY branch
+                        """
+                    ),
+                    {"repo_id": actual_id},
+                )
+                cached_branches = [
+                    row._mapping["branch"]
+                    for row in cached_rows.fetchall()
+                    if isinstance(row._mapping.get("branch"), str) and row._mapping["branch"].strip()
+                ]
+
+                fallback_order = ["main", "master", "develop", "dev"]
+                seen: set[str] = set()
+                merged: list[str] = []
+
+                for name in cached_branches + fallback_order:
+                    clean = (name or "").strip()
+                    if clean and clean not in seen:
+                        seen.add(clean)
+                        merged.append(clean)
+
+                return [{"name": name, "sha": "", "is_default": name == default_branch} for name in merged]
     except HTTPException:
         raise
     except Exception as exc:
@@ -299,7 +368,7 @@ async def list_repository_files(repo_id: str, request: Request, branch: str | No
 
             # ── 3. GitHub API (always for branch requests, fallback otherwise) ──
             repo_slug = _repo_from_github_url(repo_url) or repo_name
-            token = await get_github_token(_request_user_id(request))
+            token = await get_github_token(_request_user_id(request), allow_env_fallback=True)
             if not repo_slug:
                 return _materialize_tree(root)
 
@@ -489,7 +558,7 @@ async def get_repository_file(repo_id: str, file_path: str, request: Request, br
 
             if not row:
                 # Fallback: load raw file from GitHub.
-                token = await get_github_token(_request_user_id(request))
+                token = await get_github_token(_request_user_id(request), allow_env_fallback=True)
                 if repo_slug:
                     from urllib.parse import quote as _quote
                     encoded_path = _quote(file_path, safe="/")
@@ -640,7 +709,7 @@ async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str, user
         logger.warning("Ingestion %s: missing user_id, refusing GitHub sync without user OAuth context", job_id)
         return
 
-    token = await get_github_token(user_id)
+    token = await get_github_token(user_id, allow_env_fallback=True)
     if not token:
         logger.warning("Ingestion %s: missing OAuth token for user %s", job_id, user_id)
         return
