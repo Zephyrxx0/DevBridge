@@ -1,0 +1,151 @@
+"use client";
+
+import { useMemo } from "react";
+import { ChevronDown, ChevronRight, Code2, Folder, GitBranch } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export type FileNode = {
+  name: string;
+  path: string;
+  type: "file" | "directory";
+  children?: FileNode[];
+};
+
+export type BranchInfo = {
+  name: string;
+  is_default?: boolean;
+};
+
+interface FileExplorerProps {
+  fileTree: FileNode | null;
+  expandedFolders: Set<string>;
+  toggleFolder: (path: string) => void;
+  loadingFiles: boolean;
+  selectedFilePath: string | null;
+  onSelectFile: (path: string) => void;
+  branches: BranchInfo[];
+  selectedBranch: string;
+  setSelectedBranch: (branch: string) => void;
+  branchIndexMsg: string;
+  branchLoadError: string;
+  defaultBranchName: string;
+}
+
+export function FileExplorer({
+  fileTree,
+  expandedFolders,
+  toggleFolder,
+  loadingFiles,
+  selectedFilePath,
+  onSelectFile,
+  branches,
+  selectedBranch,
+  setSelectedBranch,
+  branchIndexMsg,
+  branchLoadError,
+  defaultBranchName,
+}: FileExplorerProps) {
+  const renderTreeNode = (node: FileNode, depth = 0): React.ReactNode => {
+    const isDirectory = node.type === "directory";
+    const isExpanded = expandedFolders.has(node.path);
+
+    if (depth === 0 && node.children?.length) {
+      return node.children.map((child) => renderTreeNode(child, depth + 1));
+    }
+
+    if (isDirectory) {
+      return (
+        <div key={node.path}>
+          <button
+            type="button"
+            draggable
+            onDragStart={(event) => {
+              event.dataTransfer.setData(
+                "application/x-devbridge-ref",
+                JSON.stringify({ kind: "folder", filePath: node.path, startLine: 1, endLine: 1, code: "" })
+              );
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-[var(--foreground-muted)] hover:bg-[var(--surface-2)]"
+            style={{ paddingLeft: `${depth * 12}px` }}
+            onClick={() => toggleFolder(node.path)}
+          >
+            <ChevronDown className={cn("size-3.5 transition-transform", isExpanded ? "" : "-rotate-90")} />
+            <Folder className="size-3.5" />
+            <span className="truncate">{node.name}</span>
+          </button>
+          {isExpanded && node.children?.length ? node.children.map((child) => renderTreeNode(child, depth + 1)) : null}
+        </div>
+      );
+    }
+
+    return (
+      <button
+        key={node.path}
+        type="button"
+        draggable
+        onDragStart={(event) => {
+          event.dataTransfer.setData(
+            "application/x-devbridge-ref",
+            JSON.stringify({ kind: "file", filePath: node.path, startLine: 1, endLine: 1, code: "" })
+          );
+        }}
+        onClick={() => onSelectFile(node.path)}
+        className={cn(
+          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-[var(--foreground-muted)] hover:bg-[var(--surface-2)]",
+          selectedFilePath === node.path ? "bg-[var(--surface-3)] text-[var(--foreground)]" : ""
+        )}
+        style={{ paddingLeft: `${depth * 12}px` }}
+      >
+        <Code2 className="size-3.5" />
+        <span className="truncate">{node.name}</span>
+      </button>
+    );
+  };
+
+  return (
+    <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_90%,transparent)] p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <GitBranch className="h-3.5 w-3.5 text-[var(--foreground-subtle)]" />
+          <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]">Files</p>
+        </div>
+        <div className="relative">
+          <select
+            value={selectedBranch}
+            onChange={(e) => setSelectedBranch(e.target.value)}
+            className="appearance-none rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2.5 py-1 pr-6 text-[10px] text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)] cursor-pointer"
+          >
+            <option value="">{defaultBranchName ? `default (${defaultBranchName})` : "default"}</option>
+            {branches.map((b) => (
+              <option key={b.name} value={b.name}>{b.name}</option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--foreground-subtle)]" />
+        </div>
+      </div>
+
+      {branchLoadError ? (
+        <p className="mt-1 text-[10px] text-amber-500">Branch fetch warning: {branchLoadError}</p>
+      ) : null}
+
+      {branchIndexMsg ? (
+        <p className="mt-1.5 flex items-center gap-1 text-[10px] text-[var(--foreground-subtle)]">
+          <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-[var(--brand)]" />
+          {branchIndexMsg}
+        </p>
+      ) : null}
+
+      <div className="mt-3 min-h-0 flex-1 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-2">
+        {loadingFiles ? <p className="px-2 py-1 text-xs text-[var(--foreground-subtle)]">Loading files…</p> : null}
+        {!loadingFiles && fileTree ? renderTreeNode(fileTree) : null}
+        {!loadingFiles && !fileTree ? (
+          <p className="px-2 py-1 text-xs text-[var(--foreground-subtle)]">
+            {selectedBranch
+              ? `No files found for branch "${selectedBranch}".`
+              : "No files indexed yet. Use the sidebar to index."}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
