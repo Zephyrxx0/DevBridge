@@ -27,6 +27,7 @@ import {
   InlineCitationSource,
 } from "@/components/ai-elements/inline-citation";
 import { ArtifactViewer } from "./ArtifactViewer";
+import { FeedbackButtons } from "./FeedbackButtons";
 import type { Message, SourceReference, SnippetChip } from "./types";
 
 interface ChatStreamProps {
@@ -274,6 +275,10 @@ export function ChatStream({
                             </div>
                           ) : null}
                         </div>
+                      ) : null}
+
+                      {!isUser ? (
+                        <FeedbackButtons messageIndex={index} messagePreview={message.content} />
                       ) : null}
                     </div>
                   </div>
