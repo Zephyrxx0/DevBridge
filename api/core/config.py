@@ -6,12 +6,6 @@ from pydantic_settings import SettingsConfigDict, BaseSettings
 from api.db.session import normalize_sync_url
 
 
-BIG_MODEL_PORT=8000
-FAST_MODEL_PORT=8001
-FAST_MODEL_TIMEOUT=30
-BIG_MODEL_TIMEOUT=120
-
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -21,10 +15,6 @@ class Settings(BaseSettings):
     embedding_model: str = Field(default="text-embedding-004", validation_alias="EMBEDDING_MODEL")
     google_cloud_project: str | None = Field(default=None, validation_alias="GOOGLE_CLOUD_PROJECT")
     max_context_tokens: int = Field(default=48000, validation_alias="MAX_CONTEXT_TOKENS")
-    big_model_port: int = Field(default=BIG_MODEL_PORT, validation_alias="BIG_MODEL_PORT")
-    fast_model_port: int = Field(default=FAST_MODEL_PORT, validation_alias="FAST_MODEL_PORT")
-    fast_model_timeout: int = Field(default=FAST_MODEL_TIMEOUT, validation_alias="FAST_MODEL_TIMEOUT")
-    big_model_timeout: int = Field(default=BIG_MODEL_TIMEOUT, validation_alias="BIG_MODEL_TIMEOUT")
     repo_cache_dir: str = Field(default="/app/repo_cache", validation_alias="REPO_CACHE_DIR")
     reports_dir: str = Field(default="/app/reports", validation_alias="REPORTS_DIR")
     gcs_bucket_name: str | None = Field(default=None, validation_alias="GCS_BUCKET_NAME")
