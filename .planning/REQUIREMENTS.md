@@ -81,6 +81,11 @@ This document maps the v0.2 milestone requirements to the architectural refineme
 - **Topic Extraction**: "Intern confusion" topics from query logs
 - **No Clustering**: Skip pgvector clustering initially
 
+### FR-07: UI Overhaul
+- **Landing Page**: Modern landing page with feature highlights and value proposition.
+- **Chat UI**: Interactive streaming feedback, better readability, and thread navigation.
+- **Consistency**: Global application of shadcn/ui and consistent spacing/typography.
+
 ---
 
 ## Database Schema Requirements

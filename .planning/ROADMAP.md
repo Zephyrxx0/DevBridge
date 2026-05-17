@@ -164,6 +164,18 @@
 3. Application fully functional using external Google AI Studio API.
 4. Gemma integration preserved as local or API-based fallback/fast-path.
 
+### Phase 28: UI Overhaul: Landing Page, Chat Interface, and Global Polishing
+**Goal**: Revitalize the frontend user experience with a modern, cohesive design across the landing page, chat interface, and dashboard components.
+**Requirements**: FR-07 (New: UI Polishing)
+**Depends on**: Phase 15, Phase 26
+**Plans**: 0 plans
+
+**Success Criteria**:
+1. Landing page redesigned with modern aesthetics and clear value proposition.
+2. Chat interface updated for better readability and interactive token streaming feedback.
+3. Consistent design system (shadcn/ui) applied globally across all pages.
+4. Mobile responsiveness improved for core user flows.
+
 ---
 
 *Last updated: 2026-05-18 - Phase 27 plans created*

@@ -55,6 +55,12 @@ Next: `/gsd:execute-phase 27`
 - Gemma 4 for Analysis Model with thinking_level=HIGH.
 - Full purge of local AMD/vLLM dependencies to simplify stack.
 
+## Accumulated Context
+
+### Roadmap Evolution
+- Phase 27 added: Model Migration: Replace Qwen with Google AI Studio (Gemini) and Clean Up Local Dependencies
+- Phase 28 added: UI Overhaul: Landing Page, Chat Interface, and Global Polishing
+
 ---
 
 *Updated: 2026-05-18*
