@@ -1,2 +1,0 @@
-- Phase plan filename convention: <phase-number>-<plan-number>-plan.md
-- Apply this naming format consistently across all phase plan files under .planning/phases/

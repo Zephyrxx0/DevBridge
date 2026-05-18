@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RepoProvider, useRepo } from "@/contexts/repo-context";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 const NAV_ITEMS = [
   { label: "Chat", hrefSuffix: "", icon: MessageCircle },
@@ -48,6 +49,7 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { repo, loading, refreshRepo } = useRepo();
+  const [mounted, setMounted] = useState(false);
 
   const [indexingState, setIndexingState] = useState<"idle" | "running" | "success" | "error">("idle");
   const [indexingProgress, setIndexingProgress] = useState("");
@@ -56,6 +58,10 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
   const dismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const apiUrl = "/api/backend";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const repoId = basePath.split("/").at(-1);
@@ -166,96 +172,23 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <aside className="hidden w-[224px] shrink-0 border-r border-[var(--border)] bg-[var(--sidebar)] md:flex md:flex-col">
-        <div className="relative border-b border-[var(--border)] px-4 py-6">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-[0.5rem] bg-[var(--brand-muted)] text-[var(--brand)]">
-              <Landmark className="size-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-[var(--text-sm)] font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
-                {loading ? "Loading..." : repo?.name || "Repository"}
-              </p>
-            </div>
-          </Link>
+    <SidebarProvider defaultCollapsed={false}>
+      <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Toggle theme"
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            className="fixed bottom-4 right-4 z-40 h-10 w-10 rounded-full border-[var(--border)] bg-[var(--surface-1)] md:hidden"
+          >
+            {mounted && theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+          </Button>
+          <main className="flex min-h-0 flex-1 overflow-hidden">{children}</main>
         </div>
-
-        <nav className="flex-1 px-2 py-4">
-          {NAV_ITEMS.map((item) => {
-            const href = `${basePath}${item.hrefSuffix}`;
-            const isActive = pathname === href;
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.label}
-                href={href}
-                className={cn(
-                  "mb-1 flex h-12 items-center gap-3 rounded-r-md px-[14px] text-[var(--text-sm)] font-medium text-[var(--foreground-muted)] transition-colors",
-                  isActive
-                    ? "border-l-[3px] border-[var(--brand)] bg-[var(--brand-muted)] text-[var(--brand)]"
-                    : "border-l-[3px] border-transparent hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
-                )}
-              >
-                <Icon className="h-[18px] w-[18px]" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="space-y-3 border-t border-[var(--border)] px-4 py-4">
-          <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">
-            Last indexed: {repo?.lastIndexed ? new Date(repo.lastIndexed).toLocaleDateString() : "never"}
-          </p>
-
-          {indexingState === "running" ? (
-            <div className="rounded-lg border border-[var(--brand-muted)] bg-[var(--brand-muted)] p-3">
-              <div className="flex items-center gap-2">
-                <Loader2 className="size-4 animate-spin text-[var(--brand)]" />
-                <p className="text-xs font-medium text-[var(--brand)]">Indexing...</p>
-              </div>
-              <p className="mt-1 text-[10px] text-[var(--brand)] opacity-80">{indexingProgress}</p>
-              <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--surface-3)]">
-                <div className="h-full animate-pulse rounded-full bg-[var(--brand)]" style={{ width: "60%" }} />
-              </div>
-            </div>
-          ) : indexingState === "success" ? (
-            <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-green-500" />
-                <p className="text-xs font-medium text-green-500">Indexed!</p>
-              </div>
-              <p className="mt-1 text-[10px] text-green-500/80">{indexingProgress}</p>
-            </div>
-          ) : indexingState === "error" ? (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="size-4 text-red-400" />
-                <p className="text-xs font-medium text-red-400">Failed</p>
-              </div>
-              <p className="mt-1 text-[10px] text-red-400/80">{indexingError}</p>
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={triggerIndex}
-            >
-              <Database className="size-4 mr-2" />
-              Index Repository
-            </Button>
-          )}
-        </div>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <main className="flex min-h-0 flex-1">{children}</main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
 

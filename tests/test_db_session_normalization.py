@@ -9,9 +9,9 @@ def test_normalize_conninfo_string_with_sslmode_suffix() -> None:
 
     normalized = _normalize_connection_string(raw)
 
-    assert normalized.startswith("postgresql+psycopg://postgres:RedHotChilliPepper%40123@")
+    assert normalized.startswith("postgresql+asyncpg://postgres:RedHotChilliPepper%40123@")
     assert "db.example.supabase.co:5432/postgres" in normalized
-    assert "sslmode=require" in normalized
+    assert "sslmode=require" not in normalized
 
 
 def test_normalize_conninfo_defaults_sslmode() -> None:
@@ -19,8 +19,8 @@ def test_normalize_conninfo_defaults_sslmode() -> None:
 
     normalized = _normalize_connection_string(raw)
 
-    assert normalized.startswith("postgresql+psycopg://")
-    assert "sslmode=require" in normalized
+    assert normalized.startswith("postgresql+asyncpg://")
+    assert "sslmode=require" not in normalized
 
 
 def test_normalize_url_encodes_reserved_password_chars() -> None:
@@ -28,6 +28,6 @@ def test_normalize_url_encodes_reserved_password_chars() -> None:
 
     normalized = _normalize_connection_string(raw)
 
-    assert normalized.startswith("postgresql+psycopg://")
+    assert normalized.startswith("postgresql+asyncpg://")
     assert "abc%40123" in normalized
     assert normalized.count("@") == 1

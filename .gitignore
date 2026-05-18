@@ -1,14 +1,22 @@
 .agent/
 .agents/
+.claude/
+.codex/
+.opencode/
+.gemini/
+.fallow/
 .env
 .venv/
 .github/
 .gsd/
+.entire/
+.bob/
 
 node_modules/
 graphify-out/
-.planning/
 docs/
+memories/
+.mcp.json
 
 __pycache__/
 .bg-shell/backend-fix2.err.log
@@ -18,6 +26,8 @@ __pycache__/
 .codex/hooks.json
 .entire/logs/entire.log
 GRAPH_REPORT.md
+.pytest_cache/
+.ruffle_cache/
 
 .opencode
 supabase/
@@ -37,4 +47,7 @@ GEMINI.md
 implementation_plan.md
 SETUP.md
 .entire/logs/entire.log
- 
+devbridge-amd-spec.md
+AMD-AUDIT-SPEC.md
+bun.lock
+test-results/.last-run.json

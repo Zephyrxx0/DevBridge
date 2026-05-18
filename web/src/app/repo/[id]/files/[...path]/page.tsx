@@ -63,7 +63,7 @@ export default function CodeViewerPage() {
   const monacoRef = useRef<typeof import("monaco-editor") | null>(null);
   const decorationsRef = useRef<string[]>([]);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/backend";
+  const apiUrl = "/api/backend";
 
   useEffect(() => {
     async function fetchFileContent() {

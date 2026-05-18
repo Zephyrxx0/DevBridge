@@ -1,7 +1,7 @@
 """
 Embedding Worker
 
-Processes asynchronous embedding jobs by calling Vertex AI and 
+Processes asynchronous embedding jobs and 
 upserting vectors into the database.
 """
 
@@ -89,7 +89,7 @@ class BatchProcessor:
                     raise RuntimeError("Failed to initialize vector store")
 
             # 2. Batch generate embeddings
-            # VertexAIEmbeddings.aembed_documents is the async batch method
+            # embedding service exposes async batch method
             embeddings = await vector_db._vectorstore.embedding_service.aembed_documents(contents)
             
             # 3. Batch upsert to database

@@ -30,6 +30,16 @@ class PullRequestRecord:
 
 
 @dataclass
+class UserRecord:
+    id: UUID
+    org_id: UUID | None
+    email: str | None
+    display_name: str | None
+    is_admin: bool = False
+    created_at: datetime | None = None
+
+
+@dataclass
 class Annotation:
     id: UUID
     repo_id: UUID
@@ -199,3 +209,22 @@ class RepoConfig:
                     review_depth=row._mapping["review_depth"],
                 )
         return cls(repo_id=UUID(str(repo_id)), review_depth=review_depth)
+
+
+@dataclass
+class RepoGraph:
+    repo_id: UUID
+    nodes: list[dict]
+    edges: list[dict]
+    updated_at: datetime
+
+
+@dataclass
+class RepoGithubIssue:
+    id: UUID
+    repo_id: UUID
+    issue_number: int
+    title: str
+    body: str | None
+    embedding: list[float] | None
+    updated_at: datetime

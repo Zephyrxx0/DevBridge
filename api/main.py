@@ -12,7 +12,10 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import json
 import asyncio
-from api.agents.orchestrator import Orchestrator
+from urllib import request
+from langchain_core.messages import HumanMessage
+
+from api.agents.graph import graph
 from api.core.config import settings
 from api.db.session import close_db_pool, init_db_pool
 from api.db.cache import PostgresCacheBackend, repo_id_key_builder
@@ -24,10 +27,18 @@ from api.routes import pr
 from api.routes import repo
 from api.routes import questions
 from api.routes import chats
+from api.routes import admin
+from api.routes.chats import stream_graph_events
 from api.db.models import Annotation
 from api.db.vector_store import vector_db
 from api.db.session import get_engine
 from sqlalchemy import text
+from api.core.secrets import get_github_token
+from api.core.scheduler import SchedulerManager
+from api.jobs.cleanup import cleanup_job
+from api.jobs.metrics import collect_daily_metrics
+from api.jobs.reports import run_daily_report_job, run_weekly_report_job
+from api.jobs.sync import sync_github_and_docs_job
 
 # psycopg async is incompatible with ProactorEventLoop on Windows.
 if sys.platform == "win32":
@@ -36,19 +47,222 @@ if sys.platform == "win32":
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+
+def _repo_slug_from_github_url(url: str | None) -> str | None:
+    if not url:
+        return None
+    clean = url.strip().rstrip("/")
+    marker = "github.com/"
+    if marker not in clean:
+        return None
+    tail = clean.split(marker, 1)[1]
+    parts = [segment for segment in tail.split("/") if segment]
+    if len(parts) < 2:
+        return None
+    return f"{parts[0]}/{parts[1]}"
+
+
+async def _github_get_json(url: str, token: str) -> dict | list:
+    def _do_request() -> dict | list:
+        req = request.Request(url)
+        req.add_header("Accept", "application/vnd.github+json")
+        req.add_header("Authorization", f"Bearer {token}")
+        req.add_header("X-GitHub-Api-Version", "2022-11-28")
+        with request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+    return await asyncio.to_thread(_do_request)
+
+
+async def _embed_issue(text_payload: str) -> list[float] | None:
+    if not vector_db._vectorstore:
+        vector_db.initialize()
+    if not vector_db._vectorstore:
+        logger.warning("Skipping issue embedding: vector store unavailable")
+        return None
+
+    try:
+        return await asyncio.to_thread(
+            vector_db._vectorstore.embedding_service.embed_query,
+            text_payload,
+        )
+    except Exception:
+        logger.exception("Failed embedding GitHub issue payload")
+        return None
+
+
+async def sync_issues() -> None:
+    """Daily GitHub issue sync into repo_github_issues table."""
+    engine = get_engine()
+    if engine is None:
+        logger.warning("Skipping issue sync: DB engine unavailable")
+        return
+
+    async with engine.connect() as conn:
+        repo_rows = await conn.execute(text("SELECT id, name, github_url FROM repositories"))
+        repos = [dict(row._mapping) for row in repo_rows.fetchall()]
+
+    upsert_sql = text(
+        """
+        INSERT INTO repo_github_issues (repo_id, issue_number, title, body, embedding, updated_at)
+        VALUES (
+            CAST(:repo_id AS uuid),
+            :issue_number,
+            :title,
+            :body,
+            CAST(:embedding AS vector),
+            NOW()
+        )
+        ON CONFLICT (repo_id, issue_number) DO UPDATE
+        SET title = EXCLUDED.title,
+            body = EXCLUDED.body,
+            embedding = EXCLUDED.embedding,
+            updated_at = NOW()
+        """
+    )
+
+    sync_user_id = (os.getenv("GITHUB_SYNC_USER_ID") or "").strip()
+    if not sync_user_id:
+        logger.info("Skipping scheduled issue sync: GITHUB_SYNC_USER_ID not configured")
+        return
+
+    synced_count = 0
+    for repo in repos:
+        token = await get_github_token(sync_user_id)
+        if not token:
+            logger.warning(
+                "Skipping issue sync for repo %s: missing OAuth token for configured sync user",
+                repo.get("id"),
+            )
+            continue
+
+        repo_id = str(repo.get("id"))
+        repo_slug = _repo_slug_from_github_url(repo.get("github_url")) or repo.get("name")
+        if not repo_slug:
+            continue
+
+        payload: list[dict] = []
+        page = 1
+        while True:
+            issues_url = (
+                f"https://api.github.com/repos/{repo_slug}/issues?state=open&per_page=100&page={page}"
+            )
+            try:
+                page_payload = await _github_get_json(issues_url, token)
+            except Exception:
+                logger.exception("Failed fetching issues for %s (page=%s)", repo_slug, page)
+                break
+
+            if not isinstance(page_payload, list):
+                logger.warning("Unexpected issues payload for %s (page=%s)", repo_slug, page)
+                break
+            if not page_payload:
+                break
+
+            payload.extend([issue for issue in page_payload if isinstance(issue, dict)])
+            if len(page_payload) < 100:
+                break
+            page += 1
+
+        async with engine.connect() as conn:
+            for issue in payload:
+                if not isinstance(issue, dict) or issue.get("pull_request"):
+                    continue
+
+                issue_number = issue.get("number")
+                title = (issue.get("title") or "").strip()
+                body = (issue.get("body") or "").strip()
+                if not issue_number or not title:
+                    continue
+
+                embedding_input = f"Issue #{issue_number}: {title}\n\n{body}"
+                try:
+                    embedding = await _embed_issue(embedding_input)
+                except Exception:
+                    logger.exception("Issue embedding crashed for %s#%s", repo_slug, issue_number)
+                    continue
+                if embedding is None:
+                    continue
+
+                try:
+                    await conn.execute(
+                        upsert_sql,
+                        {
+                            "repo_id": repo_id,
+                            "issue_number": int(issue_number),
+                            "title": title,
+                            "body": body,
+                            "embedding": embedding,
+                        },
+                    )
+                except Exception:
+                    logger.exception("Failed upserting issue %s#%s", repo_slug, issue_number)
+                    continue
+                synced_count += 1
+            await conn.commit()
+
+    logger.info("GitHub issue sync completed: %s issues upserted", synced_count)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _ = app
+    scheduler_manager: SchedulerManager | None = None
     if settings.supabase_connection_string:
         await init_db_pool(settings.supabase_connection_string)
         # Initialize caching infrastructure (D-03)
         FastAPICache.init(PostgresCacheBackend(), prefix="devbridge-cache")
+        scheduler_manager = SchedulerManager()
+        scheduler_manager.add_job(
+            sync_github_and_docs_job,
+            trigger="cron",
+            hour=2,
+            minute=0,
+            id="sync_issues",
+            replace_existing=True,
+        )
+        scheduler_manager.add_job(
+            cleanup_job,
+            trigger="cron",
+            hour=3,
+            minute=0,
+            id="cache_cleanup",
+            replace_existing=True,
+        )
+        scheduler_manager.add_job(
+            collect_daily_metrics,
+            trigger="cron",
+            hour=4,
+            minute=0,
+            id="metrics_collection",
+            replace_existing=True,
+        )
+        scheduler_manager.add_job(
+            run_daily_report_job,
+            trigger="cron",
+            hour=5,
+            minute=0,
+            id="daily_report",
+            replace_existing=True,
+        )
+        scheduler_manager.add_job(
+            run_weekly_report_job,
+            trigger="cron",
+            day_of_week="sun",
+            hour=6,
+            minute=0,
+            id="weekly_report",
+            replace_existing=True,
+        )
+        scheduler_manager.start()
+        app.state.scheduler_manager = scheduler_manager
     yield
+    if scheduler_manager is not None:
+        scheduler_manager.shutdown()
+        app.state.scheduler_manager = None
     await close_db_pool()
 
 
 app = FastAPI(title="DevBridge API", lifespan=lifespan)
-orchestrator = Orchestrator()
 
 # Configure CORS for Next.js with explicit origin allowlist.
 allowed_origins = [
@@ -96,6 +310,7 @@ app.include_router(pr.router)
 app.include_router(repo.router)
 app.include_router(questions.router)
 app.include_router(chats.router)
+app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 
 class ChatRequest(BaseModel):
     message: str
@@ -173,7 +388,10 @@ async def root():
 @cache(expire=3600, namespace="chat", key_builder=repo_id_key_builder)
 async def chat(request: ChatRequest):
     try:
-        response = await orchestrator.chat(request.message, request.thread_id)
+        config = {"configurable": {"thread_id": request.thread_id}}
+        input_data = {"messages": [HumanMessage(content=request.message)]}
+        result = await graph.ainvoke(input_data, config=config)
+        response = str(result["messages"][-1].content)
         try:
             await _persist_chat_turn(request.repo_id, request.thread_id, request.message, response)
         except Exception:
@@ -257,6 +475,15 @@ async def chat_stream(request: ChatRequest):
         # Generator that yields SSE events for streaming responses
         async def event_generator():
             try:
+                def _contains_fallback(value) -> bool:
+                    if isinstance(value, dict):
+                        if value.get("fallback") is True:
+                            return True
+                        return any(_contains_fallback(v) for v in value.values())
+                    if isinstance(value, (list, tuple)):
+                        return any(_contains_fallback(v) for v in value)
+                    return False
+
                 def _extract_chunk_text(content) -> str:
                     if isinstance(content, str):
                         return content
@@ -272,24 +499,21 @@ async def chat_stream(request: ChatRequest):
                         return "".join(parts)
                     return ""
 
-                # Send optimization metadata first (D-08)
-                metadata = {
-                    "type": "metadata",
-                    "using_cache": False,  # Note: @cache decorator handles this transparently
-                    "optimization": "parallel"
-                }
-                yield f"data: {json.dumps(metadata)}\n\n"
-
-                from langchain_core.messages import HumanMessage
-                
-                # Create config for checkpointing
-                config = {"configurable": {"thread_id": request.thread_id}}
-                input_data = {"messages": [HumanMessage(content=request.message)]}
+                fallback_sent = False
+                yield f"data: {json.dumps({'type': 'metadata', 'fallback': False})}\n\n"
 
                 chunk_count = 0
                 accumulated_response = ""
-                async for event in orchestrator.graph.astream(input_data, config=config, stream_mode="messages"):
-                    message_chunk = event[0] if isinstance(event, tuple) and event else None
+                async for event in stream_graph_events(request.message, request.thread_id):
+                    if not fallback_sent and _contains_fallback(event):
+                        fallback_sent = True
+                        yield f"data: {json.dumps({'type': 'metadata', 'fallback': True})}\n\n"
+
+                    event_name = str(event.get("event", ""))
+                    if event_name != "on_chat_model_stream":
+                        continue
+
+                    message_chunk = event.get("data", {}).get("chunk")
                     if message_chunk is None:
                         continue
 
@@ -302,7 +526,14 @@ async def chat_stream(request: ChatRequest):
 
                 # Fallback for providers/modes that produce no incremental chunks.
                 if chunk_count == 0:
-                    response = await orchestrator.chat(request.message, request.thread_id)
+                    config = {"configurable": {"thread_id": request.thread_id}}
+                    input_data = {"messages": [HumanMessage(content=request.message)]}
+                    final_state = await graph.ainvoke(input_data, config=config)
+                    if final_state.get("fallback") is True and not fallback_sent:
+                        fallback_sent = True
+                        yield f"data: {json.dumps({'type': 'metadata', 'fallback': True})}\n\n"
+
+                    response = str(final_state["messages"][-1].content)
                     if response:
                         accumulated_response = response
                         yield f"data: {json.dumps({'type': 'chunk', 'content': response})}\n\n"

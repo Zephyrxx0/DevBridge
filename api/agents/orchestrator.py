@@ -1,10 +1,17 @@
+"""Legacy orchestrator module.
+
+Phase 21 routes now invoke `api.agents.graph.graph` directly for both sync and
+streaming chat execution. Keep this module for backward compatibility in
+existing tests and tooling.
+"""
+
 import os
 import logging
 import json
 import asyncio
 from uuid import UUID
+from urllib import request
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.language_models.chat_models import BaseChatModel
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
@@ -14,6 +21,7 @@ from langchain_core.tools import tool
 from sqlalchemy import text
 
 from api.db.session import get_engine
+from api.core.secrets import get_github_token
 
 from api.db.models import Annotation
 
@@ -266,33 +274,206 @@ async def search_error_patterns(query: str, repo: str = "", k: int = 5):
         return "Failed to search error patterns."
 
 
-def get_llm():
-    """Lazy LLM initialization with mock fallback."""
-    from api.core.config import settings
+def _repo_slug_from_github_url(url: str | None) -> str | None:
+    if not url:
+        return None
+    clean = url.strip().rstrip("/")
+    marker = "github.com/"
+    if marker not in clean:
+        return None
+    tail = clean.split(marker, 1)[1]
+    parts = [segment for segment in tail.split("/") if segment]
+    if len(parts) < 2:
+        return None
+    return f"{parts[0]}/{parts[1]}"
 
-    model_name = os.environ.get("VERTEX_AI_MODEL", "gemini-1.5-flash")
-    gcp_project_id = settings.google_cloud_project
-    gcp_location = os.environ.get("GCP_LOCATION", "us-central1")
 
-    if gcp_project_id:
-        logger.info(f"GOOGLE_CLOUD_PROJECT found ({gcp_project_id}), initializing ChatGoogleGenerativeAI")
-        return ChatGoogleGenerativeAI(
-            model=model_name,
-            project=gcp_project_id,
-            location=gcp_location,
-            vertexai=True,
+async def _github_get_json(url: str, token: str) -> dict:
+    def _do_request() -> dict:
+        req = request.Request(url)
+        req.add_header("Accept", "application/vnd.github+json")
+        req.add_header("Authorization", f"Bearer {token}")
+        req.add_header("X-GitHub-Api-Version", "2022-11-28")
+        with request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+    return await asyncio.to_thread(_do_request)
+
+
+async def _sync_single_issue(repo_id: str, issue_number: int, user_id: str) -> bool:
+    engine = get_engine()
+    if engine is None:
+        return False
+
+    token = await get_github_token(user_id)
+    if not token:
+        logger.warning("GitHub token missing; cannot on-demand sync issue")
+        return False
+
+    async with engine.connect() as conn:
+        repo_row = await conn.execute(
+            text("SELECT id, name, github_url FROM repositories WHERE CAST(id AS text) = :repo_id LIMIT 1"),
+            {"repo_id": repo_id},
         )
+        repo_data = repo_row.fetchone()
+    if not repo_data:
+        return False
 
-    logger.warning(
-        "No GOOGLE_CLOUD_PROJECT found, using mock LLM fallback. Set GOOGLE_CLOUD_PROJECT to enable AI responses."
+    repo = dict(repo_data._mapping)
+    repo_slug = _repo_slug_from_github_url(repo.get("github_url")) or repo.get("name")
+    if not repo_slug:
+        return False
+
+    issue_url = f"https://api.github.com/repos/{repo_slug}/issues/{issue_number}"
+    try:
+        issue = await _github_get_json(issue_url, token)
+    except Exception:
+        logger.exception("On-demand issue sync failed for %s#%s", repo_slug, issue_number)
+        return False
+
+    if not isinstance(issue, dict) or issue.get("pull_request"):
+        return False
+
+    title = (issue.get("title") or "").strip()
+    body = (issue.get("body") or "").strip()
+    if not title:
+        return False
+
+    from api.db.vector_store import vector_db
+
+    if not vector_db._vectorstore:
+        vector_db.initialize()
+    if not vector_db._vectorstore:
+        return False
+
+    embedding_input = f"Issue #{issue_number}: {title}\n\n{body}"
+    try:
+        embedding = await asyncio.to_thread(
+            vector_db._vectorstore.embedding_service.embed_query,
+            embedding_input,
+        )
+    except Exception:
+        logger.exception("Failed embedding issue for on-demand sync %s#%s", repo_slug, issue_number)
+        return False
+
+    upsert_sql = text(
+        """
+        INSERT INTO repo_github_issues (repo_id, issue_number, title, body, embedding, updated_at)
+        VALUES (CAST(:repo_id AS uuid), :issue_number, :title, :body, CAST(:embedding AS vector), NOW())
+        ON CONFLICT (repo_id, issue_number) DO UPDATE
+        SET title = EXCLUDED.title,
+            body = EXCLUDED.body,
+            embedding = EXCLUDED.embedding,
+            updated_at = NOW()
+        """
+    )
+    async with engine.connect() as conn:
+        await conn.execute(
+            upsert_sql,
+            {
+                "repo_id": str(repo.get("id")),
+                "issue_number": issue_number,
+                "title": title,
+                "body": body,
+                "embedding": embedding,
+            },
+        )
+        await conn.commit()
+    return True
+
+
+@tool
+async def map_issue_to_files(repo_id: str, issue_number: int, user_id: str, limit: int = 5):
+    """Map a GitHub issue to relevant code files using in-DB pgvector cosine similarity."""
+    engine = get_engine()
+    if engine is None:
+        return "Database engine is not initialized."
+
+    normalized_limit = max(1, min(limit, 20))
+
+    exists_sql = text(
+        """
+        SELECT 1
+        FROM repo_github_issues
+        WHERE repo_id = CAST(:repo_id AS uuid)
+          AND issue_number = :issue_number
+        LIMIT 1
+        """
+    )
+    async with engine.connect() as conn:
+        existing = await conn.execute(exists_sql, {"repo_id": repo_id, "issue_number": issue_number})
+        issue_exists = existing.fetchone() is not None
+
+    if not user_id:
+        return "user_id is required to resolve GitHub OAuth token for issue mapping."
+
+    if not issue_exists:
+        synced = await _sync_single_issue(repo_id, issue_number, user_id)
+        if not synced:
+            return f"Issue #{issue_number} not found and on-demand sync failed for repo {repo_id}."
+
+    join_sql = text(
+        """
+        WITH repo_meta AS (
+          SELECT id::text AS repo_uuid, name, github_url
+          FROM repositories
+          WHERE CAST(id AS text) = :repo_id
+          LIMIT 1
+        )
+        SELECT
+          cc.file_path,
+          cc.start_line,
+          cc.end_line,
+          cc.content,
+          (cc.embedding <=> rgi.embedding) AS distance
+        FROM repo_github_issues rgi
+        CROSS JOIN repo_meta rm
+        JOIN code_chunks cc
+          ON cc.embedding IS NOT NULL
+         AND (
+              cc.repo = rm.name
+              OR cc.repo = rm.repo_uuid
+              OR cc.repo = replace(rm.github_url, 'https://github.com/', '')
+             )
+        WHERE rgi.repo_id = CAST(:repo_id AS uuid)
+          AND rgi.issue_number = :issue_number
+          AND rgi.embedding IS NOT NULL
+        ORDER BY cc.embedding <=> rgi.embedding
+        LIMIT :k
+        """
     )
 
+    async with engine.connect() as conn:
+        result = await conn.execute(
+            join_sql,
+            {"repo_id": repo_id, "issue_number": issue_number, "k": normalized_limit},
+        )
+        rows = [dict(row._mapping) for row in result.fetchall()]
+
+    if not rows:
+        return f"No relevant code files found for issue #{issue_number}."
+
+    lines: list[str] = [f"Top matches for issue #{issue_number} (repo {repo_id}):"]
+    for idx, row in enumerate(rows, start=1):
+        snippet = (row.get("content") or "").strip().replace("\n", " ")
+        snippet = snippet[:280] + ("..." if len(snippet) > 280 else "")
+        lines.append(
+            f"{idx}. {row.get('file_path')}:{row.get('start_line')}-{row.get('end_line')} "
+            f"(distance={float(row.get('distance') or 0.0):.4f})\n   {snippet}"
+        )
+
+    return "\n".join(lines)
+
+
+def get_llm():
+    """Lazy LLM initialization with local mock fallback."""
+
     class MockLLM(BaseChatModel):
-        model_name: str = "mock-gemini-unavailable"
+        model_name: str = "mock-llm"
 
         @property
         def _llm_type(self) -> str:
-            return "mock-gemini-unavailable"
+            return "mock-llm"
 
         @property
         def _identifying_params(self) -> dict[str, str]:
@@ -312,7 +493,7 @@ def get_llm():
 
             response = AIMessage(
                 content=(
-                    "[Mock] Vertex AI not configured. Set GOOGLE_CLOUD_PROJECT and authenticate with ADC to enable AI responses.\n\n"
+                    "[Mock] Cloud LLM integration removed. Configure new provider integration before production AI responses.\n\n"
                     f"Your message was: {msg_content}"
                 )
             )
@@ -330,6 +511,7 @@ tools = [
     get_pr_detail,
     trace_call_chain,
     search_error_patterns,
+    map_issue_to_files,
 ]
 checkpointer = MemorySaver()
 

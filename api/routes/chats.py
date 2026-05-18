@@ -1,12 +1,39 @@
 import json
 
 from fastapi import APIRouter, HTTPException, Request
+from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 from sqlalchemy import text
 
+from api.agents.graph import graph
+from api.core.config import settings
 from api.db.session import get_engine
+from api.utils.tokenizer import enforce_cap
 
 router = APIRouter(tags=["chats"])
+
+
+async def stream_graph_events(message: str, thread_id: str):
+    config = {"configurable": {"thread_id": thread_id}}
+    input_data = {"messages": [HumanMessage(content=message)]}
+    async for event in graph.astream_events(input_data, config=config, version="v2"):
+        yield event
+
+
+async def _resolve_repo_uuid(conn, repo_id: str) -> str:
+    query = text(
+        """
+        SELECT id
+        FROM repositories
+        WHERE CAST(id AS text) = :repo_id OR name = :repo_id
+        LIMIT 1
+        """
+    )
+    result = await conn.execute(query, {"repo_id": repo_id})
+    row = result.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail=f"Repository '{repo_id}' not found")
+    return str(row._mapping["id"])
 
 
 class ChatSessionCreate(BaseModel):
@@ -43,8 +70,11 @@ async def list_chats(repo_id: str):
     )
     try:
         async with engine.connect() as conn:
-            result = await conn.execute(query, {"repo_id": repo_id})
+            actual_repo_id = await _resolve_repo_uuid(conn, repo_id)
+            result = await conn.execute(query, {"repo_id": actual_repo_id})
             return [dict(row._mapping) for row in result.fetchall()]
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Chat sessions unavailable: {exc}")
 
@@ -70,9 +100,10 @@ async def create_chat(repo_id: str, payload: ChatSessionCreate, request: Request
     )
     try:
         async with engine.connect() as conn:
+            actual_repo_id = await _resolve_repo_uuid(conn, repo_id)
             result = await conn.execute(
                 query,
-                {"repo_id": repo_id, "title": title, "created_by": user_id},
+                {"repo_id": actual_repo_id, "title": title, "created_by": user_id},
             )
             await conn.commit()
             row = result.fetchone()
@@ -192,6 +223,12 @@ class ChatSessionUpdate(BaseModel):
     title: str
 
 
+class InferenceContextRequest(BaseModel):
+    messages: list[dict]
+    codebase_chunk: str = ""
+    model_type: str = "qwen"
+
+
 @router.patch("/repo/{repo_id}/chats/{session_id}")
 async def rename_chat(repo_id: str, session_id: str, payload: ChatSessionUpdate):
     engine = get_engine()
@@ -208,9 +245,10 @@ async def rename_chat(repo_id: str, session_id: str, payload: ChatSessionUpdate)
     )
     try:
         async with engine.connect() as conn:
+            actual_repo_id = await _resolve_repo_uuid(conn, repo_id)
             result = await conn.execute(
                 query,
-                {"title": payload.title, "session_id": session_id, "repo_id": repo_id},
+                {"title": payload.title, "session_id": session_id, "repo_id": actual_repo_id},
             )
             await conn.commit()
             if result.rowcount == 0:
@@ -220,6 +258,28 @@ async def rename_chat(repo_id: str, session_id: str, payload: ChatSessionUpdate)
         raise
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Chat rename unavailable: {exc}")
+
+
+@router.post("/chats/{session_id}/inference-context")
+async def build_inference_context(session_id: str, payload: InferenceContextRequest):
+    _ = session_id  # reserved for downstream session-specific enrichment
+    try:
+        messages, warning = enforce_cap(
+            payload.messages,
+            payload.codebase_chunk,
+            max_tokens=settings.max_context_tokens,
+            model_type=payload.model_type,
+        )
+
+        response = {
+            "messages": messages,
+            "warning": None,
+        }
+        if warning:
+            response["warning"] = "Context was trimmed to 48K tokens limit. Older history removed."
+        return response
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Context build unavailable: {exc}")
 
 
 @router.delete("/repo/{repo_id}/chats/{session_id}")
@@ -244,9 +304,10 @@ async def delete_chat(repo_id: str, session_id: str):
     )
     try:
         async with engine.connect() as conn:
+            actual_repo_id = await _resolve_repo_uuid(conn, repo_id)
             await conn.execute(delete_msgs_query, {"session_id": session_id})
             result = await conn.execute(
-                delete_chat_query, {"session_id": session_id, "repo_id": repo_id}
+                delete_chat_query, {"session_id": session_id, "repo_id": actual_repo_id}
             )
             await conn.commit()
             if result.rowcount == 0:
