@@ -13,7 +13,8 @@ async def intent_classifier(state: AgentState) -> dict[str, str]:
         f"Query: {user_query}"
     )
     model = get_model(is_fast=True)
-    response = await asyncio.wait_for(model.ainvoke(prompt), timeout=settings.fast_model_timeout)
+    timeout = settings.fast_model_timeout
+    response = await asyncio.wait_for(model.ainvoke(prompt), timeout=timeout)
 
     decision = str(getattr(response, "content", "")).strip().upper()
     return {"next": "fast_worker" if "FAST" in decision else "big_worker"}

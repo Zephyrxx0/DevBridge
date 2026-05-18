@@ -5,6 +5,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { LayoutTransition } from "@/components/layout/LayoutTransition";
 import { ResilienceHandler } from "@/components/ui/ResilienceHandler";
+import { AgentationMount } from "@/components/dev/AgentationMount";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -64,6 +65,7 @@ export default function RootLayout({
         </a>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} disableTransitionOnChange>
           <ResilienceHandler />
+          <AgentationMount />
           <LayoutTransition>{children}</LayoutTransition>
         </ThemeProvider>
       </body>

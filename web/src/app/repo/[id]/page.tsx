@@ -71,6 +71,8 @@ export default function RepoWorkspacePage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(true);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [snippetChips, setSnippetChips] = useState<SnippetChip[]>([]);
@@ -96,6 +98,7 @@ export default function RepoWorkspacePage() {
   );
   const editorRef = useRef<import("monaco-editor").editor.IStandaloneCodeEditor | null>(null);
   const selectionRef = useRef<import("monaco-editor").Selection | null>(null);
+  const streamAbortRef = useRef<AbortController | null>(null);
 
   const apiUrl = "/api/backend";
   const branchStorageKey = `repo:${repoId}:selectedBranch`;
@@ -162,16 +165,21 @@ export default function RepoWorkspacePage() {
 
   useEffect(() => {
     async function loadSessions() {
-      const response = await fetch(`${apiUrl}/repo/${repoId}/chats`);
-      if (!response.ok) return;
-      const data = (await response.json()) as ChatSession[];
-      setSessions(data);
-      if (data.length > 0) {
-        const savedSessionId = localStorage.getItem(`repo:${repoId}:activeSessionId`);
-        const targetSession = savedSessionId && data.some((item) => item.id === savedSessionId) ? savedSessionId : data[0].id;
-        setActiveSessionId(targetSession);
-      } else {
-        await createSession();
+      setLoadingSessions(true);
+      try {
+        const response = await fetch(`${apiUrl}/repo/${repoId}/chats`);
+        if (!response.ok) return;
+        const data = (await response.json()) as ChatSession[];
+        setSessions(data);
+        if (data.length > 0) {
+          const savedSessionId = localStorage.getItem(`repo:${repoId}:activeSessionId`);
+          const targetSession = savedSessionId && data.some((item) => item.id === savedSessionId) ? savedSessionId : data[0].id;
+          setActiveSessionId(targetSession);
+        } else {
+          await createSession();
+        }
+      } finally {
+        setLoadingSessions(false);
       }
     }
     loadSessions();
@@ -179,11 +187,19 @@ export default function RepoWorkspacePage() {
 
   useEffect(() => {
     async function loadMessages() {
-      if (!activeSessionId) return;
-      const response = await fetch(`${apiUrl}/chats/${activeSessionId}/messages`);
-      if (!response.ok) return;
-      const data = (await response.json()) as Array<{ role: "user" | "assistant"; content: string; sources?: SourceReference[] }>;
-      setMessages(data.map((item) => ({ role: item.role, content: item.content, sources: item.sources })));
+      if (!activeSessionId) {
+        setLoadingMessages(false);
+        return;
+      }
+      setLoadingMessages(true);
+      try {
+        const response = await fetch(`${apiUrl}/chats/${activeSessionId}/messages`);
+        if (!response.ok) return;
+        const data = (await response.json()) as Array<{ role: "user" | "assistant"; content: string; sources?: SourceReference[] }>;
+        setMessages(data.map((item) => ({ role: item.role, content: item.content, sources: item.sources })));
+      } finally {
+        setLoadingMessages(false);
+      }
     }
     loadMessages();
   }, [activeSessionId, apiUrl]);
@@ -446,9 +462,12 @@ export default function RepoWorkspacePage() {
 
     try {
       if (!activeSessionId) return;
+      const controller = new AbortController();
+      streamAbortRef.current = controller;
       const response = await fetch(`${apiUrl}/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           message: fullPrompt,
           repo_id: repoId,
@@ -542,6 +561,10 @@ export default function RepoWorkspacePage() {
         setIsLoading(false);
       }
     } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        setIsLoading(false);
+        return;
+      }
       const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
       setMessages((prev) => {
         const next = [...prev];
@@ -553,7 +576,14 @@ export default function RepoWorkspacePage() {
         return next;
       });
       setIsLoading(false);
+    } finally {
+      streamAbortRef.current = null;
     }
+  };
+
+  const stopGenerating = () => {
+    streamAbortRef.current?.abort();
+    setIsLoading(false);
   };
 
   const removeSnippetChip = (chipId: string) => {
@@ -711,10 +741,11 @@ export default function RepoWorkspacePage() {
   };
 
   return (
-    <div className="h-dvh overflow-hidden p-1 sm:p-2">
+    <div className="h-dvh w-full overflow-hidden p-1 sm:p-2">
       <ChatLayout 
         sidebar={
           <HistorySidebar 
+            repoId={repoId}
             sessions={sessions}
             activeSessionId={activeSessionId}
             onSelectSession={setActiveSessionId}
@@ -728,11 +759,12 @@ export default function RepoWorkspacePage() {
             <ChatStream 
               messages={messages} 
               isLoading={isLoading} 
+              isInitializing={loadingSessions || loadingMessages}
               repoId={repoId} 
               onOpenArtifact={openArtifact}
               onSelectSource={setSelectedSource}
             />
-            <ChatInput 
+            <ChatInput
               input={input}
               setInput={setInput}
               isLoading={isLoading}
@@ -740,6 +772,7 @@ export default function RepoWorkspacePage() {
               onRemoveSnippet={removeSnippetChip}
               onDropSnippet={handleDropSnippet}
               onSubmit={handleSubmit}
+              onStopGenerating={stopGenerating}
             />
           </div>
         }

@@ -68,7 +68,9 @@ const TokenSpan = ({ token }: { token: ThemedToken }) => (
         fontStyle: isItalic(token.fontStyle) ? "italic" : undefined,
         fontWeight: isBold(token.fontStyle) ? "bold" : undefined,
         textDecoration: isUnderline(token.fontStyle) ? "underline" : undefined,
-        ...token.htmlStyle,
+        ...(token.htmlStyle && typeof token.htmlStyle === "object"
+          ? (token.htmlStyle as CSSProperties)
+          : {}),
       } as CSSProperties
     }
   >

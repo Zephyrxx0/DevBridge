@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     internal_auth_token: str | None = Field(default=None, validation_alias="INTERNAL_AUTH_TOKEN")
     report_summary_model: str = Field(default="gemma-4-9b-it", validation_alias="REPORT_SUMMARY_MODEL")
     gemini_api_key: str | None = Field(default=None, validation_alias="GEMINI_API_KEY")
+    fast_model_timeout: float = Field(default=20.0, validation_alias="FAST_MODEL_TIMEOUT")
 
     def __init__(self, **values):
         super().__init__(**values)

@@ -9,6 +9,7 @@ import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { Message as ElementsMessage, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "@/components/ai-elements/tool";
 import {
@@ -33,6 +34,7 @@ import type { Message, SourceReference, SnippetChip } from "./types";
 interface ChatStreamProps {
   messages: Message[];
   isLoading: boolean;
+  isInitializing?: boolean;
   repoId: string;
   onOpenArtifact: (artifact: SnippetChip) => void;
   onSelectSource: (source: SourceReference) => void;
@@ -41,6 +43,7 @@ interface ChatStreamProps {
 export function ChatStream({
   messages,
   isLoading,
+  isInitializing = false,
   repoId,
   onOpenArtifact,
   onSelectSource,
@@ -71,14 +74,37 @@ export function ChatStream({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_88%,transparent)] p-2.5">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1 py-1">
       <Conversation>
         <ConversationContent className="p-0">
-          <div className="space-y-[var(--space-md)] pr-1">
+          <div className="space-y-[var(--space-md)]">
             {messages.length === 0 && !isLoading ? (
-              <div className="flex h-full flex-col animate-in fade-in zoom-in duration-500">
-                <OnboardingGuide repoId={repoId} />
-              </div>
+              isInitializing ? (
+                <div className="flex h-full flex-col gap-4 p-3">
+                  <div className="flex items-start gap-3">
+                    <Skeleton className="h-9 w-9 rounded-full" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-20 w-full rounded-xl" />
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Skeleton className="h-9 w-9 rounded-full" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-14 w-[85%] rounded-xl" />
+                    </div>
+                  </div>
+                  <div className="mt-auto space-y-2">
+                    <Skeleton className="h-3 w-40" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex h-full flex-col animate-in fade-in zoom-in duration-500">
+                  <OnboardingGuide repoId={repoId} />
+                </div>
+              )
             ) : null}
             {messages.map((message, index) => {
               const messageMeta = message as Message & {
@@ -114,28 +140,25 @@ export function ChatStream({
 
               return (
                 <ElementsMessage key={`${message.role}-${index}`} from={message.role}>
-                  <div className={cn("flex max-w-[85%] gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}>
-                    <Avatar className="mt-1 shrink-0">
-                      <AvatarFallback className={cn(isUser ? "bg-[var(--surface-3)] text-[var(--foreground)]" : "bg-[var(--brand-muted)] text-[var(--brand)]")}>
-                        {isUser ? "U" : "DB"}
-                      </AvatarFallback>
-                    </Avatar>
+                  <div className={cn("flex w-full gap-2.5", isUser ? "flex-row-reverse justify-end" : "flex-row")}>
+                    {isUser ? (
+                      <Avatar className="mt-1 shrink-0">
+                        <AvatarFallback className="bg-[var(--surface-3)] text-[var(--foreground)]">U</AvatarFallback>
+                      </Avatar>
+                    ) : null}
 
-                    <div className="min-w-0 flex-1">
-                      {!isUser ? (
+                    <div className={cn("min-w-0", isUser ? "max-w-[92%]" : "flex-1")}>
+                      {!isUser && message.fallback ? (
                         <div className="mb-1 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]">
-                          <span>DevBridge</span>
-                          {message.fallback ? (
-                            <Badge className="border-yellow-500/20 bg-yellow-500/10 text-yellow-600">Fast Mode</Badge>
-                          ) : null}
+                          <Badge className="border-yellow-500/20 bg-yellow-500/10 text-yellow-600">Fast Mode</Badge>
                         </div>
                       ) : null}
                       
                       <MessageContent className={cn(
-                        "rounded-xl border px-4 py-3 text-[var(--text-body)] leading-[1.62] max-w-full",
+                        "px-0 py-0 text-[var(--text-body)] leading-[1.62] max-w-full",
                         isUser
-                          ? "border-[var(--border)] bg-[var(--surface-3)] text-[var(--foreground)]"
-                          : "border-[var(--brand-muted)] bg-[var(--surface-1)] text-[var(--foreground)]"
+                          ? "rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-4 py-3 text-[var(--foreground)]"
+                          : "border-0 bg-transparent text-[var(--foreground)]"
                       )}>
                         {!isUser ? (
                           <MessageResponse>{message.content}</MessageResponse>
@@ -201,7 +224,7 @@ export function ChatStream({
 
                       {isUser && message.artifacts?.length ? (
                         <div className="pt-2">
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap justify-end gap-2">
                             {message.artifacts.map((artifact) => (
                               <button
                                 type="button"
@@ -209,8 +232,7 @@ export function ChatStream({
                                 onClick={() => onOpenArtifact(artifact)}
                                 className="rounded-md border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-2 py-1 font-mono text-[var(--text-xs)] text-[var(--brand)] hover:opacity-90"
                               >
-                                {artifact.kind === "folder" ? "Folder" : artifact.kind === "file" ? "File" : "Snippet"}: {artifact.filePath}
-                                {artifact.kind === "snippet" ? `:${artifact.startLine}-${artifact.endLine}` : ""}
+                                {artifact.filePath.split("/").pop() || artifact.filePath}
                               </button>
                             ))}
                           </div>
@@ -229,14 +251,14 @@ export function ChatStream({
                           </button>
 
                           {isSourceOpen ? (
-                            <div className="mt-2 space-y-2">
+                            <div className="mt-2 space-y-1.5">
                               <div className="flex flex-wrap gap-2">
                                 {message.sources?.map((source, sourceIndex) => (
                                   <button
                                     type="button"
                                     key={`${source.file_path}-${sourceIndex}`}
                                     onClick={() => onSelectSource(source)}
-                                    className="rounded-md border border-border bg-(--surface-2) px-2 py-1 font-mono text-(length:--text-xs) text-(--foreground-muted) transition-colors hover:border-(--brand-muted) hover:text-(--brand)"
+                                    className="rounded-md border border-border bg-(--surface-2) px-1.5 py-0.5 font-mono text-[10px] text-(--foreground-muted) transition-colors hover:border-(--brand-muted) hover:text-(--brand)"
                                   >
                                     {source.file_path}:{source.start_line}
                                   </button>
@@ -244,7 +266,7 @@ export function ChatStream({
                               </div>
 
                               <InlineCitation className="block">
-                                <InlineCitationText className="text-xs text-[var(--foreground-subtle)]">
+                                <InlineCitationText className="text-[10px] text-[var(--foreground-subtle)]">
                                   Source citations
                                 </InlineCitationText>
                                 <InlineCitationCard>

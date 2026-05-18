@@ -1,8 +1,12 @@
 {
   "dependencies": {
     "@paper-design/shaders-react": "^0.0.76",
+    "agentation-mcp": "^1.2.0",
     "docsify-cli": "^4.4.4",
     "supabase": "^2.98.2",
     "tailwindcss": "^4.3.0"
+  },
+  "devDependencies": {
+    "agentation": "^3.0.2"
   }
 }

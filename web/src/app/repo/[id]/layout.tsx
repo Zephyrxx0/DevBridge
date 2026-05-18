@@ -25,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RepoProvider, useRepo } from "@/contexts/repo-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/layout/AppSidebar";
 
 const NAV_ITEMS = [
   { label: "Chat", hrefSuffix: "", icon: MessageCircle },
@@ -50,6 +49,7 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { repo, loading, refreshRepo } = useRepo();
+  const [mounted, setMounted] = useState(false);
 
   const [indexingState, setIndexingState] = useState<"idle" | "running" | "success" | "error">("idle");
   const [indexingProgress, setIndexingProgress] = useState("");
@@ -58,6 +58,10 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
   const dismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const apiUrl = "/api/backend";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const repoId = basePath.split("/").at(-1);
@@ -170,8 +174,6 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
   return (
     <SidebarProvider defaultCollapsed={false}>
       <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
-        <AppSidebar />
-
         <div className="flex min-w-0 flex-1 flex-col">
           <Button
             type="button"
@@ -181,7 +183,7 @@ function RepoLayoutContent({ children, isRootWorkspace, basePath }: { children: 
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             className="fixed bottom-4 right-4 z-40 h-10 w-10 rounded-full border-[var(--border)] bg-[var(--surface-1)] md:hidden"
           >
-            {theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+            {mounted && theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
           </Button>
           <main className="flex min-h-0 flex-1 overflow-hidden">{children}</main>
         </div>

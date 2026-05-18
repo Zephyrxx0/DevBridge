@@ -261,7 +261,7 @@ export default function HomePage() {
     <main id="main-content" className="min-h-dvh text-[var(--foreground)]">
       <BackgroundEffects />
       <DitheringBackground />
-      <div className="relative pt-6">
+      <div className="relative bg-transparent pt-6" style={{ backgroundColor: "transparent" }}>
         <FloatingHeader />
       </div>
       <HeroSection />

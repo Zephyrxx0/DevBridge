@@ -36,23 +36,33 @@ export function FeedbackButtons({ messageIndex, messagePreview }: FeedbackButton
     <div className="mt-2 flex items-center gap-2">
       <Button
         type="button"
-        size="sm"
+        size="icon-sm"
         variant={value === "helpful" ? "secondary" : "outline"}
         aria-pressed={value === "helpful"}
         onClick={() => submitFeedback("helpful")}
         disabled={isSubmitting}
+        className="group h-7 overflow-hidden"
+        title="Helpful"
       >
-        <ThumbsUp className="size-3.5" /> Helpful
+        <ThumbsUp className="size-3.5 shrink-0" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap text-[0.75rem] opacity-0 transition-all duration-200 group-hover:ml-1 group-hover:max-w-20 group-hover:opacity-100">
+          Helpful
+        </span>
       </Button>
       <Button
         type="button"
-        size="sm"
+        size="icon-sm"
         variant={value === "not_helpful" ? "secondary" : "outline"}
         aria-pressed={value === "not_helpful"}
         onClick={() => submitFeedback("not_helpful")}
         disabled={isSubmitting}
+        className="group h-7 overflow-hidden"
+        title="Not Helpful"
       >
-        <ThumbsDown className="size-3.5" /> Not Helpful
+        <ThumbsDown className="size-3.5 shrink-0" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap text-[0.75rem] opacity-0 transition-all duration-200 group-hover:ml-1 group-hover:max-w-24 group-hover:opacity-100">
+          Not Helpful
+        </span>
       </Button>
     </div>
   );

@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -304,25 +303,16 @@
 }
 
 .dither-transition .dither-bg {
-  transition: filter 600ms ease, opacity 600ms ease;
+  transition: none;
 }
 
 .dither-bg {
-  filter: blur(0px);
-  opacity: 0.35;
+  filter: blur(var(--dither-blur, 0px));
+  opacity: var(--dither-opacity, 0.35);
 }
 
 .dark .dither-bg {
-  opacity: 0.15;
-}
-
-.dither-blur .dither-bg {
-  filter: blur(12px);
-  opacity: 0.15;
-}
-
-.dark .dither-blur .dither-bg {
-  opacity: 0.08;
+  opacity: var(--dither-opacity, 0.15);
 }
 
 /* Stagger delays */

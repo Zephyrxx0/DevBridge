@@ -7,5 +7,6 @@ from api.core.config import settings
 
 async def fast_worker_node(state: AgentState) -> dict:
     model = get_model(is_fast=True)
-    result = await asyncio.wait_for(model.ainvoke(state["messages"]), timeout=settings.fast_model_timeout)
+    timeout = settings.fast_model_timeout
+    result = await asyncio.wait_for(model.ainvoke(state["messages"]), timeout=timeout)
     return {"messages": [result]}

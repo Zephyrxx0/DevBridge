@@ -1,12 +1,12 @@
 "use client";
 
-import { 
-  PromptInput, 
-  PromptInputTextarea, 
-  PromptInputSubmit 
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputSubmit
 } from "@/components/ai-elements/prompt-input";
 import type { SnippetChip } from "./types";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 
 interface ChatInputProps {
   input: string;
@@ -16,6 +16,7 @@ interface ChatInputProps {
   onRemoveSnippet: (id: string) => void;
   onDropSnippet: (e: React.DragEvent<HTMLDivElement>) => void;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onStopGenerating?: () => void;
 }
 
 export function ChatInput({
@@ -25,17 +26,18 @@ export function ChatInput({
   snippetChips,
   onRemoveSnippet,
   onDropSnippet,
-  onSubmit
+  onSubmit,
+  onStopGenerating,
 }: ChatInputProps) {
   return (
-    <div className="mt-2.5 shrink-0 border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_92%,transparent)] pt-2.5">
+    <div className="mt-1 shrink-0 border-t border-[var(--border)]/70 pt-1.5">
       <div
-        className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_94%,transparent)] p-2 focus-within:border-[var(--brand)] focus-within:ring-1 focus-within:ring-[var(--brand)] transition-all"
+        className="flex flex-col gap-2 rounded-lg bg-transparent p-1"
         onDragOver={(event) => event.preventDefault()}
         onDrop={onDropSnippet}
       >
         {snippetChips.length > 0 ? (
-          <div className="flex flex-wrap gap-2 px-1">
+          <div className="flex flex-wrap justify-end gap-2 px-1">
             {snippetChips.map((chip) => (
               <button
                 key={chip.id}
@@ -44,15 +46,15 @@ export function ChatInput({
                 className="min-h-11 rounded-full border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-3 py-1 text-[var(--text-xs)] text-[var(--brand)] transition-opacity hover:opacity-80"
                 title="Click to remove snippet"
               >
-                {chip.filePath}:{chip.startLine}-{chip.endLine}
+                {chip.filePath.split("/").pop() || chip.filePath}
               </button>
             ))}
           </div>
         ) : null}
         
         <div className="flex items-end gap-[var(--space-sm)]">
-          <PromptInput 
-            className="flex-1"
+          <PromptInput
+            className="flex-1 border-transparent ring-0 shadow-none focus-within:border-transparent focus-within:ring-0 focus-within:shadow-none [&_[data-slot=input-group]]:border-transparent [&_[data-slot=input-group]]:ring-0 [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:has-[[data-slot=input-group-control]:focus-visible]:border-transparent [&_[data-slot=input-group]]:has-[[data-slot=input-group-control]:focus-visible]:ring-0 [&_[data-slot=input-group-addon][data-align=inline-end]]:border-l-0 [&_[data-slot=input-group-addon][data-align=inline-end]]:pl-0"
             onSubmit={(msg, e) => onSubmit(e)}
           >
             <PromptInputTextarea
@@ -74,11 +76,13 @@ export function ChatInput({
                 }
               }}
             />
-            <PromptInputSubmit 
-              disabled={isLoading || !input.trim()}
-              className="mb-1 mr-1 size-11 shrink-0 rounded-md bg-[var(--brand)] text-white hover:bg-[var(--brand)]/90"
+            <PromptInputSubmit
+              disabled={!isLoading && !input.trim()}
+              status={isLoading ? "streaming" : "ready"}
+              onStop={onStopGenerating}
+              className="mb-1 mr-1 size-11 shrink-0 rounded-md border-0 border-l-0 bg-[var(--brand)] text-white ring-0 shadow-none outline-none focus-visible:border-transparent focus-visible:ring-0 before:hidden after:hidden hover:bg-[var(--brand)]/90"
             >
-              <ArrowUp className="size-4" />
+              {isLoading ? <Square className="size-4" /> : <ArrowUp className="size-4" />}
             </PromptInputSubmit>
           </PromptInput>
         </div>
