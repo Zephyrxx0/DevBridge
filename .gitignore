@@ -48,3 +48,4 @@ SETUP.md
 devbridge-amd-spec.md
 AMD-AUDIT-SPEC.md
 bun.lock
+test-results/.last-run.json
