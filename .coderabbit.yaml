@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  path_filters:
+    - "src/**"
+    - "app/**"
+    - "!node_modules/**"
+    - "!dist/**"
+    - "!.planning/**"
+    - "!memories/**"
+    - "!bg-shell/**"
