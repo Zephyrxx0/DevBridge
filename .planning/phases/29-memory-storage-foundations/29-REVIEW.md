@@ -1,128 +1,95 @@
 ---
 phase: 29-memory-storage-foundations
-reviewed: 2026-05-19T17:58:53Z
+reviewed: 2026-05-19T19:05:00Z
 depth: standard
-files_reviewed: 8
+files_reviewed: 3
 files_reviewed_list:
-  - api/requirements.txt
-  - sql/migrations/0032_create_hindsight_schema.sql
-  - api/db/hindsight.py
-  - api/agents/state.py
   - api/main.py
-  - api/agents/graph.py
-  - api/routes/chats.py
   - api/tests/test_phase29_memory.py
+  - api/db/cache.py
 findings:
-  critical: 3
-  warning: 3
+  critical: 1
+  warning: 2
   info: 0
-  total: 6
+  total: 3
 status: issues_found
 ---
 
 # Phase 29: Code Review Report
 
-**Reviewed:** 2026-05-19T17:58:53Z  
+**Reviewed:** 2026-05-19T19:05:00Z  
 **Depth:** standard  
-**Files Reviewed:** 8  
+**Files Reviewed:** 3  
 **Status:** issues_found
 
 ## Summary
 
-Phase 29 files reviewed end-to-end. Memory integration works shape-level, but security boundaries weak. Main risk: cross-user memory/data exposure when auth context missing or route checks absent. Also startup/scheduler robustness gaps can create recurring runtime failures.
+Reviewed phase 29-04 source changes (`api/main.py`, `api/tests/test_phase29_memory.py`) plus called cache key builder (`api/db/cache.py`). Auth guard for missing `user_id` now present and tests cover basic rejection/isolation. Found one shipping blocker: response cache key omits authenticated user identity, enabling cross-user response reuse. Also found two warning-level robustness gaps.
 
 ## Critical Issues (BLOCKER)
 
-### CR-01: Unauthenticated requests collapse into shared memory bank
+### CR-01: Chat cache key omits authenticated user identity (cross-user data leak)
 
 **Classification:** BLOCKER  
-**File:** `api/main.py:400-402`, `api/main.py:517-518`  
-**Issue:** When `request.state.user_id` missing, code uses hardcoded `"default_user"`. All unauthenticated callers share same Hindsight `bank_id`. This leaks recalled memory across users/sessions. Security/privacy break.
+**File:** `api/main.py:397`, `api/main.py:485`, `api/db/cache.py:88-108`  
+**Issue:** `/chat` and `/chat/stream` responses are cached with `repo_id_key_builder`, but that builder does not include `request.state.user_id`. Cache key effectively depends on namespace/repo/function/args payload, so two different authenticated users with same payload can receive each other’s cached response. This breaks memory isolation and can disclose prior user output.
 
-**Fix:** Reject missing user context (401/403), or derive per-session anonymous id (never global constant).
+**Fix:** Include authenticated `user_id` in cache key (and fail closed when missing). Example:
 
 ```python
-user_id = getattr(request.state, "user_id", None)
-if not user_id:
-    raise HTTPException(status_code=401, detail="Missing authenticated user context")
+def repo_id_key_builder(func, namespace: str = "", request=None, response=None, args=None, kwargs=None):
+    from fastapi_cache import FastAPICache
 
-config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id}}
-```
+    req = None
+    if kwargs and "request" in kwargs:
+        req = kwargs["request"]
+    elif args:
+        req = next((a for a in args if hasattr(a, "state")), None)
 
-### CR-02: Chat routes have no ownership/authorization enforcement
+    user_id = getattr(getattr(req, "state", None), "user_id", None) or "anonymous"
 
-**Classification:** BLOCKER  
-**File:** `api/routes/chats.py:50-79`, `119-139`, `141-190`, `192-220`, `232-260`, `285-319`  
-**Issue:** Endpoints access/modify chat sessions by `repo_id`/`session_id` without checking caller identity against `created_by` (or repo membership). Any caller with IDs can read/write/delete other users’ chats. Direct authz bypass.
-
-**Fix:** Require authenticated `user_id`; enforce in SQL `WHERE ... created_by = :user_id` (or membership table check) for every read/write/delete path.
-
-```sql
-SELECT id, repo_id, title
-FROM chat_sessions
-WHERE id = CAST(:session_id AS uuid)
-  AND created_by = CAST(:user_id AS uuid)
-```
-
-### CR-03: Scheduler registers `hindsight_reflect` even when Hindsight init failed
-
-**Classification:** BLOCKER  
-**File:** `api/main.py:213`, `258-264`; `api/db/hindsight.py:55-57`  
-**Issue:** `hindsight_db.initialize()` return value ignored. Job always schedules `hindsight_db.reflect`. If init failed, `reflect()` raises `ValueError` every run. Repeating job failure, noisy logs, unstable ops.
-
-**Fix:** Gate job registration on successful initialization.
-
-```python
-hindsight_ready = hindsight_db.initialize()
-if hindsight_ready:
-    scheduler_manager.add_job(
-        hindsight_db.reflect,
-        trigger="cron",
-        hour="*/4",
-        id="hindsight_reflect",
-        replace_existing=True,
-    )
-else:
-    logger.warning("Skipping hindsight_reflect job: Hindsight unavailable")
+    payload = kwargs or {}
+    prefix = FastAPICache.get_prefix()
+    return f"{prefix}:{namespace}:{user_id}:{func.__module__}:{func.__name__}:{payload}"
 ```
 
 ## Warnings
 
-### WR-01: Process-wide env mutation for DB/LLM config creates hidden side effects
+### WR-01: Unbounded `thread_id` default causes cross-session thread collision risk
 
 **Classification:** WARNING  
-**File:** `api/db/hindsight.py:34-45`  
-**Issue:** `initialize()` mutates `os.environ` globally at runtime. Other libs/tasks in same process can read changed values unexpectedly. Hard-to-debug coupling.
+**File:** `api/main.py:326`  
+**Issue:** `ChatRequest.thread_id` defaults to constant `"default-thread"`. Clients that omit `thread_id` share one conversation thread, causing unintended context mixing and hard-to-debug behavior.
 
-**Fix:** Pass config directly to client constructor when supported; else confine env mutation to startup and avoid repeated mutation calls.
-
-### WR-02: Mutable default on Pydantic model field
-
-**Classification:** WARNING  
-**File:** `api/routes/chats.py:47`  
-**Issue:** `sources: list[dict] = []` uses mutable default. Can cause shared-state bugs across model instances depending on model behavior/version.
-
-**Fix:** Use `Field(default_factory=list)`.
+**Fix:** Make `thread_id` required or generate per-request UUID when omitted.
 
 ```python
-from pydantic import BaseModel, Field
-
-class ChatMessageCreate(BaseModel):
-    role: str
-    content: str
-    sources: list[dict] = Field(default_factory=list)
+class ChatRequest(BaseModel):
+    message: str
+    thread_id: str  # required
+    repo_id: Optional[str] = None
 ```
 
-### WR-03: Broad exception handling drops root cause and masks failure mode
+### WR-02: Tests mutate global FastAPICache without teardown isolation
 
 **Classification:** WARNING  
-**File:** `api/main.py:414-416`, `559-562`, `572-574`; `api/routes/chats.py:78-80`, `115-117`, `137-139`, `188-190`, `218-220`, `259-260`, `318-319`  
-**Issue:** Multiple `except Exception` blocks return generic errors. Incident triage and client behavior degrade; important failure semantics lost.
+**File:** `api/tests/test_phase29_memory.py:31`, `api/tests/test_phase29_memory.py:60`  
+**Issue:** Each test calls `FastAPICache.init(...)` on shared global cache state without reset fixture. In larger suite runs this can cause hidden coupling/order dependence.
 
-**Fix:** Catch expected exceptions separately (validation, DB, auth), keep structured error mapping, retain safe diagnostic identifiers in response.
+**Fix:** Use fixture that initializes and clears cache around each test.
+
+```python
+import pytest
+
+@pytest.fixture(autouse=True)
+def cache_isolation():
+    FastAPICache.init(InMemoryBackend(), prefix="phase29-test")
+    yield
+    FastAPICache.reset()
+```
 
 ---
 
-_Reviewed: 2026-05-19T17:58:53Z_  
+_Reviewed: 2026-05-19T19:05:00Z_  
 _Reviewer: the agent (gsd-code-reviewer)_  
 _Depth: standard_
