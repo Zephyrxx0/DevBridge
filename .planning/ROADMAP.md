@@ -18,8 +18,9 @@
   3. System saves interaction history by offloading `reflect()` to an asynchronous APScheduler job
 **Plans**:
 - [x] 29-01-PLAN.md — Setup Hindsight dependencies, isolated DB schema, and test scaffold
-- [ ] 29-02-PLAN.md — Define memory state in AgentState and implement HindsightManager service
-- [ ] 29-03-PLAN.md — Integrate recall/retain nodes into LangGraph and schedule async reflection
+- [x] 29-02-PLAN.md — Define memory state in AgentState and implement HindsightManager service
+- [x] 29-03-PLAN.md — Integrate recall/retain nodes into LangGraph and schedule async reflection
+- [ ] 29-04-PLAN.md — Enforce authentication in chat endpoints and implement isolation tests
 
 ### Phase 30: Speculative Router Setup
 **Goal**: System dynamically routes to the large model only when necessary to preserve GPU VRAM
@@ -57,7 +58,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 29. Memory Storage & Foundations | 1/3 | In Progress|  |
+| 29. Memory Storage & Foundations | 3/4 | In Progress|  |
 | 30. Speculative Router Setup | 0/0 | Not started | - |
 | 31. Memory Curation Dashboard | 0/0 | Not started | - |
 | 32. Streaming Escalation UX | 0/0 | Not started | - |
