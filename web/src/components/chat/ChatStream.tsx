@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
@@ -29,6 +28,7 @@ import {
 } from "@/components/ai-elements/inline-citation";
 import { ArtifactViewer } from "./ArtifactViewer";
 import { FeedbackButtons } from "./FeedbackButtons";
+import { EscalationIndicator } from "./EscalationIndicator";
 import type { Message, SourceReference, SnippetChip } from "./types";
 
 interface ChatStreamProps {
@@ -148,10 +148,11 @@ export function ChatStream({
                     ) : null}
 
                     <div className={cn("min-w-0", isUser ? "ml-auto max-w-[92%]" : "flex-1")}>
-                      {!isUser && message.fallback ? (
-                        <div className="mb-1 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]">
-                          <Badge className="border-yellow-500/20 bg-yellow-500/10 text-yellow-600">Fast Mode</Badge>
-                        </div>
+                      {!isUser && (typeof message.cascaded !== "undefined" || typeof message.model_used !== "undefined" || message.fallback) ? (
+                        <EscalationIndicator
+                          modelUsed={message.model_used}
+                          cascaded={typeof message.cascaded !== "undefined" ? message.cascaded : message.fallback}
+                        />
                       ) : null}
                       
                       <MessageContent className={cn(
