@@ -28,6 +28,7 @@ from api.routes import repo
 from api.routes import questions
 from api.routes import chats
 from api.routes import admin
+from api.routes.memory import router as memory_router
 from api.routes.chats import stream_graph_events
 from api.db.models import Annotation
 from api.db.vector_store import vector_db
@@ -320,6 +321,7 @@ app.include_router(repo.router)
 app.include_router(questions.router)
 app.include_router(chats.router)
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
+app.include_router(memory_router, prefix="/api/backend/memory", tags=["memory"])
 
 class ChatRequest(BaseModel):
     message: str
