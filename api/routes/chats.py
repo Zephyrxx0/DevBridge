@@ -13,8 +13,8 @@ from api.utils.tokenizer import enforce_cap
 router = APIRouter(tags=["chats"])
 
 
-async def stream_graph_events(message: str, thread_id: str):
-    config = {"configurable": {"thread_id": thread_id}}
+async def stream_graph_events(message: str, thread_id: str, user_id: str):
+    config = {"configurable": {"thread_id": thread_id, "user_id": user_id}}
     input_data = {"messages": [HumanMessage(content=message)]}
     async for event in graph.astream_events(input_data, config=config, version="v2"):
         yield event

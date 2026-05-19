@@ -5,7 +5,7 @@ import os
 import sys
 import secrets as pysecrets
 import uuid
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -386,20 +386,21 @@ async def root():
 
 @app.post("/chat")
 @cache(expire=3600, namespace="chat", key_builder=repo_id_key_builder)
-async def chat(request: ChatRequest):
+async def chat(request: Request, payload: ChatRequest):
     try:
-        config = {"configurable": {"thread_id": request.thread_id}}
-        input_data = {"messages": [HumanMessage(content=request.message)]}
+        user_id = getattr(request.state, "user_id", "default_user")
+        config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id}}
+        input_data = {"messages": [HumanMessage(content=payload.message)]}
         result = await graph.ainvoke(input_data, config=config)
         response = str(result["messages"][-1].content)
         try:
-            await _persist_chat_turn(request.repo_id, request.thread_id, request.message, response)
+            await _persist_chat_turn(payload.repo_id, payload.thread_id, payload.message, response)
         except Exception:
             logger.exception("Failed to persist chat turn for /chat")
 
         return {
             "response": response,
-            "thread_id": request.thread_id
+            "thread_id": payload.thread_id
         }
     except Exception as e:
         logger.exception("Chat request failed")
@@ -469,7 +470,7 @@ async def health_db():
 
 @app.post("/chat/stream")
 @cache(expire=3600, namespace="chat_stream", key_builder=repo_id_key_builder)
-async def chat_stream(request: ChatRequest):
+async def chat_stream(request: Request, payload: ChatRequest):
     """SSE streaming endpoint for real-time response delivery."""
     try:
         # Generator that yields SSE events for streaming responses
@@ -504,7 +505,8 @@ async def chat_stream(request: ChatRequest):
 
                 chunk_count = 0
                 accumulated_response = ""
-                async for event in stream_graph_events(request.message, request.thread_id):
+                user_id = getattr(request.state, "user_id", "default_user")
+                async for event in stream_graph_events(payload.message, payload.thread_id, user_id):
                     if not fallback_sent and _contains_fallback(event):
                         fallback_sent = True
                         yield f"data: {json.dumps({'type': 'metadata', 'fallback': True})}\n\n"
@@ -526,8 +528,8 @@ async def chat_stream(request: ChatRequest):
 
                 # Fallback for providers/modes that produce no incremental chunks.
                 if chunk_count == 0:
-                    config = {"configurable": {"thread_id": request.thread_id}}
-                    input_data = {"messages": [HumanMessage(content=request.message)]}
+                    config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id}}
+                    input_data = {"messages": [HumanMessage(content=payload.message)]}
                     final_state = await graph.ainvoke(input_data, config=config)
                     if final_state.get("fallback") is True and not fallback_sent:
                         fallback_sent = True
@@ -540,7 +542,7 @@ async def chat_stream(request: ChatRequest):
 
                 # Send done event
                 try:
-                    await _persist_chat_turn(request.repo_id, request.thread_id, request.message, accumulated_response)
+                    await _persist_chat_turn(payload.repo_id, payload.thread_id, payload.message, accumulated_response)
                 except Exception:
                     logger.exception("Failed to persist chat turn for /chat/stream")
                 yield f"data: {json.dumps({'type': 'done'})}\n\n"
