@@ -13,7 +13,7 @@
 - [x] **MEM-04**: User can curate and edit agent memory via a Memory Dashboard UI.
 
 ### UX
-- [ ] **UX-01**: User can view Cascadeflow model escalation states via SSE frontend display.
+- [x] **UX-01**: User can view Cascadeflow model escalation states via SSE frontend display.
 
 ## Future Requirements (Deferred)
 - None
@@ -32,4 +32,4 @@
 | MEM-02 | Phase 29 | Complete |
 | MEM-03 | Phase 29 | Complete |
 | MEM-04 | Phase 31 | Complete |
-| UX-01 | Phase 32 | Pending |
+| UX-01 | Phase 32 | Complete |

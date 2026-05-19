@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-19T22:11:47.663Z"
+last_updated: "2026-05-19T22:26:30.000Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 14
-  completed_plans: 12
-  percent: 86
+  completed_plans: 13
+  percent: 93
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 
 ## Current Position
 
-Phase: 32
-Plan: Not started
-Status: Ready to execute
+Phase: 32 (streaming-escalation-ux) — EXECUTING
+Plan: 2 of 2
+Status: Plan 32-01 complete; ready for 32-02
 **Phase**: Phase 32: Streaming Escalation UX
-**Plan**: None
-**Status**: Context gathered; decisions for real-time escalation UI locked.
+**Plan**: 32-02-PLAN.md next
+**Status**: SSE metadata data-layer shipped (backend + frontend state).
 
 ## Performance Metrics
 
 - **Phases Completed**: 3 / 4
-- **Plans Completed**: 12 / 12
+- **Plans Completed**: 13 / 14
 
 ## Accumulated Context
 
@@ -51,6 +51,8 @@ Status: Ready to execute
 - **D-31-01**: Added dedicated memory router with `verify_admin` + `bank_id=user_id` isolation for list/delete/update.
 - **D-31-02**: Implemented direct SQL fallback for memory text updates using parameterized query.
 - **D-31-03**: Stabilized memory dashboard e2e with deterministic Playwright route mocks (`@list`, `@delete`, `@edit`).
+- **D-32-01**: Emit only allowlisted SSE metadata fields (`fallback`, `model_used`, `cascaded`) via recursive extraction.
+- **D-32-02**: Merge metadata SSE events into latest assistant message state to preserve backward-compatible fallback behavior.
 
 ### Blockers / Open Questions
 
@@ -66,3 +68,4 @@ Status: Ready to execute
 - [x] Setup cascadeflow dependency, validator schema utility, and phase-30 routing test scaffold (Plan 30-01).
 - [x] Close escalation gap with real rerun behavior and robust routing verification (Plan 30-04).
 - [x] Deliver memory curation dashboard backend + frontend + edit/delete flows (Phase 31).
+- [x] Enrich SSE protocol and frontend chat message state with escalation metadata (Plan 32-01).

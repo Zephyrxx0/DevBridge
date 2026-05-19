@@ -59,7 +59,7 @@
   2. User receives explicit visual notification via SSE events when an escalation to the big model occurs
   3. UI maintains a stable chat experience during model transitions
 **Plans**:
-- [ ] 32-01-PLAN.md — Enrich SSE protocol and frontend message state with model metadata
+- [x] 32-01-PLAN.md — Enrich SSE protocol and frontend message state with model metadata
 - [ ] 32-02-PLAN.md — Implement animated escalation indicators and E2E verification
 **UI hint**: yes
 
@@ -70,4 +70,4 @@
 | 29. Memory Storage & Foundations | 4/4 | Complete    | 2026-05-19 |
 | 30. Speculative Router Setup | 4/4 | Complete   | 2026-05-19 |
 | 31. Memory Curation Dashboard | 4/4 | Complete   | 2026-05-19 |
-| 32. Streaming Escalation UX | 0/0 | Not started | - |
+| 32. Streaming Escalation UX | 1/2 | In Progress|  |
