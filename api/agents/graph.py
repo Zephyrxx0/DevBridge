@@ -4,9 +4,7 @@ from hindsight_langgraph import create_recall_node, create_retain_node
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
-from api.agents.nodes.big import big_worker_node
-from api.agents.nodes.fast import fast_worker_node
-from api.agents.nodes.router import intent_classifier
+from api.agents.nodes.cascade import cascade_node
 from api.agents.state import AgentState
 from api.db.hindsight import hindsight_db
 
@@ -65,16 +63,12 @@ recall = _create_recall_wrapper()
 retain = _create_retain_wrapper()
 
 builder.add_node("recall", recall)
-builder.add_node("router", intent_classifier)
-builder.add_node("fast_worker", fast_worker_node)
-builder.add_node("big_worker", big_worker_node)
+builder.add_node("cascade", cascade_node)
 builder.add_node("retain", retain)
 
 builder.add_edge(START, "recall")
-builder.add_edge("recall", "router")
-builder.add_conditional_edges("router", lambda x: x["next"])
-builder.add_edge("fast_worker", "retain")
-builder.add_edge("big_worker", "retain")
+builder.add_edge("recall", "cascade")
+builder.add_edge("cascade", "retain")
 builder.add_edge("retain", END)
 
 graph = builder.compile(checkpointer=MemorySaver())
