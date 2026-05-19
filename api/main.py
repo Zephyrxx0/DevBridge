@@ -397,7 +397,9 @@ async def root():
 @cache(expire=3600, namespace="chat", key_builder=repo_id_key_builder)
 async def chat(request: Request, payload: ChatRequest):
     try:
-        user_id = getattr(request.state, "user_id", "default_user")
+        user_id = getattr(request.state, "user_id", None)
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Authentication required")
         config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id}}
         input_data = {"messages": [HumanMessage(content=payload.message)]}
         result = await graph.ainvoke(input_data, config=config)
@@ -482,6 +484,10 @@ async def health_db():
 async def chat_stream(request: Request, payload: ChatRequest):
     """SSE streaming endpoint for real-time response delivery."""
     try:
+        user_id = getattr(request.state, "user_id", None)
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Authentication required")
+
         # Generator that yields SSE events for streaming responses
         async def event_generator():
             try:
@@ -514,7 +520,6 @@ async def chat_stream(request: Request, payload: ChatRequest):
 
                 chunk_count = 0
                 accumulated_response = ""
-                user_id = getattr(request.state, "user_id", "default_user")
                 async for event in stream_graph_events(payload.message, payload.thread_id, user_id):
                     if not fallback_sent and _contains_fallback(event):
                         fallback_sent = True
