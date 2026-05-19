@@ -44,8 +44,11 @@
   1. User can access a Memory Dashboard UI to view stored "Experiences" and "World Facts"
   2. User can edit or delete specific memory entries
   3. Curated memory updates take effect immediately in subsequent agent interactions
-**Plans**: TBD
-**UI hint**: yes
+**Plans**:
+- [ ] 31-01-PLAN.md — Memory Backend API with List and Delete endpoints
+- [ ] 31-02-PLAN.md — Dashboard Foundation and Navigation
+- [ ] 31-03-PLAN.md — Memory Management UI (Listing and Deletion)
+- [ ] 31-04-PLAN.md — Memory Editing and Direct Updates
 
 ### Phase 32: Streaming Escalation UX
 **Goal**: Users are visually informed of model routing and escalation in real-time
@@ -64,5 +67,5 @@
 |-------|----------------|--------|-----------|
 | 29. Memory Storage & Foundations | 4/4 | Complete    | 2026-05-19 |
 | 30. Speculative Router Setup | 4/4 | Complete   | 2026-05-19 |
-| 31. Memory Curation Dashboard | 0/0 | Not started | - |
+| 31. Memory Curation Dashboard | 0/4 | In Progress | - |
 | 32. Streaming Escalation UX | 0/0 | Not started | - |
