@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-05-19T21:26:22.633Z"
+status: ready
+last_updated: "2026-05-20T00:00:00.000Z"
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 8
-  percent: 67
+  completed_plans: 12
+  percent: 100
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 
 ## Current Position
 
-Phase: 31
+Phase: 32
 Plan: Not started
 Status: Ready to execute
 **Phase**: Phase 31: Memory Curation Dashboard
-**Plan**: None
-**Status**: Context gathered; UI decisions for /dashboard/memory locked.
+**Plan**: Completed (31-01 through 31-04)
+**Status**: Phase complete; ready to start Phase 32.
 
 ## Performance Metrics
 
-- **Phases Completed**: 1 / 4
-- **Plans Completed**: 5
+- **Phases Completed**: 3 / 4
+- **Plans Completed**: 12 / 12
 
 ## Accumulated Context
 
@@ -48,6 +48,9 @@ Status: Ready to execute
 - **D-30-02**: Lock `model_used` and `cascaded` metadata expectations in scaffold tests before cascade node implementation.
 - **D-30-04-01**: Use `ValidatorCascadeAgent` wrapper to inject schema-validator gating with cascadeflow 1.1.0 API constraints.
 - **D-30-04-02**: On schema failure, rerun full turn with direct big-model path and return replaced content.
+- **D-31-01**: Added dedicated memory router with `verify_admin` + `bank_id=user_id` isolation for list/delete/update.
+- **D-31-02**: Implemented direct SQL fallback for memory text updates using parameterized query.
+- **D-31-03**: Stabilized memory dashboard e2e with deterministic Playwright route mocks (`@list`, `@delete`, `@edit`).
 
 ### Blockers / Open Questions
 
@@ -62,3 +65,4 @@ Status: Ready to execute
 - [x] Close isolation safety gaps and implement tests (Plan 29-04).
 - [x] Setup cascadeflow dependency, validator schema utility, and phase-30 routing test scaffold (Plan 30-01).
 - [x] Close escalation gap with real rerun behavior and robust routing verification (Plan 30-04).
+- [x] Deliver memory curation dashboard backend + frontend + edit/delete flows (Phase 31).
