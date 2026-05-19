@@ -2,7 +2,7 @@
 phase: 30
 slug: speculative-router-setup
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-05-20
 ---
@@ -39,8 +39,11 @@ created: 2026-05-20
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
 | 30-01-01 | 01 | 1 | ROUT-01 | — | N/A | unit | `pip show cascadeflow` | ✅ | ⬜ pending |
-| 30-01-02 | 01 | 1 | ROUT-01 | — | N/A | integration | `pytest tests/test_phase30_routing.py::test_gemma_path` | ⬜ W0 | ⬜ pending |
-| 30-01-03 | 01 | 2 | ROUT-02 | — | N/A | integration | `pytest tests/test_phase30_routing.py::test_escalation_path` | ⬜ W0 | ⬜ pending |
+| 30-01-02 | 01 | 1 | ROUT-01 | — | N/A | integration | `pytest tests/test_phase30_routing.py` | ⬜ W0 | ⬜ pending |
+| 30-02-01 | 02 | 2 | ROUT-01 | — | N/A | unit | `python -c "from api.agents.state import AgentState"` | ✅ | ⬜ pending |
+| 30-02-02 | 02 | 2 | ROUT-01, ROUT-02 | T-30-02 | Retries configured | integration | `pytest tests/test_phase30_routing.py` | ⬜ W0 | ⬜ pending |
+| 30-03-01 | 03 | 3 | ROUT-01 | — | N/A | e2e | `pytest tests/test_phase21_e2e.py` | ✅ | ⬜ pending |
+| 30-03-02 | 03 | 3 | ROUT-01, ROUT-02 | T-30-03 | Auth isolation | e2e | `pytest tests/test_phase30_routing.py tests/test_phase21_e2e.py` | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -48,7 +51,7 @@ created: 2026-05-20
 
 ## Wave 0 Requirements
 
-- [ ] `tests/test_phase30_routing.py` — stubs for ROUT-01, ROUT-02
+- [ ] `tests/test_phase30_routing.py` — stubs for ROUT-01, ROUT-02, and metadata checks.
 
 ---
 
@@ -62,11 +65,11 @@ created: 2026-05-20
 
 ## Validation Sign-Off
 
-- [ ] All tasks have <automated> verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have <automated> verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
