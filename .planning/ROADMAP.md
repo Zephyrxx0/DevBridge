@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Phases
-- [x] **Phase 29: Memory Storage & Foundations** - Integrate Hindsight for persistent agent memory backed by pgvector (completed 2026-05-19)
+- [x] **Phase 29: Memory Storage & Foundations** - Integrate Hindsight for persistent agent memory backed by pgvector (completed 2026-05-19)
 - [ ] **Phase 30: Speculative Router Setup** - Implement Cascadeflow for dynamic, speculative model routing
 - [ ] **Phase 31: Memory Curation Dashboard** - Build UI for curating and editing agent mental models
 - [ ] **Phase 32: Streaming Escalation UX** - Expose model escalation states to the frontend via SSE
@@ -28,9 +28,12 @@
 **Requirements**: ROUT-01, ROUT-02
 **Success Criteria**:
   1. System uses Cascadeflow to let the fast model (Gemma) draft responses and validates them heuristically
-  2. System automatically escalates entire conversation turns to the big model (Qwen) on validation failure
+  2. System automatically escalates entire conversation turns to the big model (Gemini 2.5 Flash) on validation failure
   3. System enforces strict concurrency limits on big model requests to prevent MI300X OOM errors
-**Plans**: TBD
+**Plans**:
+- [ ] 30-01-PLAN.md — Setup Cascadeflow dependencies, validation schemas, and test scaffold
+- [ ] 30-02-PLAN.md — Implement speculative cascade node with Pydantic validation
+- [ ] 30-03-PLAN.md — Integrate cascade node into LangGraph agent workflow
 
 ### Phase 31: Memory Curation Dashboard
 **Goal**: Users can view and manage the agent's long-term memory via a dashboard
@@ -59,6 +62,6 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 29. Memory Storage & Foundations | 4/4 | Complete    | 2026-05-19 |
-| 30. Speculative Router Setup | 0/0 | Not started | - |
+| 30. Speculative Router Setup | 0/3 | Not started | - |
 | 31. Memory Curation Dashboard | 0/0 | Not started | - |
 | 32. Streaming Escalation UX | 0/0 | Not started | - |
