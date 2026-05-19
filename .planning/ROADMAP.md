@@ -16,7 +16,10 @@
   1. System initializes Hindsight using the existing Supabase pgvector instance for unified storage
   2. Agent workflows retrieve contextual priming by invoking `recall()` before execution
   3. System saves interaction history by offloading `reflect()` to an asynchronous APScheduler job
-**Plans**: TBD
+**Plans**:
+- [ ] 29-01-PLAN.md — Setup Hindsight dependencies, isolated DB schema, and test scaffold
+- [ ] 29-02-PLAN.md — Define memory state in AgentState and implement HindsightManager service
+- [ ] 29-03-PLAN.md — Integrate recall/retain nodes into LangGraph and schedule async reflection
 
 ### Phase 30: Speculative Router Setup
 **Goal**: System dynamically routes to the large model only when necessary to preserve GPU VRAM
@@ -54,7 +57,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 29. Memory Storage & Foundations | 0/0 | Not started | - |
+| 29. Memory Storage & Foundations | 0/3 | In Progress | - |
 | 30. Speculative Router Setup | 0/0 | Not started | - |
 | 31. Memory Curation Dashboard | 0/0 | Not started | - |
 | 32. Streaming Escalation UX | 0/0 | Not started | - |
