@@ -195,8 +195,24 @@ export default function RepoWorkspacePage() {
       try {
         const response = await fetch(`${apiUrl}/chats/${activeSessionId}/messages`);
         if (!response.ok) return;
-        const data = (await response.json()) as Array<{ role: "user" | "assistant"; content: string; sources?: SourceReference[] }>;
-        setMessages(data.map((item) => ({ role: item.role, content: item.content, sources: item.sources })));
+        const data = (await response.json()) as Array<{
+          role: "user" | "assistant";
+          content: string;
+          sources?: SourceReference[];
+          fallback?: boolean;
+          model_used?: string;
+          cascaded?: boolean;
+        }>;
+        setMessages(
+          data.map((item) => ({
+            role: item.role,
+            content: item.content,
+            sources: item.sources,
+            fallback: item.fallback,
+            model_used: item.model_used,
+            cascaded: item.cascaded,
+          }))
+        );
       } finally {
         setLoadingMessages(false);
       }
@@ -518,7 +534,9 @@ export default function RepoWorkspacePage() {
               accumulatedContent += data.content;
               setMessages((prev) => {
                 const next = [...prev];
+                const last = next[next.length - 1];
                 next[next.length - 1] = {
+                  ...last,
                   role: "assistant",
                   content: accumulatedContent,
                   sources: accumulatedSources.length > 0 ? accumulatedSources : undefined,
@@ -543,7 +561,9 @@ export default function RepoWorkspacePage() {
               accumulatedSources = data.sources;
               setMessages((prev) => {
                 const next = [...prev];
+                const last = next[next.length - 1];
                 next[next.length - 1] = {
+                  ...last,
                   role: "assistant",
                   content: accumulatedContent,
                   sources: accumulatedSources,
