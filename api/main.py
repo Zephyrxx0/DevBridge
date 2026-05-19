@@ -413,6 +413,8 @@ async def chat(request: Request, payload: ChatRequest):
             "response": response,
             "thread_id": payload.thread_id
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("Chat request failed")
         raise HTTPException(status_code=500, detail="Chat request failed")
@@ -574,6 +576,8 @@ async def chat_stream(request: Request, payload: ChatRequest):
                 "X-Accel-Buffering": "no"
             }
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("Failed to initialize streaming response")
         raise HTTPException(status_code=500, detail="Streaming request failed")
