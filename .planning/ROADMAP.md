@@ -58,7 +58,9 @@
   1. User sees real-time UI indicators when the fast model is drafting
   2. User receives explicit visual notification via SSE events when an escalation to the big model occurs
   3. UI maintains a stable chat experience during model transitions
-**Plans**: TBD
+**Plans**:
+- [ ] 32-01-PLAN.md — Enrich SSE protocol and frontend message state with model metadata
+- [ ] 32-02-PLAN.md — Implement animated escalation indicators and E2E verification
 **UI hint**: yes
 
 ## Progress

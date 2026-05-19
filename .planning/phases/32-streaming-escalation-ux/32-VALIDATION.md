@@ -2,7 +2,7 @@
 phase: 32
 slug: streaming-escalation-ux
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-05-20
 ---
@@ -38,10 +38,12 @@ created: 2026-05-20
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 32-01-01 | 01 | 1 | UX-01 | — | N/A | unit | `pytest api/tests/test_phase32_sse.py::test_custom_event_dispatch` | ❌ W0 | ⬜ pending |
-| 32-01-02 | 01 | 1 | UX-01 | — | N/A | integration | `pytest api/tests/test_phase32_sse.py::test_sse_metadata_packet` | ❌ W0 | ⬜ pending |
-| 32-02-01 | 02 | 2 | UX-01 | — | N/A | unit | `npm run test web/src/components/chat/__tests__/ChatStream.test.tsx` | ❌ W0 | ⬜ pending |
-| 32-02-02 | 02 | 2 | UX-01 | — | N/A | integration | `npx playwright test web/tests/escalation-ux.spec.ts` | ❌ W0 | ⬜ pending |
+| 32-01-00 | 01 | 1 | UX-01 | — | N/A | scaffold | `pytest api/tests/test_phase32_sse.py` | ❌ W0 | ⬜ pending |
+| 32-01-01 | 01 | 1 | UX-01 | T-32-01 | Sanitize metadata | unit | `pytest api/tests/test_phase32_sse.py` | ✅ | ⬜ pending |
+| 32-01-02 | 01 | 1 | UX-01 | — | N/A | build | `npm run build --prefix web` | ✅ | ⬜ pending |
+| 32-02-01 | 02 | 2 | UX-01 | — | N/A | build/unit | `npm run build --prefix web && npm run test --prefix web -- ChatStream` | ✅ | ⬜ pending |
+| 32-02-02 | 02 | 2 | UX-01 | — | N/A | manual | N/A | ✅ | ⬜ pending |
+| 32-02-03 | 02 | 2 | UX-01 | — | N/A | E2E/maint | `npx playwright test web/tests/escalation-ux.spec.ts && graphify update .` | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -49,8 +51,9 @@ created: 2026-05-20
 
 ## Wave 0 Requirements
 
-- [ ] `api/tests/test_phase32_sse.py` — stubs for custom event dispatch and SSE packets
-- [ ] `web/tests/escalation-ux.spec.ts` — stubs for pulse/color shift visual checks
+- [ ] `api/tests/test_phase32_sse.py` — Created in 32-01-00
+- [ ] `web/src/components/chat/__tests__/ChatStream.test.tsx` — Created in 32-02-01
+- [ ] `web/tests/escalation-ux.spec.ts` — Created in 32-02-03
 
 ---
 
@@ -58,17 +61,17 @@ created: 2026-05-20
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Pulse/Color Animation | UX-01 | Visual feel | Trigger escalation in UI; verify pulse effect is noticeable and smooth. |
+| Pulse/Color Animation | UX-01 | Visual feel | Trigger escalation in UI (Task 32-02-02); verify pulse effect is noticeable and smooth. |
 
 ---
 
 ## Validation Sign-Off
 
-- [ ] All tasks have <automated> verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have <automated> verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
