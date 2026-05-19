@@ -26,17 +26,25 @@ class _FakeResult:
 class _FakeConn:
     def __init__(self, row: dict[str, object] | None) -> None:
         self._row = row
+        self.executed: list[tuple[object, dict[str, object]]] = []
+        self.committed = False
 
-    async def execute(self, *_args, **_kwargs):
+    async def execute(self, *args, **kwargs):
+        if len(args) >= 2 and isinstance(args[1], dict):
+            self.executed.append((args[0], args[1]))
         return _FakeResult(self._row)
+
+    async def commit(self):
+        self.committed = True
 
 
 class _FakeConnCtx:
     def __init__(self, row: dict[str, object] | None) -> None:
         self._row = row
+        self.conn = _FakeConn(row)
 
     async def __aenter__(self):
-        return _FakeConn(self._row)
+        return self.conn
 
     async def __aexit__(self, *_exc):
         return False
@@ -45,9 +53,11 @@ class _FakeConnCtx:
 class _FakeEngine:
     def __init__(self, row: dict[str, object] | None) -> None:
         self._row = row
+        self.last_conn_ctx: _FakeConnCtx | None = None
 
     def connect(self):
-        return _FakeConnCtx(self._row)
+        self.last_conn_ctx = _FakeConnCtx(self._row)
+        return self.last_conn_ctx
 
 
 class _FakeMemoriesAPI:
@@ -77,13 +87,17 @@ def _build_memory_app(
 ) -> TestClient:
     app = FastAPI()
     app.include_router(memory_router, prefix="/memory")
-    monkeypatch.setattr("api.routes.admin.get_engine", lambda: _FakeEngine(row))
+    fake_engine = _FakeEngine(row)
+    monkeypatch.setattr("api.routes.admin.get_engine", lambda: fake_engine)
+    monkeypatch.setattr("api.routes.memory.get_engine", lambda: fake_engine)
     tracker_ref = tracker if tracker is not None else {}
     memories_ref = memories if memories is not None else []
     monkeypatch.setattr(
         "api.routes.memory.hindsight_db._client",
         _FakeHindsightClient(memories_ref, tracker_ref),
     )
+    if tracker is not None:
+        tracker["engine"] = fake_engine
     return TestClient(app)
 
 
@@ -120,3 +134,26 @@ def test_memory_isolation(monkeypatch: pytest.MonkeyPatch) -> None:
     response = client.get("/memory/list", headers={"X-User-Id": "user-abc"})
     assert response.status_code == 200
     assert tracker["bank_id"] == "user-abc"
+
+
+def test_memory_update_persists_with_bank_isolation(monkeypatch: pytest.MonkeyPatch) -> None:
+    tracker: dict[str, object] = {}
+    client = _build_memory_app(monkeypatch, row={"is_admin": True}, memories=[], tracker=tracker)
+    response = client.put(
+        "/memory/m-123",
+        headers={"X-User-Id": "user-edit"},
+        json={"text": "updated body"},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"status": "updated"}
+
+    engine = tracker.get("engine")
+    assert isinstance(engine, _FakeEngine)
+    assert engine.last_conn_ctx is not None
+    executed = engine.last_conn_ctx.conn.executed
+    assert len(executed) == 1
+    _, params = executed[0]
+    assert params["text"] == "updated body"
+    assert params["id"] == "m-123"
+    assert params["bank_id"] == "user-edit"
+    assert engine.last_conn_ctx.conn.committed is True

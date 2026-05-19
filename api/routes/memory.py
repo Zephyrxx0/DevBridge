@@ -4,11 +4,17 @@ from inspect import isawaitable
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import text
 
 from api.db.hindsight import hindsight_db
-from api.routes.admin import verify_admin
+from api.routes.admin import get_engine, verify_admin
 
 router = APIRouter()
+
+
+class MemoryUpdateBody(BaseModel):
+    text: str = Field(min_length=1)
 
 
 def _normalize_memories(payload: Any) -> list[dict[str, Any]]:
@@ -55,3 +61,28 @@ async def delete_memory(memory_id: str, user_id: str = Depends(verify_admin)) ->
     if isawaitable(result):
         await result
     return {"status": "deleted"}
+
+
+@router.put("/{memory_id}")
+async def update_memory(memory_id: str, body: MemoryUpdateBody, user_id: str = Depends(verify_admin)) -> dict[str, str]:
+    engine = get_engine()
+    if engine is None:
+        raise HTTPException(status_code=500, detail="Database engine not initialized")
+
+    async with engine.connect() as conn:
+        await conn.execute(
+            text(
+                """
+                UPDATE hindsight.memories
+                SET text = :text
+                WHERE id = :id AND bank_id = :bank_id
+                """
+            ),
+            {
+                "text": body.text,
+                "id": memory_id,
+                "bank_id": user_id,
+            },
+        )
+        await conn.commit()
+    return {"status": "updated"}
