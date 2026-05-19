@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-19T20:01:27.974Z"
+last_updated: "2026-05-19T20:10:26.318Z"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 7
-  completed_plans: 4
-  percent: 57
+  completed_plans: 5
+  percent: 71
 ---
 
 # Project State
@@ -21,8 +21,8 @@ progress:
 
 ## Current Position
 
-Phase: 30
-Plan: Not started
+Phase: 30 (speculative-router-setup) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
 **Phase**: Phase 30: Speculative Router Setup
 **Plan**: None
@@ -31,7 +31,7 @@ Status: Ready to execute
 ## Performance Metrics
 
 - **Phases Completed**: 1 / 4
-- **Plans Completed**: 4
+- **Plans Completed**: 5
 
 ## Accumulated Context
 
@@ -44,6 +44,8 @@ Status: Ready to execute
 - **D-29-01**: Enforce unique authenticated identity for all memory-related chat endpoints to prevent cross-user leakage.
 - **D-29-02**: Reject `/chat` and `/chat/stream` requests without authenticated `user_id` via HTTP 401.
 - **D-29-03**: Enforce memory isolation with endpoint behavioral tests for per-user config propagation.
+- **D-30-01**: Add cascadeflow validator compatibility shim to handle v1.1.0 export drift while preserving schema-gate behavior.
+- **D-30-02**: Lock `model_used` and `cascaded` metadata expectations in scaffold tests before cascade node implementation.
 
 ### Blockers / Open Questions
 
@@ -56,3 +58,4 @@ Status: Ready to execute
 - [x] Implement HindsightManager and AgentState memory field.
 - [x] Integrate LangGraph recall/retain nodes.
 - [x] Close isolation safety gaps and implement tests (Plan 29-04).
+- [x] Setup cascadeflow dependency, validator schema utility, and phase-30 routing test scaffold (Plan 30-01).

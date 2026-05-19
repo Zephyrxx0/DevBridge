@@ -31,7 +31,7 @@
   2. System automatically escalates entire conversation turns to the big model (Gemini 2.5 Flash) on validation failure
   3. System implements standard rate-limit handling for Gemini 2.5 Flash requests via Google AI Studio
 **Plans**:
-- [ ] 30-01-PLAN.md — Setup Cascadeflow dependencies, validation schemas, and test scaffold
+- [x] 30-01-PLAN.md — Setup Cascadeflow dependencies, validation schemas, and test scaffold
 - [ ] 30-02-PLAN.md — Implement speculative cascade node with Pydantic validation
 - [ ] 30-03-PLAN.md — Integrate cascade node into LangGraph agent workflow
 
@@ -62,6 +62,6 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 29. Memory Storage & Foundations | 4/4 | Complete    | 2026-05-19 |
-| 30. Speculative Router Setup | 0/3 | Not started | - |
+| 30. Speculative Router Setup | 1/3 | In Progress|  |
 | 31. Memory Curation Dashboard | 0/0 | Not started | - |
 | 32. Streaming Escalation UX | 0/0 | Not started | - |
