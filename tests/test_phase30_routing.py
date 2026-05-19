@@ -5,24 +5,24 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from api.agents.nodes.big import big_worker_node
-from api.agents.nodes.fast import fast_worker_node
+from api.agents.nodes.cascade import cascade_node
 
 
 @pytest.mark.asyncio
 async def test_gemma_path(monkeypatch):
-    class FastResponse:
+    class CascadeResult:
         content = '{"content":"quick answer","is_complete":true,"confidence":0.95}'
+        model_used = "gemma-2-9b-it"
+        cascaded = False
 
-    class FastModel:
-        async def ainvoke(self, _messages):
-            return FastResponse()
+    class FakeCascadeAgent:
+        async def run(self, _messages):
+            return CascadeResult()
 
-    monkeypatch.setattr("api.agents.utils.llm.get_model", lambda is_fast: FastModel())
-    monkeypatch.setattr("api.agents.nodes.fast.get_model", lambda is_fast: FastModel())
+    monkeypatch.setattr("api.agents.nodes.cascade.cascade_agent", FakeCascadeAgent())
 
     state = {"messages": [type("Msg", (), {"content": "hi"})()]}
-    result = await fast_worker_node(state)
+    result = await cascade_node(state)
 
     assert result["messages"][0].content
     assert result.get("model_used") == "gemma-2-9b-it"
@@ -31,45 +31,19 @@ async def test_gemma_path(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_escalation_path(monkeypatch):
-    call_counts = {"fast": 0, "big": 0}
-
-    class FastResponse:
-        content = "malformed text"
-
-    class BigResponse:
+    class CascadeResult:
         content = "deep answer"
+        model_used = "gemini-2.5-flash"
+        cascaded = True
 
-    class FastModel:
-        async def ainvoke(self, _messages):
-            call_counts["fast"] += 1
-            return FastResponse()
+    class FakeCascadeAgent:
+        async def run(self, _messages):
+            return CascadeResult()
 
-    class BigModel:
-        async def ainvoke(self, _messages):
-            call_counts["big"] += 1
-            return BigResponse()
-
-    def _mock_get_model(is_fast: bool):
-        return FastModel() if is_fast else BigModel()
-
-    monkeypatch.setattr("api.agents.utils.llm.get_model", _mock_get_model)
-    monkeypatch.setattr("api.agents.nodes.fast.get_model", _mock_get_model)
-    monkeypatch.setattr("api.agents.nodes.big.get_model", _mock_get_model)
+    monkeypatch.setattr("api.agents.nodes.cascade.cascade_agent", FakeCascadeAgent())
 
     state = {"messages": [type("Msg", (), {"content": "complex request"})()]}
-    fast_result = await fast_worker_node(state)
+    result = await cascade_node(state)
 
-    if "model_used" not in fast_result or "cascaded" not in fast_result:
-        big_result = await big_worker_node(state)
-        result = {
-            "messages": big_result["messages"],
-            "model_used": "gemini-2.5-flash",
-            "cascaded": True,
-        }
-    else:
-        result = fast_result
-
-    assert call_counts["fast"] >= 1
-    assert call_counts["big"] >= 1
     assert result.get("model_used") == "gemini-2.5-flash"
     assert result.get("cascaded") is True
