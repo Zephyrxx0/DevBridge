@@ -39,6 +39,7 @@ from api.jobs.cleanup import cleanup_job
 from api.jobs.metrics import collect_daily_metrics
 from api.jobs.reports import run_daily_report_job, run_weekly_report_job
 from api.jobs.sync import sync_github_and_docs_job
+from api.db.hindsight import hindsight_db
 
 # psycopg async is incompatible with ProactorEventLoop on Windows.
 if sys.platform == "win32":
@@ -209,6 +210,7 @@ async def lifespan(app: FastAPI):
     scheduler_manager: SchedulerManager | None = None
     if settings.supabase_connection_string:
         await init_db_pool(settings.supabase_connection_string)
+        hindsight_db.initialize()
         # Initialize caching infrastructure (D-03)
         FastAPICache.init(PostgresCacheBackend(), prefix="devbridge-cache")
         scheduler_manager = SchedulerManager()
@@ -251,6 +253,13 @@ async def lifespan(app: FastAPI):
             hour=6,
             minute=0,
             id="weekly_report",
+            replace_existing=True,
+        )
+        scheduler_manager.add_job(
+            hindsight_db.reflect,
+            trigger="cron",
+            hour="*/4",
+            id="hindsight_reflect",
             replace_existing=True,
         )
         scheduler_manager.start()
