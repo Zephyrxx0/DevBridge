@@ -3,8 +3,8 @@
 ## Active Requirements
 
 ### Routing
-- [ ] **ROUT-01**: User can experience dynamic model routing (Gemma to Qwen) via Cascadeflow speculative execution.
-- [ ] **ROUT-02**: System enforces concurrency limits on Big model (Qwen) requests to prevent OOM.
+- [ ] **ROUT-01**: User can experience dynamic model routing (Gemma to Gemini 2.5 Flash) via Cascadeflow speculative execution.
+- [ ] **ROUT-02**: System implements standard rate-limit handling for Gemini 2.5 Flash requests via Google AI Studio.
 
 ### Memory
 - [x] **MEM-01**: System invokes Hindsight recall() before execution and retain() post-execution for agent memory.

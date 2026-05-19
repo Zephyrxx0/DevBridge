@@ -29,7 +29,7 @@
 **Success Criteria**:
   1. System uses Cascadeflow to let the fast model (Gemma) draft responses and validates them heuristically
   2. System automatically escalates entire conversation turns to the big model (Gemini 2.5 Flash) on validation failure
-  3. System enforces strict concurrency limits on big model requests to prevent MI300X OOM errors
+  3. System implements standard rate-limit handling for Gemini 2.5 Flash requests via Google AI Studio
 **Plans**:
 - [ ] 30-01-PLAN.md — Setup Cascadeflow dependencies, validation schemas, and test scaffold
 - [ ] 30-02-PLAN.md — Implement speculative cascade node with Pydantic validation
