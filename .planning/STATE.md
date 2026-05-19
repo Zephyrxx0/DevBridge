@@ -1,22 +1,23 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.2
-milestone_name: milestone
-status: milestone_complete
-last_updated: "2026-05-17T20:59:32.288Z"
+milestone: v0.3
+milestone_name: Integrate Cascadeflow & Hindsight
+status: planning
+last_updated: "2026-05-19T16:28:11.528Z"
+last_activity: 2026-05-19
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 19
-  completed_plans: 19
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
-# State: v0.2 Milestone
+# State: v0.3 Milestone
 
-**Active Milestone**: v0.2 - Implement AMD-AUDIT-SPEC.md Refinements
+**Active Milestone**: v0.3 - Integrate Cascadeflow & Hindsight
 
-**Status**: Phase 28 execution complete (Plan 28-07 completed).
+**Status**: Defining requirements.
 
 ## Milestone Context
 
@@ -80,3 +81,10 @@ Next: `/gsd-verify-work 28`
 ---
 
 *Updated: 2026-05-18*
+
+## Current Position
+
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-19 — Milestone v0.3 started

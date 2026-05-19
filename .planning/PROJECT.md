@@ -10,6 +10,14 @@ DevBridge is a persistent, team-aware knowledge system for codebases, designed t
 
 Contextually grounded understanding and intent retrieval over simple code generation. Prioritizes deep codebase awareness through multi-agent reasoning.
 
+## Current Milestone: v0.3 Integrate Cascadeflow & Hindsight
+
+**Goal:** Integrate Cascadeflow and Hindsight into the application in a faithful and optimized way.
+
+**Target features:**
+- Integrate Cascadeflow (https://github.com/lemony-ai/cascadeflow)
+- Integrate Hindsight (https://github.com/vectorize-io/hindsight)
+
 ## Requirements
 
 ### Validated
@@ -21,16 +29,18 @@ Contextually grounded understanding and intent retrieval over simple code genera
 - [x] History & Intent Ingestion (Phase 07)
 - [x] Human Annotation API (Phase 08)
 - [x] Security Audit (Phase 11)
-
-### Active (v0.2 Milestone)
-
-- [ ] **AMD GPU Integration**: Single MI300X with VRAM partitioning for concurrent LLM inference
+- [x] **AMD GPU Integration**: Single MI300X with VRAM partitioning for concurrent LLM inference
 - [x] **Agent Orchestrator**: Dual-model routing (Big Model for deep reasoning, Fast Model for intent classification) (Validated in Phase 21)
-- [ ] **Knowledge Graph**: Internal symbol resolution with CALLS edges
-- [ ] **Onboarding UX**: Polling/SSE endpoint for plan generation with JSON schema validation
-- [ ] **GitHub Integration**: pgvector-based issue-to-file mapping, OAuth token extraction from Supabase
-- [ ] **Task Scheduling**: APScheduler for daily async jobs
-- [ ] **Admin Dashboard**: Gemma 4 summarization for "intern confusion" topics
+- [x] **Knowledge Graph**: Internal symbol resolution with CALLS edges
+- [x] **Onboarding UX**: Polling/SSE endpoint for plan generation with JSON schema validation
+- [x] **GitHub Integration**: pgvector-based issue-to-file mapping, OAuth token extraction from Supabase
+- [x] **Task Scheduling**: APScheduler for daily async jobs
+- [x] **Admin Dashboard**: Gemma 4 summarization for "intern confusion" topics
+
+### Active (v0.3 Milestone)
+
+- [ ] **Cascadeflow Integration**: Faithful and optimized integration
+- [ ] **Hindsight Integration**: Faithful and optimized integration
 
 ### Out of Scope
 
