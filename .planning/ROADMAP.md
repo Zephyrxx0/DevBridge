@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Phases
-- [ ] **Phase 29: Memory Storage & Foundations** - Integrate Hindsight for persistent agent memory backed by pgvector
+- [x] **Phase 29: Memory Storage & Foundations** - Integrate Hindsight for persistent agent memory backed by pgvector (completed 2026-05-19)
 - [ ] **Phase 30: Speculative Router Setup** - Implement Cascadeflow for dynamic, speculative model routing
 - [ ] **Phase 31: Memory Curation Dashboard** - Build UI for curating and editing agent mental models
 - [ ] **Phase 32: Streaming Escalation UX** - Expose model escalation states to the frontend via SSE
@@ -20,7 +20,7 @@
 - [x] 29-01-PLAN.md — Setup Hindsight dependencies, isolated DB schema, and test scaffold
 - [x] 29-02-PLAN.md — Define memory state in AgentState and implement HindsightManager service
 - [x] 29-03-PLAN.md — Integrate recall/retain nodes into LangGraph and schedule async reflection
-- [ ] 29-04-PLAN.md — Enforce authentication in chat endpoints and implement isolation tests
+- [x] 29-04-PLAN.md — Enforce authentication in chat endpoints and implement isolation tests
 
 ### Phase 30: Speculative Router Setup
 **Goal**: System dynamically routes to the large model only when necessary to preserve GPU VRAM
@@ -58,7 +58,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 29. Memory Storage & Foundations | 3/4 | In Progress|  |
+| 29. Memory Storage & Foundations | 4/4 | Complete   | 2026-05-19 |
 | 30. Speculative Router Setup | 0/0 | Not started | - |
 | 31. Memory Curation Dashboard | 0/0 | Not started | - |
 | 32. Streaming Escalation UX | 0/0 | Not started | - |
