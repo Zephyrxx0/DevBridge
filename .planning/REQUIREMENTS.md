@@ -9,7 +9,7 @@
 ### Memory
 - [x] **MEM-01**: System invokes Hindsight recall() before execution and retain() post-execution for agent memory.
 - [x] **MEM-02**: System points Hindsight embedded mode to existing Supabase pgvector instance for unified storage.
-- [ ] **MEM-03**: System offloads Hindsight reflect() operation to APScheduler to prevent UI blocking.
+- [x] **MEM-03**: System offloads Hindsight reflect() operation to APScheduler to prevent UI blocking.
 - [ ] **MEM-04**: User can curate and edit agent memory via a Memory Dashboard UI.
 
 ### UX
@@ -30,6 +30,6 @@
 | ROUT-02 | Phase 30 | Pending |
 | MEM-01 | Phase 29 | Complete |
 | MEM-02 | Phase 29 | Complete |
-| MEM-03 | Phase 29 | Pending |
+| MEM-03 | Phase 29 | Complete |
 | MEM-04 | Phase 31 | Pending |
 | UX-01 | Phase 32 | Pending |
