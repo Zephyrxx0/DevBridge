@@ -50,6 +50,34 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
+def _extract_metadata(value) -> dict:
+    """Extracts only allowed SSE metadata fields from nested graph events."""
+    metadata = {"fallback": False, "model_used": None, "cascaded": False}
+
+    def _walk(node) -> None:
+        if isinstance(node, dict):
+            if node.get("fallback") is True:
+                metadata["fallback"] = True
+
+            model_used = node.get("model_used")
+            if isinstance(model_used, str) and model_used.strip():
+                metadata["model_used"] = model_used
+
+            if node.get("cascaded") is True:
+                metadata["cascaded"] = True
+
+            for nested in node.values():
+                _walk(nested)
+            return
+
+        if isinstance(node, (list, tuple)):
+            for nested in node:
+                _walk(nested)
+
+    _walk(value)
+    return metadata
+
+
 def _repo_slug_from_github_url(url: str | None) -> str | None:
     if not url:
         return None
@@ -495,15 +523,6 @@ async def chat_stream(request: Request, payload: ChatRequest):
         # Generator that yields SSE events for streaming responses
         async def event_generator():
             try:
-                def _contains_fallback(value) -> bool:
-                    if isinstance(value, dict):
-                        if value.get("fallback") is True:
-                            return True
-                        return any(_contains_fallback(v) for v in value.values())
-                    if isinstance(value, (list, tuple)):
-                        return any(_contains_fallback(v) for v in value)
-                    return False
-
                 def _extract_chunk_text(content) -> str:
                     if isinstance(content, str):
                         return content
@@ -519,15 +538,16 @@ async def chat_stream(request: Request, payload: ChatRequest):
                         return "".join(parts)
                     return ""
 
-                fallback_sent = False
-                yield f"data: {json.dumps({'type': 'metadata', 'fallback': False})}\n\n"
+                metadata_sent = {"fallback": False, "model_used": None, "cascaded": False}
+                yield f"data: {json.dumps({'type': 'metadata', **metadata_sent})}\n\n"
 
                 chunk_count = 0
                 accumulated_response = ""
                 async for event in stream_graph_events(payload.message, payload.thread_id, user_id):
-                    if not fallback_sent and _contains_fallback(event):
-                        fallback_sent = True
-                        yield f"data: {json.dumps({'type': 'metadata', 'fallback': True})}\n\n"
+                    extracted = _extract_metadata(event)
+                    if extracted != metadata_sent:
+                        metadata_sent = extracted
+                        yield f"data: {json.dumps({'type': 'metadata', **metadata_sent})}\n\n"
 
                     event_name = str(event.get("event", ""))
                     if event_name != "on_chat_model_stream":
@@ -549,9 +569,10 @@ async def chat_stream(request: Request, payload: ChatRequest):
                     config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id}}
                     input_data = {"messages": [HumanMessage(content=payload.message)]}
                     final_state = await graph.ainvoke(input_data, config=config)
-                    if final_state.get("fallback") is True and not fallback_sent:
-                        fallback_sent = True
-                        yield f"data: {json.dumps({'type': 'metadata', 'fallback': True})}\n\n"
+                    final_metadata = _extract_metadata(final_state)
+                    if final_metadata != metadata_sent:
+                        metadata_sent = final_metadata
+                        yield f"data: {json.dumps({'type': 'metadata', **metadata_sent})}\n\n"
 
                     response = str(final_state["messages"][-1].content)
                     if response:
