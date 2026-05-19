@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/sheet";
+import { Textarea } from "@/components/ui/textarea";
 
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -29,6 +31,8 @@ export default function MemoryDashboardPage() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [statusMessage, setStatusMessage] = useState<string>("");
+  const [editingMemoryId, setEditingMemoryId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +94,40 @@ export default function MemoryDashboardPage() {
       setMemories(prevMemories);
       setStatusMessage("Delete failed");
     }
+  };
+
+  const openEditor = (memory: Memory) => {
+    setEditingMemoryId(memory.id);
+    setEditingText(memory.text);
+  };
+
+  const closeEditor = () => {
+    setEditingMemoryId(null);
+    setEditingText("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingMemoryId) return;
+    const nextText = editingText.trim();
+    if (!nextText) {
+      setStatusMessage("Edit failed");
+      return;
+    }
+
+    const response = await fetch(`/api/backend/memory/${editingMemoryId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: nextText }),
+    });
+
+    if (!response.ok) {
+      setStatusMessage("Edit failed");
+      return;
+    }
+
+    setMemories((curr) => curr.map((item) => (item.id === editingMemoryId ? { ...item, text: nextText } : item)));
+    setStatusMessage("Memory updated");
+    closeEditor();
   };
 
   const memoryCountLabel = useMemo(() => {
@@ -164,24 +202,51 @@ export default function MemoryDashboardPage() {
                   </CardContent>
                   <CardFooter className="flex items-center justify-between gap-2 text-xs text-[var(--foreground-subtle)]">
                     <span>{memory.created_at ? new Date(memory.created_at).toLocaleString() : "Unknown time"}</span>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      data-testid={`delete-${memory.id}`}
-                      onClick={() => {
-                        void handleDelete(memory.id);
-                      }}
-                    >
-                      <Trash2 className="size-4" />
-                      Delete
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="secondary" size="sm" data-testid={`edit-${memory.id}`} onClick={() => openEditor(memory)}>
+                        <Pencil className="size-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        data-testid={`delete-${memory.id}`}
+                        onClick={() => {
+                          void handleDelete(memory.id);
+                        }}
+                      >
+                        <Trash2 className="size-4" />
+                        Delete
+                      </Button>
+                    </div>
                   </CardFooter>
                 </Card>
               );
             })}
           </div>
         ) : null}
+
+        <Sheet open={Boolean(editingMemoryId)} onOpenChange={(open) => (open ? null : closeEditor())}>
+          <SheetContent side="right" className="w-full sm:max-w-lg">
+            <SheetHeader>
+              <SheetTitle>Edit Memory</SheetTitle>
+              <SheetDescription>Update stored memory text.</SheetDescription>
+            </SheetHeader>
+            <div className="p-4">
+              <Textarea
+                data-testid="memory-edit-textarea"
+                value={editingText}
+                onChange={(event) => setEditingText(event.target.value)}
+                rows={10}
+              />
+            </div>
+            <SheetFooter>
+              <Button type="button" variant="outline" onClick={closeEditor}>Cancel</Button>
+              <Button type="button" data-testid="memory-edit-save" onClick={() => void handleSaveEdit()}>Save</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </section>
     </div>
   );

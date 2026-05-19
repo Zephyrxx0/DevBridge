@@ -84,3 +84,41 @@ test("@delete delete button calls endpoint and updates UI", async ({ page }) => 
   await expect(page.locator('[data-testid="memory-card"]')).toHaveCount(0);
   expect(deleteCalled).toBeTruthy();
 });
+
+test("@edit edit sheet saves updated memory text", async ({ page }) => {
+  await page.route("**/api/backend/memory/list", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        memories: [
+          {
+            id: "m-edit",
+            text: "old text",
+            metadata: { type: "experience", tags: [] },
+            created_at: "2026-05-20T00:00:00Z",
+          },
+        ],
+      }),
+    });
+  });
+
+  let putCalled = false;
+  await page.route("**/api/backend/memory/m-edit", async (route) => {
+    if (route.request().method() === "PUT") {
+      const payload = route.request().postDataJSON() as { text: string };
+      putCalled = payload.text === "new edited text";
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "updated" }) });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/dashboard/memory");
+  await page.getByTestId("edit-m-edit").click();
+  await expect(page.getByRole("heading", { name: "Edit Memory" })).toBeVisible();
+  await page.getByTestId("memory-edit-textarea").fill("new edited text");
+  await page.getByTestId("memory-edit-save").click();
+  await expect(page.getByTestId("memory-text")).toContainText("new edited text");
+  expect(putCalled).toBeTruthy();
+});
