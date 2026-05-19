@@ -19,6 +19,8 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   fallback?: boolean;
+  model_used?: string;
+  cascaded?: boolean;
   sources?: SourceReference[];
   artifacts?: SnippetChip[];
 }

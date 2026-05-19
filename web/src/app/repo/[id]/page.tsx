@@ -503,6 +503,8 @@ export default function RepoWorkspacePage() {
               type: string;
               content?: string;
               fallback?: boolean;
+              model_used?: string;
+              cascaded?: boolean;
               sources?: SourceReference[];
               message?: string;
             };
@@ -523,14 +525,16 @@ export default function RepoWorkspacePage() {
                 };
                 return next;
               });
-            } else if (data.type === "metadata" && data.fallback === true) {
+            } else if (data.type === "metadata") {
               setMessages((prev) => {
                 const next = [...prev];
                 const last = next[next.length - 1];
                 if (last?.role === "assistant") {
                   next[next.length - 1] = {
                     ...last,
-                    fallback: true,
+                    fallback: data.fallback ?? last.fallback,
+                    model_used: data.model_used ?? last.model_used,
+                    cascaded: data.cascaded ?? last.cascaded,
                   };
                 }
                 return next;
