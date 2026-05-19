@@ -23,4 +23,13 @@
 - Dual-model routing inside LangGraph intent router (replaced by Cascadeflow).
 
 ## Traceability
-*(To be filled by roadmap)*
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| ROUT-01 | Phase 30 | Pending |
+| ROUT-02 | Phase 30 | Pending |
+| MEM-01 | Phase 29 | Pending |
+| MEM-02 | Phase 29 | Pending |
+| MEM-03 | Phase 29 | Pending |
+| MEM-04 | Phase 31 | Pending |
+| UX-01 | Phase 32 | Pending |
