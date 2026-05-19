@@ -15,3 +15,5 @@ fastapi-cache2[redis]==0.2.2
 jinja2
 APScheduler==3.10.4
 google-genai>=1.33.0
+hindsight-all-slim
+hindsight-langgraph
