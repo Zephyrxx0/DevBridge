@@ -62,7 +62,7 @@ export const InlineCitationCardTrigger = ({
   className,
   ...props
 }: InlineCitationCardTriggerProps) => (
-  <HoverCardTrigger render={<Badge className={cn("ml-1 rounded-full", className)} variant="secondary" {...props} />}>{sources[0] ? (
+  <HoverCardTrigger render={<Badge className={cn("ml-1 rounded-full px-1.5 py-0 text-[10px]", className)} variant="secondary" {...props} />}>{sources[0] ? (
             <>
               {new URL(sources[0]).hostname}{" "}
               {sources.length > 1 && `+${sources.length - 1}`}
@@ -132,7 +132,7 @@ export const InlineCitationCarouselHeader = ({
 }: InlineCitationCarouselHeaderProps) => (
   <div
     className={cn(
-      "flex items-center justify-between gap-2 rounded-t-md bg-secondary p-2",
+      "flex items-center justify-between gap-2 rounded-t-md bg-secondary px-2 py-1.5",
       className
     )}
     {...props}
@@ -175,7 +175,7 @@ export const InlineCitationCarouselIndex = ({
   return (
     <div
       className={cn(
-        "flex flex-1 items-center justify-end px-3 py-1 text-muted-foreground text-xs",
+        "flex flex-1 items-center justify-end px-2 py-1 text-[10px] text-muted-foreground",
         className
       )}
       {...props}

@@ -69,11 +69,11 @@ function TrustStrip() {
     <SectionReveal animation="fade-up">
       <section className="px-[var(--space-md)] py-[var(--space-xl)] md:px-[var(--space-xl)] md:py-[var(--space-2xl)]">
         <div className="mx-auto w-full max-w-[1200px]">
-          <div className="rounded-2xl border border-border bg-[color-mix(in_oklab,var(--surface-1)_85%,transparent)] backdrop-blur-md p-6 md:p-8 shadow-sm">
+          <div className="rounded-2xl border border-border bg-[color-mix(in_oklab,var(--surface-1)_78%,transparent)] backdrop-blur-md p-6 md:p-8">
             <div className="grid gap-4 sm:grid-cols-3 md:gap-6">
               {stats.map((stat) => (
                 <div key={stat.label} className="flex items-center gap-4">
-                  <div className="grid size-10 shrink-0 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--brand)]">
+                  <div className="grid size-10 shrink-0 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--icon-contrast)]">
                     {stat.icon}
                   </div>
                   <div>
@@ -126,13 +126,10 @@ function HowItWorks() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {steps.map((s, idx) => (
             <SectionReveal key={s.title} animation="fade-up" delay={idx * 120}>
-              <Card className="group relative overflow-hidden">
-                <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  <div className="absolute inset-0 bg-[var(--brand-glow)] opacity-10" />
-                </div>
+              <Card className="group relative overflow-hidden bg-[color-mix(in_oklab,var(--surface-1)_84%,transparent)] backdrop-blur-sm">
                 <CardHeader className="p-6">
                   <div className="inline-flex items-center gap-2">
-                    <div className="grid size-9 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--brand)]">
+                    <div className="grid size-9 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--icon-contrast)]">
                       {s.icon}
                     </div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--foreground-subtle)]">
@@ -155,7 +152,7 @@ function HowItWorks() {
 
 function CodebaseGraphSection() {
   return (
-    <section className="py-[var(--space-4xl)]">
+    <section className="pt-[var(--space-4xl)] pb-0">
       <SectionReveal>
         <SectionHeading
           eyebrow="Repo graph"
@@ -165,7 +162,7 @@ function CodebaseGraphSection() {
       </SectionReveal>
       <div className="mx-auto mt-10 w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
         <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
-          <Card className="relative overflow-hidden">
+          <Card className="relative overflow-hidden bg-[color-mix(in_oklab,var(--surface-1)_84%,transparent)] backdrop-blur-sm">
             <CardHeader className="p-6">
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="size-4" />
@@ -178,7 +175,7 @@ function CodebaseGraphSection() {
             </CardContent>
           </Card>
           <div className="space-y-4">
-            <Card>
+            <Card className="bg-[color-mix(in_oklab,var(--surface-1)_84%,transparent)] backdrop-blur-sm">
               <CardHeader className="p-6">
                 <CardTitle>Map signals</CardTitle>
                 <CardDescription>Track the most referenced, annotated, and recently changed files.</CardDescription>
@@ -198,7 +195,7 @@ function CodebaseGraphSection() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-[color-mix(in_oklab,var(--surface-1)_84%,transparent)] backdrop-blur-sm">
               <CardHeader className="p-6">
                 <CardTitle>Explore the map</CardTitle>
                 <CardDescription>Jump into the workspace map view for real data once a repo is connected.</CardDescription>
@@ -266,8 +263,6 @@ export default function HomePage() {
       </div>
       <HeroSection />
 
-      <TrustStrip />
-
       <div className="mx-auto w-full max-w-[1200px] px-[1.25rem] md:px-[2.5rem]">
         <div className="h-px w-full bg-border" />
       </div>
@@ -288,6 +283,8 @@ export default function HomePage() {
       </div>
 
       <CodebaseGraphSection />
+
+      <TrustStrip />
 
       <FinalCTA />
 

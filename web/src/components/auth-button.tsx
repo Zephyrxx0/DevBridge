@@ -70,7 +70,12 @@ export function AuthButton({ showThemeToggle = false }: { showThemeToggle?: bool
           <AvatarFallback className="bg-white/5">{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_88%,transparent)] backdrop-blur-md" align="end">
+      <DropdownMenuContent
+        className="w-56 border-white/10 bg-background/95 backdrop-blur-md"
+        align="end"
+        side="bottom"
+        sideOffset={18}
+      >
         <DropdownMenuGroup>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
@@ -79,19 +84,19 @@ export function AuthButton({ showThemeToggle = false }: { showThemeToggle?: bool
             </div>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator className="bg-[var(--border)]" />
-        <DropdownMenuItem render={<Link href="/dashboard" />} className="cursor-pointer focus:bg-[var(--surface-2)]">
+        <DropdownMenuSeparator className="bg-white/10" />
+        <DropdownMenuItem render={<Link href="/dashboard" />} className="cursor-pointer focus:bg-white/5">
           <UserIcon className="mr-2 h-4 w-4" />
           <span>Dashboard</span>
         </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/profile" />} className="cursor-pointer focus:bg-[var(--surface-2)]">
+        <DropdownMenuItem render={<Link href="/profile" />} className="cursor-pointer focus:bg-white/5">
           <Settings2 className="mr-2 h-4 w-4" />
           <span>Edit Profile</span>
         </DropdownMenuItem>
         {showThemeToggle ? (
           <DropdownMenuItem
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="cursor-pointer focus:bg-[var(--surface-2)]"
+            className="cursor-pointer focus:bg-white/5"
           >
             {theme === "light" ? <Moon className="mr-2 h-4 w-4" /> : <Sun className="mr-2 h-4 w-4" />}
             <span>{theme === "light" ? "Dark mode" : "Light mode"}</span>

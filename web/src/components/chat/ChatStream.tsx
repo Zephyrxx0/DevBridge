@@ -147,7 +147,7 @@ export function ChatStream({
                       </Avatar>
                     ) : null}
 
-                    <div className={cn("min-w-0", isUser ? "max-w-[92%]" : "flex-1")}>
+                    <div className={cn("min-w-0", isUser ? "ml-auto max-w-[92%]" : "flex-1")}>
                       {!isUser && message.fallback ? (
                         <div className="mb-1 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]">
                           <Badge className="border-yellow-500/20 bg-yellow-500/10 text-yellow-600">Fast Mode</Badge>
@@ -266,7 +266,7 @@ export function ChatStream({
                               </div>
 
                               <InlineCitation className="block">
-                                <InlineCitationText className="text-[10px] text-[var(--foreground-subtle)]">
+                                <InlineCitationText className="text-[9px] text-[var(--foreground-subtle)]">
                                   Source citations
                                 </InlineCitationText>
                                 <InlineCitationCard>

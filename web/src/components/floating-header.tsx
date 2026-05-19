@@ -5,7 +5,13 @@ import Link from 'next/link';
 import { ChevronDown, MenuIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetFooter } from '@/components/sheet';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { AuthButton } from './auth-button';
 
@@ -43,38 +49,37 @@ export function FloatingHeader() {
 				'shadow-[0_8px_32px_rgba(0,0,0,0.18),inset_0_1px_0_0_rgba(255,255,255,0.06)]',
 			)}
 		>
-			<nav className="mx-auto flex items-center justify-between px-4 py-2">
+			<nav className="mx-auto flex items-center justify-between px-3 py-1.5">
 				<Link
 					href="/"
-					className="flex items-center gap-2 rounded-lg px-2.5 py-2 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--brand-glow)]"
+					className="flex items-center gap-2 rounded-lg px-2 py-1.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--brand-glow)]"
 					aria-label="DevBridge home"
 				>
-					<div
-						className="grid size-9 place-items-center rounded-lg text-white shadow-[0_0_0_1px_var(--brand-muted),0_14px_44px_-26px_var(--brand-glow)]"
-						style={{ background: 'var(--brand)' }}
-					>
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-							<path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+					<div className="grid size-9 place-items-center text-[color-mix(in_oklab,var(--icon-contrast)_70%,transparent)]">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 256 256" fill="none" aria-hidden="true">
+							<path d="M112 32H54.627L128 105.373 201.373 32H144V0h112v112h-32V54.627L150.627 128 224 201.373V144h32v112H144v-32h57.373L128 150.627 54.627 224H112v32H0V144h32v57.373L105.373 128 32 54.627V112H0V0h112z" fill="currentColor" />
 						</svg>
 					</div>
 					<div className="leading-none">
-						<p className="font-heading text-sm font-semibold tracking-[-0.02em] text-foreground">DevBridge</p>
+						<p className="font-heading text-base font-semibold tracking-[-0.02em] text-foreground">DevBridge</p>
 					</div>
 				</Link>
 				<div className="hidden items-center gap-2 xl:flex">
 					<DropdownMenu>
-					<DropdownMenuTrigger render={<Button variant="ghost" size="sm" nativeButton={true} className="gap-1.5 font-medium text-[var(--foreground)] hover:text-[var(--foreground)]" />}>
+					<DropdownMenuTrigger render={<Button variant="ghost" size="sm" nativeButton={true} className="gap-1.5 text-base font-medium text-[var(--foreground)] hover:text-[var(--foreground)]" />}>
 							Features <ChevronDown className="size-3.5" />
 						</DropdownMenuTrigger>
-						<DropdownMenuContent align="start" className="border-white/10 bg-background/95 backdrop-blur-md">
-							<DropdownMenuItem render={<Link href="/docs?feature=map" />} className="cursor-pointer focus:bg-white/5">Map</DropdownMenuItem>
-							<DropdownMenuItem render={<Link href="/docs?feature=search" />} className="cursor-pointer focus:bg-white/5">Search</DropdownMenuItem>
-							<DropdownMenuItem render={<Link href="/docs?feature=annotations" />} className="cursor-pointer focus:bg-white/5">Annotations</DropdownMenuItem>
-							<DropdownMenuItem render={<Link href="/docs?feature=prs" />} className="cursor-pointer focus:bg-white/5">PRs</DropdownMenuItem>
+						<DropdownMenuContent align="start" side="bottom" sideOffset={18} className="w-56 border-white/10 bg-background/95 backdrop-blur-md">
+							<DropdownMenuGroup>
+								<DropdownMenuItem render={<Link href="/docs?feature=map" />} className="cursor-pointer focus:bg-white/5">Map</DropdownMenuItem>
+								<DropdownMenuItem render={<Link href="/docs?feature=search" />} className="cursor-pointer focus:bg-white/5">Search</DropdownMenuItem>
+								<DropdownMenuItem render={<Link href="/docs?feature=annotations" />} className="cursor-pointer focus:bg-white/5">Annotations</DropdownMenuItem>
+								<DropdownMenuItem render={<Link href="/docs?feature=prs" />} className="cursor-pointer focus:bg-white/5">PRs</DropdownMenuItem>
+							</DropdownMenuGroup>
 						</DropdownMenuContent>
 					</DropdownMenu>
 					{links.map((link) => (
-						<Link key={link.href} className={buttonVariants({ variant: 'ghost', size: 'sm' })} href={link.href} target={link.href.startsWith('http') ? '_blank' : undefined} rel={link.href.startsWith('http') ? 'noreferrer' : undefined}>
+						<Link key={link.href} className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'text-base font-medium' })} href={link.href} target={link.href.startsWith('http') ? '_blank' : undefined} rel={link.href.startsWith('http') ? 'noreferrer' : undefined}>
 							{link.label}
 						</Link>
 					))}

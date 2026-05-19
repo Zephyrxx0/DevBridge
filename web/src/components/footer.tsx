@@ -8,12 +8,9 @@ export function Footer() {
         <div className="flex flex-col justify-between gap-6 py-10 md:flex-row md:items-start">
           <div className="space-y-3">
             <Link href="/" className="inline-flex items-center gap-2.5">
-              <div
-                className="grid size-8 place-items-center rounded-lg text-white"
-                style={{ background: "var(--brand)" }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+              <div className="grid size-8 place-items-center text-[color-mix(in_oklab,var(--icon-contrast)_70%,transparent)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256" fill="none" aria-hidden="true">
+                  <path d="M112 32H54.627L128 105.373 201.373 32H144V0h112v112h-32V54.627L150.627 128 224 201.373V144h32v112H144v-32h57.373L128 150.627 54.627 224H112v32H0V144h32v57.373L105.373 128 32 54.627V112H0V0h112z" fill="currentColor" />
                 </svg>
               </div>
               <span className="font-heading text-base font-semibold tracking-[-0.01em] text-foreground">
@@ -86,7 +83,6 @@ export function Footer() {
         {/* Row 2 */}
         <div className="flex flex-col justify-between gap-3 border-t border-border py-6 text-xs text-[var(--foreground-subtle)] sm:flex-row">
           <p>&copy; {new Date().getFullYear()} DevBridge. Built for onboarding.</p>
-          <p>Built for Google Solutions Hackathon</p>
         </div>
       </div>
     </footer>

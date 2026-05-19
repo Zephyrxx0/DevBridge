@@ -23,7 +23,7 @@ export function DitheringBackground() {
     <div className="pointer-events-none fixed inset-0 -z-10">
       <Suspense fallback={<div className="absolute inset-0 bg-muted/20" />}>
         <div
-          className="absolute inset-0 z-0 opacity-40 mix-blend-multiply transition-[filter] duration-200 dark:opacity-30 dark:mix-blend-screen"
+          className="absolute inset-0 z-0 opacity-30 transition-[filter,opacity] duration-200 dark:opacity-[0.22]"
           style={{ filter: "blur(var(--dither-blur, 0px))" }}
         >
           <Dithering

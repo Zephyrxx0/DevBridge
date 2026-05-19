@@ -52,12 +52,9 @@ export function FeaturesSection({ title, body }: FeaturesSectionProps) {
         <div className="grid gap-4 md:grid-cols-2">
           {features.map((feature, idx) => (
             <SectionReveal key={feature.title} animation="fade-up" delay={idx * 90}>
-              <Card className="group relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_0_1px_var(--brand-muted),0_20px_45px_-30px_var(--brand-glow)]">
-                <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                  <div className="absolute inset-0 bg-[radial-gradient(80%_75%_at_50%_0%,var(--brand-glow),transparent_72%)]" />
-                </div>
+              <Card className="group relative overflow-hidden bg-[color-mix(in_oklab,var(--surface-1)_84%,transparent)] backdrop-blur-sm transition-colors duration-200 hover:bg-[color-mix(in_oklab,var(--surface-1)_88%,transparent)]">
                 <CardHeader className="p-6">
-                  <div className="grid size-10 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--brand)]">
+                  <div className="grid size-10 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--icon-contrast)]">
                     {feature.icon}
                   </div>
                   <CardTitle className="pt-3">{feature.title}</CardTitle>

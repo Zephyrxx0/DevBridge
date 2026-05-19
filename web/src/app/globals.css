@@ -157,6 +157,7 @@
   --chart-3: #67c9ae;
   --chart-4: #4fa891;
   --chart-5: #2f796a;
+  --icon-contrast: #0b2133;
 }
 
 .light {
@@ -172,6 +173,11 @@
   --sidebar: #ecfaf5;
   --primary-foreground: #0b2133;
   --sidebar-primary-foreground: #0b2133;
+  --icon-contrast: #0b2133;
+}
+
+.dark {
+  --icon-contrast: #b3f6e2;
 }
 
 /* ── Keyframe Animations ── */
