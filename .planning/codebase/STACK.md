@@ -1,70 +1,82 @@
 # Technology Stack
 
-**Analysis Date:** 2026-04-28
+**Analysis Date:** 2025-05-15
 
 ## Languages
 
 **Primary:**
-- TypeScript - Frontend and proxy logic in `web/`
-- Python - Backend API, agents, and ingestion in `api/` and `scripts/`
+- Python 3.11 - Backend API and Agents (`api/`)
+- TypeScript - Frontend and Shared Types (`web/`, `api/`)
 
 **Secondary:**
-- SQL - Database migrations and vector store setup in `sql/` and `supabase/`
+- SQL - Database migrations and hybrid search logic (`sql/`, `supabase/`)
+- Shell/Bash - Build and utility scripts (`scripts/`)
 
 ## Runtime
 
 **Environment:**
-- Node.js (v20+) - For Next.js frontend
-- Python (v3.x) - For FastAPI backend
+- Node.js (version not explicitly pinned, typically >= 18 for Next.js 16)
+- Python 3.11 (specified in `api/Dockerfile`)
 
 **Package Manager:**
-- npm - Used in `web/package.json` and root
-- Lockfile: present (`package-lock.json` in root and `web/`)
+- npm - Frontend package management (`web/`)
+- pip - Backend package management (`api/requirements.txt`)
+- Lockfile: `package-lock.json` (root/web), `api/requirements.txt` (versions pinned for some deps)
 
 ## Frameworks
 
 **Core:**
-- Next.js 16.2.3 - Frontend React framework (`web/package.json`)
-- FastAPI - Backend API framework (`api/main.py`)
+- Next.js 16.2.3 - Frontend Framework (`web/`)
+- FastAPI - Backend API Framework (`api/main.py`)
+- LangGraph 1.1.7 - LLM Orchestration and Agent workflows (`api/agents/`)
 
 **Testing:**
-- Playwright - E2E testing for frontend (`web/playwright.config.ts`)
-- Pytest - Backend testing framework (`pytest.ini`, `tests/`)
+- Pytest - Backend unit and integration testing (`tests/`, `pytest.ini`)
+- Jest - Frontend unit testing (`web/jest.config.js`)
+- Playwright - End-to-end testing (`web/playwright.config.ts`)
 
 **Build/Dev:**
-- Tailwind CSS 4 - Utility-first styling
-- ESLint 9 - Code linting (`web/eslint.config.mjs`)
+- Docker - Containerization (`Dockerfile`, `docker-compose.yml`)
+- Tailwind CSS 4 - Utility-first CSS framework (`web/`)
 
 ## Key Dependencies
 
 **Critical:**
-- `@supabase/ssr` / `@supabase/supabase-js` - Supabase integration on the frontend
-- `langchain_google_vertexai` / `langchain_core` - AI orchestration and tool usage (`api/ingestion/history.py`)
-- `sqlalchemy` - ORM for backend Postgres database (`api/routes/annotations.py`)
+- Pydantic / Pydantic Settings - Data validation and configuration management (`api/core/config.py`)
+- SQLAlchemy / asyncpg - Database ORM and async driver (`api/db/`)
+- pgvector - Vector similarity search in PostgreSQL (`api/db/vector_store.py`)
+- LangChain - LLM abstractions and tools (`api/agents/orchestrator.py`)
+- Tree-sitter - Code parsing for chunking and analysis (`api/ingest/`)
 
 **Infrastructure:**
-- `@base-ui/react`, `@radix-ui/*` - Accessible unstyled components (`web/components/ui/`)
-- `lucide-react` - Icons
-- `fastapi-cache2` - Backend response caching (`api/main.py`)
+- Radix UI - Primitive UI components (`web/`)
+- Framer Motion (motion) - Animation library (`web/`)
+- Tiptap - Rich-text editor components (`web/`)
+- Shiki - Syntax highlighting (`web/`)
 
 ## Configuration
 
 **Environment:**
-- Environment variables defined in `.env` and `.env.example`
-- Core settings loaded via `pydantic` in `api/core/config.py`
+- `.env` files (managed via `python-dotenv` in API, Next.js built-in for Web)
+- `api/core/config.py` - Centralized Pydantic-based configuration
 
 **Build:**
-- Frontend: `web/next.config.ts`, `web/postcss.config.mjs`, `web/eslint.config.mjs`, `web/tsconfig.json`
+- `next.config.ts` - Next.js build configuration
+- `tsconfig.json` - TypeScript configuration
+- `Dockerfile` / `docker-compose.yml` - Container orchestration
 
 ## Platform Requirements
 
 **Development:**
-- Node.js 20+, Python 3.x
-- Local Supabase instance or remote connection
+- Docker Desktop or equivalent
+- Node.js environment
+- Python 3.11 environment
+- Local LLM server (optional, e.g., Ollama/vLLM) for big/fast model routing
 
 **Production:**
-- Google Cloud Run (defined in `infra/cloudrun/`)
+- Google Cloud Platform (Cloud Run recommended based on `Procfile` and `Dockerfile` patterns)
+- Supabase (PostgreSQL + pgvector)
 
 ---
 
-*Stack analysis: 2026-04-28*
+*Stack analysis: 2025-05-15*

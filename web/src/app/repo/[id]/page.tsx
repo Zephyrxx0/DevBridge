@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import { ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Code2, Folder, GitBranch, Plus, Sun, Moon } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -17,49 +18,24 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 
-type SourceReference = {
-  file_path: string;
-  function_name?: string;
-  start_line: number;
-  end_line: number;
-  similarity?: number;
-};
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  sources?: SourceReference[];
-  artifacts?: SnippetChip[];
-}
-
-type ChatSession = {
-  id: string;
-  title: string;
-  updated_at: string;
-  last_message?: string;
-};
-
-type SnippetChip = {
-  id: string;
-  filePath: string;
-  startLine: number;
-  endLine: number;
-  code: string;
-  kind?: "snippet" | "file" | "folder";
-};
-
-type FileNode = {
-  name: string;
-  path: string;
-  type: "file" | "directory";
-  children?: FileNode[];
-};
+import { HistorySidebar, type ChatSession } from "@/components/chat/HistorySidebar";
+import { FileExplorer, type FileNode, type BranchInfo } from "@/components/chat/FileExplorer";
+import { ChatLayout } from "@/components/chat/ChatLayout";
+import { ChatStream } from "@/components/chat/ChatStream";
+import { ChatInput } from "@/components/chat/ChatInput";
+import type { Message, SourceReference, SnippetChip } from "@/components/chat/types";
 
 type FileContent = {
   content: string;
   language: string;
   line_count: number;
 };
+
+function countTreeFiles(node: FileNode | null): number {
+  if (!node) return 0;
+  if (node.type === "file") return 1;
+  return (node.children || []).reduce((sum, child) => sum + countTreeFiles(child), 0);
+}
 
 const languageMap: Record<string, string> = {
   ts: "typescript",
@@ -84,6 +60,7 @@ function detectLanguage(filePath: string, fallback: string): string {
 }
 
 import { useRepo } from "@/contexts/repo-context";
+import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 
 export default function RepoWorkspacePage() {
   const params = useParams<{ id: string }>();
@@ -94,10 +71,11 @@ export default function RepoWorkspacePage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(true);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [snippetChips, setSnippetChips] = useState<SnippetChip[]>([]);
-  const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
   const [selectedSource, setSelectedSource] = useState<SourceReference | null>(null);
 
   const [fileTree, setFileTree] = useState<FileNode | null>(null);
@@ -106,16 +84,24 @@ export default function RepoWorkspacePage() {
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<FileContent | null>(null);
   const [loadingFileContent, setLoadingFileContent] = useState(false);
-  const [branches, setBranches] = useState<{ name: string }[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string>("");
+  const [branches, setBranches] = useState<BranchInfo[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(`repo:${repoId}:selectedBranch`) || "";
+  });
   const [branchIndexing, setBranchIndexing] = useState(false);
   const [branchIndexMsg, setBranchIndexMsg] = useState("");
+  const [branchLoadError, setBranchLoadError] = useState("");
+  const defaultBranchName = useMemo(
+    () => branches.find((b) => b.is_default)?.name || branches.find((b) => b.name === "main")?.name || branches.find((b) => b.name === "master")?.name || "",
+    [branches]
+  );
   const editorRef = useRef<import("monaco-editor").editor.IStandaloneCodeEditor | null>(null);
   const selectionRef = useRef<import("monaco-editor").Selection | null>(null);
-
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const streamAbortRef = useRef<AbortController | null>(null);
 
   const apiUrl = "/api/backend";
+  const branchStorageKey = `repo:${repoId}:selectedBranch`;
 
   const createSession = useCallback(async () => {
     const response = await fetch(`${apiUrl}/repo/${repoId}/chats`, {
@@ -179,16 +165,21 @@ export default function RepoWorkspacePage() {
 
   useEffect(() => {
     async function loadSessions() {
-      const response = await fetch(`${apiUrl}/repo/${repoId}/chats`);
-      if (!response.ok) return;
-      const data = (await response.json()) as ChatSession[];
-      setSessions(data);
-      if (data.length > 0) {
-        const savedSessionId = localStorage.getItem(`repo:${repoId}:activeSessionId`);
-        const targetSession = savedSessionId && data.some((item) => item.id === savedSessionId) ? savedSessionId : data[0].id;
-        setActiveSessionId(targetSession);
-      } else {
-        await createSession();
+      setLoadingSessions(true);
+      try {
+        const response = await fetch(`${apiUrl}/repo/${repoId}/chats`);
+        if (!response.ok) return;
+        const data = (await response.json()) as ChatSession[];
+        setSessions(data);
+        if (data.length > 0) {
+          const savedSessionId = localStorage.getItem(`repo:${repoId}:activeSessionId`);
+          const targetSession = savedSessionId && data.some((item) => item.id === savedSessionId) ? savedSessionId : data[0].id;
+          setActiveSessionId(targetSession);
+        } else {
+          await createSession();
+        }
+      } finally {
+        setLoadingSessions(false);
       }
     }
     loadSessions();
@@ -196,11 +187,19 @@ export default function RepoWorkspacePage() {
 
   useEffect(() => {
     async function loadMessages() {
-      if (!activeSessionId) return;
-      const response = await fetch(`${apiUrl}/chats/${activeSessionId}/messages`);
-      if (!response.ok) return;
-      const data = (await response.json()) as Array<{ role: "user" | "assistant"; content: string; sources?: SourceReference[] }>;
-      setMessages(data.map((item) => ({ role: item.role, content: item.content, sources: item.sources })));
+      if (!activeSessionId) {
+        setLoadingMessages(false);
+        return;
+      }
+      setLoadingMessages(true);
+      try {
+        const response = await fetch(`${apiUrl}/chats/${activeSessionId}/messages`);
+        if (!response.ok) return;
+        const data = (await response.json()) as Array<{ role: "user" | "assistant"; content: string; sources?: SourceReference[] }>;
+        setMessages(data.map((item) => ({ role: item.role, content: item.content, sources: item.sources })));
+      } finally {
+        setLoadingMessages(false);
+      }
     }
     loadMessages();
   }, [activeSessionId, apiUrl]);
@@ -210,25 +209,36 @@ export default function RepoWorkspacePage() {
     localStorage.setItem(`repo:${repoId}:activeSessionId`, activeSessionId);
   }, [activeSessionId, repoId]);
 
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages]);
-
   // Fetch branches list once
   useEffect(() => {
     async function loadBranches() {
       try {
+        setBranchLoadError("");
         const res = await fetch(`${apiUrl}/repo/${repoId}/branches`);
-        if (!res.ok) return;
-        const data = (await res.json()) as { name: string }[];
+        if (!res.ok) {
+          let detail = "Branch list unavailable";
+          try {
+            const payload = (await res.json()) as { detail?: string };
+            if (payload?.detail) detail = payload.detail;
+          } catch {
+            // ignore json parsing errors
+          }
+          setBranchLoadError(detail);
+          setBranches([]);
+          return;
+        }
+        const data = (await res.json()) as BranchInfo[];
         setBranches(data);
+        if (selectedBranch && !data.some((b) => b.name === selectedBranch)) {
+          setSelectedBranch("");
+          localStorage.removeItem(branchStorageKey);
+        }
       } catch {
         // silent — branches are non-critical
       }
     }
     loadBranches();
-  }, [apiUrl, repoId]);
+  }, [apiUrl, repoId, selectedBranch, branchStorageKey]);
 
   // Load file tree whenever branch changes; auto-trigger indexing for unindexed branches
   useEffect(() => {
@@ -259,11 +269,24 @@ export default function RepoWorkspacePage() {
           }
         }
 
-        const branchParam = selectedBranch ? `?branch=${encodeURIComponent(selectedBranch)}` : "";
+        const effectiveBranch = selectedBranch || defaultBranchName;
+        const branchParam = effectiveBranch ? `?branch=${encodeURIComponent(effectiveBranch)}` : "";
         const response = await fetch(`${apiUrl}/repo/${repoId}/files${branchParam}`);
-        if (!response.ok || cancelled) return;
-        const data = await response.json();
-        if (!cancelled) setFileTree(data as FileNode);
+        if (!response.ok || cancelled) {
+          setBranchIndexMsg(`Unable to load ${effectiveBranch ? `branch \"${effectiveBranch}\"` : "files"}.`);
+          return;
+        }
+        let data = (await response.json()) as FileNode;
+        if (!effectiveBranch && countTreeFiles(data) < 5) {
+          const retry = await fetch(`${apiUrl}/repo/${repoId}/files?fresh=true`);
+          if (retry.ok) {
+            data = (await retry.json()) as FileNode;
+          }
+        }
+        if (!cancelled) {
+          setFileTree(data);
+          setBranchIndexMsg("");
+        }
       } finally {
         if (!cancelled) {
           setLoadingFiles(false);
@@ -274,14 +297,13 @@ export default function RepoWorkspacePage() {
 
     loadFileTree();
     return () => { cancelled = true; };
-  }, [apiUrl, repoId, selectedBranch]);
+  }, [apiUrl, repoId, selectedBranch, defaultBranchName]);
 
   useEffect(() => {
     setFileTree(null);
     setSelectedFilePath(null);
     setFileContent(null);
     setSelectedBranch("");
-    setBranches([]);
     setBranchIndexMsg("");
   }, [repoId]);
 
@@ -331,18 +353,6 @@ export default function RepoWorkspacePage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [branchIndexing, apiUrl, repoId, refreshRepo]);
-
-  const toggleSourceSection = (messageIndex: number) => {
-    setExpandedSources((prev) => {
-      const next = new Set(prev);
-      if (next.has(messageIndex)) {
-        next.delete(messageIndex);
-      } else {
-        next.add(messageIndex);
-      }
-      return next;
-    });
-  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -452,9 +462,12 @@ export default function RepoWorkspacePage() {
 
     try {
       if (!activeSessionId) return;
+      const controller = new AbortController();
+      streamAbortRef.current = controller;
       const response = await fetch(`${apiUrl}/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           message: fullPrompt,
           repo_id: repoId,
@@ -489,6 +502,7 @@ export default function RepoWorkspacePage() {
             const data = JSON.parse(eventChunk.slice(6)) as {
               type: string;
               content?: string;
+              fallback?: boolean;
               sources?: SourceReference[];
               message?: string;
             };
@@ -507,6 +521,18 @@ export default function RepoWorkspacePage() {
                   content: accumulatedContent,
                   sources: accumulatedSources.length > 0 ? accumulatedSources : undefined,
                 };
+                return next;
+              });
+            } else if (data.type === "metadata" && data.fallback === true) {
+              setMessages((prev) => {
+                const next = [...prev];
+                const last = next[next.length - 1];
+                if (last?.role === "assistant") {
+                  next[next.length - 1] = {
+                    ...last,
+                    fallback: true,
+                  };
+                }
                 return next;
               });
             } else if (data.type === "sources" && data.sources) {
@@ -535,6 +561,10 @@ export default function RepoWorkspacePage() {
         setIsLoading(false);
       }
     } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        setIsLoading(false);
+        return;
+      }
       const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
       setMessages((prev) => {
         const next = [...prev];
@@ -546,7 +576,14 @@ export default function RepoWorkspacePage() {
         return next;
       });
       setIsLoading(false);
+    } finally {
+      streamAbortRef.current = null;
     }
+  };
+
+  const stopGenerating = () => {
+    streamAbortRef.current?.abort();
+    setIsLoading(false);
   };
 
   const removeSnippetChip = (chipId: string) => {
@@ -682,7 +719,7 @@ export default function RepoWorkspacePage() {
           setSelectedFilePath(node.path);
         }}
         className={cn(
-          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-[var(--foreground-muted)] hover:bg-[var(--surface-2)]",
+          "flex min-h-11 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[var(--text-label)] text-[var(--foreground-muted)] hover:bg-[var(--surface-2)]",
           selectedFilePath === node.path ? "bg-[var(--surface-3)] text-[var(--foreground)]" : "",
         )}
         style={{ paddingLeft: `${depth * 12}px` }}
@@ -704,308 +741,117 @@ export default function RepoWorkspacePage() {
   };
 
   return (
-    <section className="flex h-[calc(100vh-1rem)] min-h-0 flex-1 gap-0 overflow-hidden px-2 py-2">
-      <div className="flex min-h-0 h-full flex-[3.5] flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_88%,transparent)] p-2.5">
-        <div className="mb-2 shrink-0 flex items-center gap-2 overflow-x-auto border-b border-[var(--border)] pb-2 relative">
-          <Button type="button" variant="outline" size="sm" onClick={() => void createSession()}>
-            <Plus className="size-4" />
-            New Chat
-          </Button>
-          {sessions.map((session) => (
-            <ContextMenu key={session.id}>
-              <ContextMenuTrigger className={cn("inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs cursor-context-menu", activeSessionId === session.id ? "border-[var(--brand)] bg-[var(--brand-muted)] text-[var(--brand)]" : "border-[var(--border)] text-[var(--foreground-muted)]")}>
-                <button type="button" onClick={() => setActiveSessionId(session.id)} className="max-w-[220px] truncate cursor-default">{session.title || "New chat"}</button>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem onClick={() => renameChat(session.id)}>Rename</ContextMenuItem>
-                <ContextMenuItem onClick={() => deleteChat(session.id)} className="text-red-500">Delete</ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
-          ))}
-          <div className="ml-auto pr-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Toggle theme"
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="h-9 w-9 border border-[var(--border)] text-[var(--foreground-muted)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)]"
-            >
-              <Sun className="hidden size-4 dark:block" />
-              <Moon className="block size-4 dark:hidden" />
-            </Button>
+    <div className="h-dvh w-full overflow-hidden p-1 sm:p-2">
+      <ChatLayout 
+        sidebar={
+          <HistorySidebar 
+            repoId={repoId}
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            onSelectSession={setActiveSessionId}
+            onCreateSession={createSession}
+            onRenameSession={renameChat}
+            onDeleteSession={deleteChat}
+          />
+        }
+        chatArea={
+          <div className="flex min-h-0 h-full flex-col overflow-hidden">
+            <ChatStream 
+              messages={messages} 
+              isLoading={isLoading} 
+              isInitializing={loadingSessions || loadingMessages}
+              repoId={repoId} 
+              onOpenArtifact={openArtifact}
+              onSelectSource={setSelectedSource}
+            />
+            <ChatInput
+              input={input}
+              setInput={setInput}
+              isLoading={isLoading}
+              snippetChips={snippetChips}
+              onRemoveSnippet={removeSnippetChip}
+              onDropSnippet={handleDropSnippet}
+              onSubmit={handleSubmit}
+              onStopGenerating={stopGenerating}
+            />
           </div>
-        </div>
-        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
-          <div className="space-y-[var(--space-md)]">
-            {messages.length === 0 && !isLoading ? (
-              <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-500">
-                <Avatar className="h-16 w-16 mb-4">
-                  <AvatarFallback className="bg-[var(--brand-muted)] text-[var(--brand)] text-xl">DB</AvatarFallback>
-                </Avatar>
-                <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
-                  Welcome to {repo?.name || "your repository"}
-                </h2>
-                <p className="mt-2 max-w-md text-sm text-[var(--foreground-muted)]">
-                  I&apos;m your DevBridge AI assistant. {repo?.description ? repo.description : "I'm ready to help you understand, navigate, and build upon this codebase."}
-                </p>
-                <div className="mt-8 flex flex-col gap-2 w-full max-w-sm">
-                  {repo?.lastIndexed ? (
-                    <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm">
-                      <span className="text-[var(--foreground-subtle)]">Last Indexed</span>
-                      <span className="font-medium text-[var(--foreground)]">{new Date(repo.lastIndexed).toLocaleDateString()}</span>
-                    </div>
+        }
+        rightPanel={
+          selectedSource || selectedFilePath ? (
+            <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-1)]">
+              <div className="border-b border-[var(--border)] px-[var(--space-lg)] py-[var(--space-md)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSource(null);
+                    setSelectedFilePath(null);
+                  }}
+                  className="mb-2 inline-flex items-center gap-1 text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                >
+                  <ChevronLeft className="size-3.5" /> Back
+                </button>
+                <p className="text-[var(--text-xs)] font-medium uppercase tracking-[0.08em] text-[var(--foreground-subtle)]">{selectedSource ? "Cited Source" : "File Viewer"}</p>
+                <p className="font-mono text-[var(--text-sm)] text-[var(--foreground)]">{activeViewerPath}</p>
+                {selectedSource ? (
+                  <p className="text-[var(--text-xs)] text-[var(--foreground-muted)]">
+                    L{selectedSource.start_line}-L{selectedSource.end_line}
+                    {selectedSource.function_name ? ` • ${selectedSource.function_name}` : ""}
+                    {typeof selectedSource.similarity === "number" ? ` • ${Math.round(selectedSource.similarity * 100)}% match` : ""}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col gap-4 p-[var(--space-lg)]">
+                <div className="h-full min-h-0 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-2)]">
+                  {loadingFileContent ? (
+                    <div className="h-full animate-pulse bg-[var(--surface-3)]" />
                   ) : (
-                    <div className="flex items-center justify-between rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm">
-                      <span className="text-yellow-600/70 dark:text-yellow-400/70">Index Status</span>
-                      <span className="font-medium text-yellow-600 dark:text-yellow-400">Not Indexed</span>
-                    </div>
+                    <Editor
+                      language={selectedLanguage}
+                      value={fileContent?.content || ""}
+                      onMount={handleEditorMount}
+                      theme={editorTheme}
+                      options={{
+                        readOnly: true,
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                        lineNumbersMinChars: 4,
+                        wordWrap: "off",
+                        automaticLayout: true,
+                      }}
+                    />
                   )}
-                  {repo?.url ? (
-                    <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm">
-                      <span className="text-[var(--foreground-subtle)]">Repository URL</span>
-                      <a href={repo.url} target="_blank" rel="noopener noreferrer" className="font-medium text-[var(--brand)] hover:underline truncate max-w-[180px]">{repo.url}</a>
-                    </div>
-                  ) : null}
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Select lines, then add snippet to chat.</p>
+                  <Button type="button" variant="outline" size="sm" onClick={addCurrentSelectionToChat}>Add selection</Button>
                 </div>
               </div>
-            ) : null}
-            {messages.map((message, index) => {
-              const isUser = message.role === "user";
-              if (!isUser && message.content.trim() === "") return null;
-              const hasSources = !isUser && Boolean(message.sources?.length);
-              const isSourceOpen = expandedSources.has(index);
-
-              return (
-                <div key={`${message.role}-${index}`} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
-                  <div className={cn("flex max-w-[74%] gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}>
-                    <Avatar className="mt-1 shrink-0">
-                      <AvatarFallback className={cn(isUser ? "bg-[var(--surface-3)]" : "bg-[var(--brand-muted)] text-[var(--brand)]")}>
-                        {isUser ? "U" : "DB"}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <div className="min-w-0">
-                      <div
-                        className={cn(
-                           "rounded-xl border px-4 py-3 text-[var(--text-body)] leading-[1.62]",
-                          isUser
-                            ? "border-[var(--border)] bg-[var(--surface-3)] text-[var(--foreground)]"
-                            : "border-[var(--brand-muted)] bg-[var(--surface-1)] text-[var(--foreground)]"
-                        )}
-                      >
-                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                      </div>
-
-                      {isUser && message.artifacts?.length ? (
-                        <div className="pt-2">
-                          <div className="flex flex-wrap gap-2">
-                            {message.artifacts.map((artifact) => (
-                              <button
-                                type="button"
-                                key={artifact.id}
-                                onClick={() => openArtifact(artifact)}
-                                className="rounded-md border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-2 py-1 font-mono text-[var(--text-xs)] text-[var(--brand)] hover:opacity-90"
-                              >
-                                {artifact.kind === "folder" ? "Folder" : artifact.kind === "file" ? "File" : "Snippet"}: {artifact.filePath}
-                                {artifact.kind === "snippet" ? `:${artifact.startLine}-${artifact.endLine}` : ""}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {hasSources ? (
-                        <div className="pt-2">
-                          <button
-                            type="button"
-                            onClick={() => toggleSourceSection(index)}
-                            className="inline-flex items-center gap-1 text-(length:--text-xs) font-medium tracking-[0.08em] uppercase text-(--foreground-subtle) hover:text-(--foreground-muted)"
-                          >
-                            {isSourceOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-                            Sources ({message.sources?.length})
-                          </button>
-
-                          {isSourceOpen ? (
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {message.sources?.map((source, sourceIndex) => (
-                                <button
-                                  type="button"
-                                  key={`${source.file_path}-${sourceIndex}`}
-                                  onClick={() => setSelectedSource(source)}
-                                  className="rounded-md border border-border bg-(--surface-2) px-2 py-1 font-mono text-(length:--text-xs) text-(--foreground-muted) transition-colors hover:border-(--brand-muted) hover:text-(--brand)"
-                                >
-                                  {source.file_path}:{source.start_line}
-                                </button>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {isLoading ? (
-              <div className="flex justify-start">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback className="bg-[var(--brand-muted)] text-[var(--brand)]">DB</AvatarFallback>
-                  </Avatar>
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-1)] px-[var(--space-lg)] py-[var(--space-md)]">
-                    <div className="flex gap-1.5">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:0ms]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:150ms]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:300ms]" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="mt-2.5 shrink-0 border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_92%,transparent)] pt-2.5">
-          <div
-            className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_94%,transparent)] p-2"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={handleDropSnippet}
-          >
-            {snippetChips.length > 0 ? (
-              <div className="flex flex-wrap gap-2 px-1">
-                {snippetChips.map((chip) => (
-                  <button
-                    key={chip.id}
-                    type="button"
-                    onClick={() => removeSnippetChip(chip.id)}
-                    className="rounded-full border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-3 py-1 text-[var(--text-xs)] text-[var(--brand)]"
-                    title="Click to remove snippet"
-                  >
-                    {chip.filePath}:{chip.startLine}-{chip.endLine}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            <div className="flex items-center gap-[var(--space-sm)]">
-              <Input
-                type="text"
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                disabled={isLoading}
-                placeholder="Ask about your code or drop snippet here..."
-                className="h-11 border-transparent bg-transparent focus-visible:border-transparent focus-visible:ring-0"
-              />
-              <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-                <ArrowUp className="size-4" />
-              </Button>
             </div>
-          </div>
-        </form>
-      </div>
-
-      <aside className="hidden min-h-0 h-full flex-[1.7] overflow-hidden pl-2.5 md:flex md:flex-col">
-        {selectedSource || selectedFilePath ? (
-          <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-1)]">
-            <div className="border-b border-[var(--border)] px-[var(--space-lg)] py-[var(--space-md)]">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSource(null);
-                  setSelectedFilePath(null);
-                }}
-                className="mb-2 inline-flex items-center gap-1 text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
-              >
-                <ChevronLeft className="size-3.5" /> Back
-              </button>
-              <p className="text-[var(--text-xs)] font-medium uppercase tracking-[0.08em] text-[var(--foreground-subtle)]">{selectedSource ? "Cited Source" : "File Viewer"}</p>
-              <p className="font-mono text-[var(--text-sm)] text-[var(--foreground)]">{activeViewerPath}</p>
-              {selectedSource ? (
-                <p className="text-[var(--text-xs)] text-[var(--foreground-muted)]">
-                  L{selectedSource.start_line}-L{selectedSource.end_line}
-                  {selectedSource.function_name ? ` • ${selectedSource.function_name}` : ""}
-                  {typeof selectedSource.similarity === "number" ? ` • ${Math.round(selectedSource.similarity * 100)}% match` : ""}
-                </p>
-              ) : null}
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col gap-4 p-[var(--space-lg)]">
-              <div className="h-full min-h-0 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-2)]">
-                {loadingFileContent ? (
-                  <div className="h-full animate-pulse bg-[var(--surface-3)]" />
-                ) : (
-                  <Editor
-                    language={selectedLanguage}
-                    value={fileContent?.content || ""}
-                    onMount={handleEditorMount}
-                    theme={editorTheme}
-                    options={{
-                      readOnly: true,
-                      minimap: { enabled: false },
-                      scrollBeyondLastLine: false,
-                      lineNumbersMinChars: 4,
-                      wordWrap: "off",
-                      automaticLayout: true,
-                    }}
-                  />
-                )}
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[var(--text-xs)] text-[var(--foreground-subtle)]">Select lines, then add snippet to chat.</p>
-                <Button type="button" variant="outline" size="sm" onClick={addCurrentSelectionToChat}>Add selection</Button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_90%,transparent)] p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5">
-                <GitBranch className="h-3.5 w-3.5 text-[var(--foreground-subtle)]" />
-                <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]">Files</p>
-              </div>
-              {branches.length > 0 ? (
-                <div className="relative">
-                  <select
-                    value={selectedBranch}
-                    onChange={(e) => {
-                      setSelectedBranch(e.target.value);
-                      setFileTree(null);
-                    }}
-                    className="appearance-none rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2.5 py-1 pr-6 text-[10px] text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)] cursor-pointer"
-                  >
-                    <option value="">default</option>
-                    {branches.map((b) => (
-                      <option key={b.name} value={b.name}>{b.name}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--foreground-subtle)]" />
-                </div>
-              ) : (
-                <p className="text-[10px] text-[var(--foreground-subtle)]">Drag files into chat</p>
-              )}
-            </div>
-
-            {branchIndexMsg ? (
-              <p className="mt-1.5 flex items-center gap-1 text-[10px] text-[var(--foreground-subtle)]">
-                <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-[var(--brand)]" />
-                {branchIndexMsg}
-              </p>
-            ) : null}
-
-            <div className="mt-3 min-h-0 flex-1 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-2">
-              {loadingFiles ? <p className="px-2 py-1 text-xs text-[var(--foreground-subtle)]">Loading files…</p> : null}
-              {!loadingFiles && fileTree ? renderTreeNode(fileTree) : null}
-              {!loadingFiles && !fileTree ? (
-                <p className="px-2 py-1 text-xs text-[var(--foreground-subtle)]">
-                  {selectedBranch
-                    ? `No files found for branch "${selectedBranch}".`
-                    : "No files indexed yet. Use the sidebar to index."}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        )}
-      </aside>
-    </section>
+          ) : (
+            <FileExplorer 
+              fileTree={fileTree}
+              expandedFolders={expandedFolders}
+              toggleFolder={toggleFolder}
+              loadingFiles={loadingFiles}
+              selectedFilePath={selectedFilePath}
+              onSelectFile={(path) => {
+                setSelectedSource(null);
+                setSelectedFilePath(path);
+              }}
+              branches={branches}
+              selectedBranch={selectedBranch}
+              setSelectedBranch={(b) => {
+                setSelectedBranch(b);
+                if (b) localStorage.setItem(branchStorageKey, b);
+                else localStorage.removeItem(branchStorageKey);
+              }}
+              branchIndexMsg={branchIndexMsg}
+              branchLoadError={branchLoadError}
+              defaultBranchName={defaultBranchName}
+            />
+          )
+        }
+      />
+    </div>
   );
 }

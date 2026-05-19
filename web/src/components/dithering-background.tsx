@@ -9,15 +9,18 @@ const Dithering = lazy(() =>
 export function DitheringBackground() {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10">
-      <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_50%_-10%,var(--brand-glow),transparent_55%)]" />
       <Suspense fallback={<div className="absolute inset-0 bg-muted/20" />}>
-        <div className="dither-bg absolute inset-0 mix-blend-multiply dark:mix-blend-screen">
+        {/* Keep this wrapper free of `dither-bg`; global styles for that class darken landing visuals. */}
+        <div
+          className="absolute inset-0 z-0 opacity-40 mix-blend-multiply transition-[filter] duration-200 dark:opacity-30 dark:mix-blend-screen"
+          style={{ filter: "blur(var(--dither-blur, 0px))" }}
+        >
           <Dithering
             colorBack="#00000000"
             colorFront="#EC4E02"
             shape="warp"
             type="4x4"
-            speed={0.22}
+            speed={0.2}
             className="size-full"
             minPixelRatio={1}
           />

@@ -10,10 +10,13 @@
 .github/
 .gsd/
 .entire/
+.bob/
 
 node_modules/
 graphify-out/
 docs/
+memories/
+.mcp.json
 
 __pycache__/
 .bg-shell/backend-fix2.err.log
@@ -44,6 +47,7 @@ GEMINI.md
 implementation_plan.md
 SETUP.md
 .entire/logs/entire.log
- devbridge-amd-spec.md
 devbridge-amd-spec.md
 AMD-AUDIT-SPEC.md
+bun.lock
+test-results/.last-run.json

@@ -16,7 +16,7 @@ Contextually grounded understanding and intent retrieval over simple code genera
 
 - [x] Interactive Frontend (Phase 06)
 - [x] Tree-sitter Code Parsing (Phase 03)
-- [x] GCS/PubSub Ingestion (Phase 04)
+- [x] Event-driven Ingestion (Phase 04, provider-agnostic)
 - [x] Vector Indexing + Hybrid Search (Phase 05)
 - [x] History & Intent Ingestion (Phase 07)
 - [x] Human Annotation API (Phase 08)
@@ -25,7 +25,7 @@ Contextually grounded understanding and intent retrieval over simple code genera
 ### Active (v0.2 Milestone)
 
 - [ ] **AMD GPU Integration**: Single MI300X with VRAM partitioning for concurrent LLM inference
-- [ ] **Agent Orchestrator**: Dual-model routing (Big Model for deep reasoning, Fast Model for intent classification)
+- [x] **Agent Orchestrator**: Dual-model routing (Big Model for deep reasoning, Fast Model for intent classification) (Validated in Phase 21)
 - [ ] **Knowledge Graph**: Internal symbol resolution with CALLS edges
 - [ ] **Onboarding UX**: Polling/SSE endpoint for plan generation with JSON schema validation
 - [ ] **GitHub Integration**: pgvector-based issue-to-file mapping, OAuth token extraction from Supabase
@@ -55,7 +55,7 @@ Contextually grounded understanding and intent retrieval over simple code genera
 | Decision | Rationale |
 |----------|-----------|
 | Single GPU with VRAM partitioning | Budget constraint: $1.99/hr MI300X vs multi-GPU |
-| Qwen2.5-72B + Gemma-2-9B | Balance of reasoning capability vs. latency |
+| Qwen2.5-72B + Gemma-4-9B | Balance of reasoning capability vs. latency |
 | 48K token context cap | Prevents KV cache OOM on shared GPU |
 | Internal symbol resolution | Drops external/unresolvable CALLS edges |
 | pgvector cosine distance | Avoids huge VRAM context spikes for issue mapping |
@@ -63,4 +63,4 @@ Contextually grounded understanding and intent retrieval over simple code genera
 
 ---
 
-*Last updated: 2026-05-09 - v0.2 milestone initialized*
+*Last updated: 2026-05-10 - Phase 21 complete (dual-model orchestrator validated)*

@@ -9,12 +9,11 @@ from datetime import datetime
 from typing import Any
 from urllib import parse, request
 
-from langchain_core.messages import HumanMessage
-from langchain_google_vertexai import ChatVertexAI, VertexAIEmbeddings
 from sqlalchemy import text
 
-from api.core.config import GOOGLE_CLOUD_PROJECT, settings
+from api.core.config import settings
 from api.db.session import get_engine, init_db_pool
+from api.db.vector_store import vector_db
 
 
 GITHUB_API_BASE = "https://api.github.com"
@@ -49,29 +48,6 @@ def _sanitize_text(value: str | None, max_len: int = 20000) -> str:
 
 
 def _get_github_token() -> str:
-    # Use GOOGLE_CLOUD_PROJECT from config.py as single source of truth
-    project_id = GOOGLE_CLOUD_PROJECT
-    if project_id:
-        try:
-            from google.cloud import secretmanager
-
-            client = secretmanager.SecretManagerServiceClient()
-            secret_paths = [
-                f"projects/{project_id}/secrets/GITHUB_TOKEN/versions/latest",
-                f"projects/{project_id}/secrets/GITHUB_API_TOKEN/versions/latest",
-            ]
-            for secret_path in secret_paths:
-                try:
-                    response = client.access_secret_version(request={"name": secret_path})
-                    token = response.payload.data.decode("utf-8").strip()
-                    if token:
-                        return token
-                except Exception:
-                    continue
-        except Exception:
-            pass
-
-    # Local fallback for development/tests only.
     return (
         os.environ.get("GITHUB_TOKEN")
         or os.environ.get("GITHUB_API_TOKEN")
@@ -108,40 +84,17 @@ async def _summarize_pr(title: str, description: str) -> str:
     if not clean_title and not clean_description:
         return ""
 
-    if not settings.google_cloud_project:
-        # Deterministic fallback in local/non-cloud envs.
-        fallback = clean_description[:600]
-        if fallback:
-            return f"{clean_title}\n\n{fallback}".strip()
-        return clean_title
-
-    prompt = (
-        "Summarize this pull request for engineering intent retrieval. "
-        "Include motivation, core changes, and expected impact in <= 120 words.\n\n"
-        f"Title: {clean_title}\n\n"
-        f"Description:\n{clean_description}"
-    )
-
-    model_name = os.environ.get("VERTEX_AI_SUMMARY_MODEL", "gemini-1.5-flash")
-    llm = ChatVertexAI(
-        model_name=model_name,
-        project=settings.google_cloud_project,
-        location=os.environ.get("GCP_LOCATION", "us-central1"),
-        temperature=0.1,
-    )
-    response = await llm.ainvoke([HumanMessage(content=prompt)])
-    return _sanitize_text(getattr(response, "content", ""), max_len=3000)
+    fallback = clean_description[:600]
+    if fallback:
+        return f"{clean_title}\n\n{fallback}".strip()
+    return clean_title
 
 
 async def _embed_text(text_to_embed: str) -> list[float] | None:
     if not text_to_embed:
         return None
 
-    project_id = settings.google_cloud_project
-    if not project_id:
-        return None
-
-    embeddings = VertexAIEmbeddings(model_name="text-embedding-004", project=project_id)
+    embeddings = vector_db.get_embedding_service()
     try:
         vector = await asyncio.to_thread(embeddings.embed_query, text_to_embed)
         return vector

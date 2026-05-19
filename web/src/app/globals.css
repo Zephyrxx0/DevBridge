@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -89,26 +88,34 @@
   --accent-amber: var(--accent-warm);
   --accent-amber-muted: var(--accent-warm-muted);
 
-  /* Typography scale */
-  --text-hero: clamp(3rem, 6vw, 5.5rem);
-  --text-h1: 2rem;
-  --text-h2: 1.375rem;
-  --text-h3: 1rem;
-  --text-body-lg: 1.125rem;
-  --text-body: 0.9375rem;
-  --text-sm: 0.8125rem;
-  --text-xs: 0.6875rem;
-  --text-code: 0.8125rem;
+  /* Typography scale (UI-SPEC constrained) */
+  --text-hero: clamp(3rem, 6vw, 4rem);
+  --text-display: 3rem;
+  --text-heading: 1.5rem;
+  --text-body: 1rem;
+  --text-label: 0.875rem;
+  --text-code: 1rem;
+  --text-h1: var(--text-display);
+  --text-h2: var(--text-heading);
+  --text-h3: var(--text-heading);
+  --text-body-lg: var(--text-body);
+  --text-sm: var(--text-label);
+  --text-xs: var(--text-label);
 
   /* Spacing */
-  --space-xs: 0.5rem;
-  --space-sm: 0.75rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2.5rem;
-  --space-2xl: 4rem;
-  --space-3xl: 6rem;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
   --space-4xl: 9rem;
+
+  /* Soft UI transition tokens */
+  --transition-soft-duration: 240ms;
+  --transition-soft-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-soft: all var(--transition-soft-duration) var(--transition-soft-ease);
 
   /* Gradient tokens — warm orange direction */
   --gradient-brand: linear-gradient(135deg, oklch(0.58 0.2 30), oklch(0.65 0.18 50));
@@ -253,26 +260,59 @@
   animation: glow-pulse 3s ease-in-out infinite;
 }
 
+.skip-link {
+  position: fixed;
+  top: -120px;
+  left: var(--space-md);
+  z-index: 80;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  color: var(--foreground);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-label);
+  font-weight: 600;
+  transition: top var(--transition-soft-duration) var(--transition-soft-ease);
+}
+
+.skip-link:focus-visible {
+  top: var(--space-md);
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+:where(a, button, input, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.soft-ui-transition {
+  transition: var(--transition-soft);
+}
+
+.soft-ui-fade-up {
+  animation: fade-up var(--transition-soft-duration) var(--transition-soft-ease) both;
+}
+
+.soft-ui-fade-in {
+  animation: fade-in var(--transition-soft-duration) var(--transition-soft-ease) both;
+}
+
+.soft-ui-slide-up {
+  animation: slide-up var(--transition-soft-duration) var(--transition-soft-ease) both;
+}
+
 .dither-transition .dither-bg {
-  transition: filter 600ms ease, opacity 600ms ease;
+  transition: none;
 }
 
 .dither-bg {
-  filter: blur(0px);
-  opacity: 0.35;
+  filter: blur(var(--dither-blur, 0px));
+  opacity: var(--dither-opacity, 0.35);
 }
 
 .dark .dither-bg {
-  opacity: 0.15;
-}
-
-.dither-blur .dither-bg {
-  filter: blur(12px);
-  opacity: 0.15;
-}
-
-.dark .dither-blur .dither-bg {
-  opacity: 0.08;
+  opacity: var(--dither-opacity, 0.15);
 }
 
 /* Stagger delays */
@@ -335,24 +375,24 @@
   }
   h1 {
     font-family: var(--font-heading);
-    font-size: 2.25rem;
-    line-height: 1.15;
+    font-size: var(--text-display);
+    line-height: 1.1;
     letter-spacing: -0.025em;
-    font-weight: 700;
+    font-weight: 600;
   }
   h2 {
     font-family: var(--font-heading);
-    font-size: 1.875rem;
+    font-size: var(--text-heading);
     line-height: 1.2;
     letter-spacing: -0.02em;
     font-weight: 600;
   }
   h3 {
     font-family: var(--font-heading);
-    font-size: 1.5rem;
-    line-height: 1.3;
+    font-size: var(--text-heading);
+    line-height: 1.2;
     letter-spacing: -0.015em;
-    font-weight: 500;
+    font-weight: 600;
   }
   h4, h5, h6 {
     font-family: var(--font-heading);
@@ -360,9 +400,26 @@
   }
   body, p {
     font-family: var(--font-body);
-    line-height: 1.6;
+    font-size: var(--text-body);
+    line-height: 1.5;
+    font-weight: 400;
+  }
+  label,
+  [data-slot="label"] {
+    font-size: var(--text-label);
+    line-height: 1.4;
+    font-weight: 400;
+  }
+  button,
+  [data-slot="button"],
+  input,
+  textarea,
+  [data-slot="tooltip-content"] {
+    font-size: var(--text-label);
+    line-height: 1.4;
   }
   code, pre {
     font-family: var(--font-mono);
+    font-size: var(--text-code);
   }
 }

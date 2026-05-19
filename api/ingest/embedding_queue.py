@@ -13,7 +13,7 @@ async def enqueue_embedding_jobs(jobs: List[EmbeddingJob]) -> bool:
     
     This is a transport-agnostic interface. In Phase 05 Wave 1, this acts
     as a contract verification point and logs the jobs. Wave 2 will wire 
-    this to the actual transport (e.g., Pub/Sub or Cloud Tasks).
+    this to the actual transport (e.g., queue service or task runner).
     
     Args:
         jobs: List of EmbeddingJob objects to process.

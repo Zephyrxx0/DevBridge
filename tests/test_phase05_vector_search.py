@@ -136,7 +136,7 @@ async def test_ingest_to_search_flow_contract():
     """
     from api.ingest.trigger import handle_pubsub_event
     
-    # Mock GCS download and database engine
+    # Mock object download and database engine
     with patch("api.ingest.trigger._download_from_gcs", new_callable=AsyncMock) as mock_download, \
          patch("api.db.session.engine") as mock_engine, \
          patch("api.ingest.trigger.init_db_pool", new_callable=AsyncMock), \
@@ -204,35 +204,27 @@ async def test_code_search_output_schema():
         # It should contain a JSON block or a clear list
         assert "[" in response and "]" in response
 
-def test_project_env_key_alignment():
-    """
-    Verify canonical env key (GOOGLE_CLOUD_PROJECT) usage and production mode rejection.
-    """
+def test_config_requires_connection_string_in_production():
+    """Verify production mode requires SUPABASE_CONNECTION_STRING."""
     from api.core.config import Settings
     import os
     from unittest.mock import patch
 
-    # 1. Canonical usage
-    with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "canonical-project", "ENV": "development"}, clear=True):
+    # 1. Development allows empty connection string
+    with patch.dict(os.environ, {"ENV": "development"}, clear=True):
         s = Settings(_env_file=None)
-        assert s.google_cloud_project == "canonical-project"
+        assert s.supabase_connection_string == ""
 
-    # 2. Legacy env var is ignored
-    with patch.dict(os.environ, {"GCP_PROJECT_ID": "legacy-project", "ENV": "development"}, clear=True):
-        s = Settings(_env_file=None)
-        assert s.google_cloud_project is None
-
-    # 3. Production mode rejection
+    # 2. Production mode rejection
     with patch.dict(os.environ, {"ENV": "production"}, clear=True):
-        with pytest.raises(ValueError, match="GOOGLE_CLOUD_PROJECT must be set in production mode"):
+        with pytest.raises(ValueError, match="SUPABASE_CONNECTION_STRING must be set in production mode"):
             Settings(_env_file=None)
 
-    # 4. Canonical still works when legacy env var is present
+    # 3. Production with connection string passes
     with patch.dict(os.environ, {
-        "GOOGLE_CLOUD_PROJECT": "canonical-project",
-        "GCP_PROJECT_ID": "legacy-project",
+        "SUPABASE_CONNECTION_STRING": "postgresql+psycopg://user:pass@localhost:6543/dev",
         "ENV": "development"
     }, clear=True):
         s = Settings(_env_file=None)
-        assert s.google_cloud_project == "canonical-project"
+        assert s.supabase_connection_string.startswith("postgresql+psycopg://")
 

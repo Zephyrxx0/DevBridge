@@ -98,6 +98,28 @@ def _normalize_connection_string(connection_string: str) -> str:
     return urlunsplit((parts.scheme, netloc, parts.path, urlencode(query), parts.fragment))
 
 
+def normalize_sync_url(connection_string: str) -> str:
+    """Return a SQLAlchemy sync Postgres URL for APScheduler JobStore."""
+    normalized = connection_string.strip()
+
+    if "://" not in normalized and "=" in normalized:
+        normalized = _conninfo_to_url(normalized)
+
+    if normalized.startswith("postgres://"):
+        normalized = normalized.replace("postgres://", "postgresql+psycopg://", 1)
+    if normalized.startswith("postgresql://"):
+        normalized = normalized.replace("postgresql://", "postgresql+psycopg://", 1)
+    if normalized.startswith("postgresql+asyncpg://"):
+        normalized = normalized.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
+
+    parts = urlsplit(normalized)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query.pop("sslmode", None)
+    query.pop("ssl", None)
+
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
 async def init_db_pool(connection_string: str) -> AsyncEngine:
     global engine
     if engine is not None:

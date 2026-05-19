@@ -1,9 +1,11 @@
 from functools import lru_cache
 import os
+from uuid import UUID
 
-from google.cloud import secretmanager
+from sqlalchemy import text
 
 from api.core.config import settings
+from api.db.session import get_engine
 
 class SecretManager:
     """
@@ -11,7 +13,7 @@ class SecretManager:
     Kept to avoid breaking existing imports while callers migrate.
     """
     def __init__(self, project_id: str = None):
-        self.project_id = project_id or settings.google_cloud_project
+        self.project_id = project_id or ""
 
     @lru_cache(maxsize=32)
     def get_secret(self, secret_id: str, version_id: str = "latest") -> str:
@@ -21,7 +23,6 @@ class SecretManager:
         _ = version_id  # Kept for backwards-compatible signature.
         mapping = {
             "SUPABASE_CONNECTION_STRING": settings.supabase_connection_string,
-            "GOOGLE_CLOUD_PROJECT": settings.google_cloud_project or "",
         }
         return mapping.get(secret_id, "")
 
@@ -32,18 +33,40 @@ def get_secret_manager() -> SecretManager:
     return secrets
 
 
-async def get_github_token() -> str:
-    """Resolve GitHub token using Secret Manager first, then environment fallback."""
-    project_id = settings.google_cloud_project
-    if project_id:
-        try:
-            client = secretmanager.SecretManagerServiceClient()
-            name = f"projects/{project_id}/secrets/GITHUB_TOKEN/versions/latest"
-            response = client.access_secret_version(request={"name": name})
-            token = response.payload.data.decode("utf-8").strip()
-            if token:
-                return token
-        except Exception:
-            pass
+def _normalize_user_uuid(user_id: UUID | str | None) -> UUID | None:
+    if user_id is None:
+        return None
+    if isinstance(user_id, UUID):
+        return user_id
+    try:
+        return UUID(str(user_id).strip())
+    except Exception:
+        return None
 
-    return (os.getenv("GITHUB_TOKEN") or "").strip()
+
+async def get_github_token(
+    user_id: UUID | str | None = None,
+    allow_env_fallback: bool = False,
+) -> str:
+    """Resolve user-scoped GitHub token from RPC.
+
+    Environment fallback is disabled by default to avoid shared PAT usage.
+    """
+    user_uuid = _normalize_user_uuid(user_id)
+    if user_uuid is not None:
+        engine = get_engine()
+        if engine is not None:
+            query = text(
+                "SELECT get_github_token_for_user(CAST(:user_id AS uuid)) AS provider_token"
+            )
+            async with engine.connect() as conn:
+                result = await conn.execute(query, {"user_id": str(user_uuid)})
+                row = result.fetchone()
+                if row:
+                    token = (row._mapping.get("provider_token") or "").strip()
+                    if token:
+                        return token
+
+    if allow_env_fallback:
+        return (os.getenv("GITHUB_TOKEN") or "").strip()
+    return ""

@@ -1,7 +1,6 @@
 import os
 import argparse
 import psycopg
-from google.cloud import storage
 
 def _normalize_psycopg_conn(connection_string: str) -> str:
     """Normalize connection string for psycopg3."""
@@ -9,7 +8,7 @@ def _normalize_psycopg_conn(connection_string: str) -> str:
     return connection_string.replace("postgresql+psycopg://", "postgresql://")
 
 def cleanup_e2e(repo_name="e2e-test-repo", dry_run=False):
-    """Purge E2E test data from database and GCS."""
+    """Purge E2E test data from database."""
     print(f"Starting E2E cleanup for repo: {repo_name}")
     
     # 1. Database Cleanup
@@ -53,24 +52,6 @@ def cleanup_e2e(repo_name="e2e-test-repo", dry_run=False):
             conn.close()
         except Exception as e:
             print(f"DB Cleanup Error: {e}")
-
-    # 2. GCS Cleanup
-    bucket_name = os.environ.get("GCS_BUCKET_NAME", "code-snapshots")
-    try:
-        client = storage.Client()
-        bucket = client.bucket(bucket_name)
-        # List blobs with the repo prefix
-        blobs = list(bucket.list_blobs(prefix=f"{repo_name}/"))
-        
-        if dry_run:
-            print(f"[Dry Run] Would delete {len(blobs)} blobs from gs://{bucket_name}/{repo_name}/")
-        else:
-            for blob in blobs:
-                blob.delete()
-            print(f"Deleted {len(blobs)} blobs from gs://{bucket_name}/{repo_name}/")
-            
-    except Exception as e:
-        print(f"GCS Cleanup Error: {e}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Cleanup E2E test artifacts.")

@@ -1,12 +1,23 @@
 import json
 
 from fastapi import APIRouter, HTTPException, Request
+from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 from sqlalchemy import text
 
+from api.agents.graph import graph
+from api.core.config import settings
 from api.db.session import get_engine
+from api.utils.tokenizer import enforce_cap
 
 router = APIRouter(tags=["chats"])
+
+
+async def stream_graph_events(message: str, thread_id: str):
+    config = {"configurable": {"thread_id": thread_id}}
+    input_data = {"messages": [HumanMessage(content=message)]}
+    async for event in graph.astream_events(input_data, config=config, version="v2"):
+        yield event
 
 
 async def _resolve_repo_uuid(conn, repo_id: str) -> str:
@@ -212,6 +223,12 @@ class ChatSessionUpdate(BaseModel):
     title: str
 
 
+class InferenceContextRequest(BaseModel):
+    messages: list[dict]
+    codebase_chunk: str = ""
+    model_type: str = "qwen"
+
+
 @router.patch("/repo/{repo_id}/chats/{session_id}")
 async def rename_chat(repo_id: str, session_id: str, payload: ChatSessionUpdate):
     engine = get_engine()
@@ -241,6 +258,28 @@ async def rename_chat(repo_id: str, session_id: str, payload: ChatSessionUpdate)
         raise
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Chat rename unavailable: {exc}")
+
+
+@router.post("/chats/{session_id}/inference-context")
+async def build_inference_context(session_id: str, payload: InferenceContextRequest):
+    _ = session_id  # reserved for downstream session-specific enrichment
+    try:
+        messages, warning = enforce_cap(
+            payload.messages,
+            payload.codebase_chunk,
+            max_tokens=settings.max_context_tokens,
+            model_type=payload.model_type,
+        )
+
+        response = {
+            "messages": messages,
+            "warning": None,
+        }
+        if warning:
+            response["warning"] = "Context was trimmed to 48K tokens limit. Older history removed."
+        return response
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Context build unavailable: {exc}")
 
 
 @router.delete("/repo/{repo_id}/chats/{session_id}")

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { ChevronDown, ChevronLeft, GitBranch, RefreshCw, ZoomIn, ZoomOut, Network } from "lucide-react";
+import { ChevronDown, ChevronLeft, RefreshCw, ZoomIn, ZoomOut, Network } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +30,11 @@ type FileNode = {
 type GraphData = {
   nodes: { id: string; group: string; degree: number; val: number }[];
   links: { source: string; target: string }[];
+};
+
+type BranchInfo = {
+  name: string;
+  is_default?: boolean;
 };
 
 /* ------------------------------------------------------------------ */
@@ -227,8 +232,16 @@ export default function MapPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({ files: 0, edges: 0 });
-  const [branches, setBranches] = useState<{ name: string }[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState("");
+  const [branches, setBranches] = useState<BranchInfo[]>([]);
+  const [branchLoadError, setBranchLoadError] = useState("");
+  const defaultBranchName = useMemo(
+    () => branches.find((b) => b.is_default)?.name || branches.find((b) => b.name === "main")?.name || branches.find((b) => b.name === "master")?.name || "",
+    [branches]
+  );
+  const [selectedBranch, setSelectedBranch] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(`repo:${repoId}:selectedBranch`) || "";
+  });
   const graphRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -250,14 +263,27 @@ export default function MapPage() {
   }, []);
 
   const apiUrl = "/api/backend";
+  const branchStorageKey = `repo:${repoId}:selectedBranch`;
 
   // Load branches and check indexing status
   useEffect(() => {
     async function loadBranches() {
       try {
+        setBranchLoadError("");
         const res = await fetch(`${apiUrl}/repo/${repoId}/branches`);
-        if (!res.ok) return;
-        const data = (await res.json()) as { name: string }[];
+        if (!res.ok) {
+          let detail = "Branch list unavailable";
+          try {
+            const payload = (await res.json()) as { detail?: string };
+            if (payload?.detail) detail = payload.detail;
+          } catch {
+            // ignore
+          }
+          setBranchLoadError(detail);
+          setBranches([]);
+          return;
+        }
+        const data = (await res.json()) as BranchInfo[];
         setBranches(data);
       } catch {
         // non-critical
@@ -288,7 +314,8 @@ export default function MapPage() {
     setError(null);
     try {
       const params = new URLSearchParams();
-      if (branch) params.set("branch", branch);
+      const effectiveBranch = branch || defaultBranchName;
+      if (effectiveBranch) params.set("branch", effectiveBranch);
       if (fresh) params.set("fresh", "true");
       const qs = params.toString() ? `?${params.toString()}` : "";
       const filesRes = await fetch(`${apiUrl}/repo/${repoId}/files${qs}`);
@@ -306,7 +333,7 @@ export default function MapPage() {
           // Small delay then retry bypassing cache
           await new Promise((r) => setTimeout(r, 800));
           const retryParams = new URLSearchParams();
-          if (branch) retryParams.set("branch", branch);
+          if (effectiveBranch) retryParams.set("branch", effectiveBranch);
           retryParams.set("fresh", "true");
           const retryRes = await fetch(`${apiUrl}/repo/${repoId}/files?${retryParams.toString()}`);
           if (retryRes.ok) {
@@ -314,7 +341,7 @@ export default function MapPage() {
             const retryFiles = flattenFiles(retryTree).filter(shouldInclude).slice(0, MAX_FILES);
             if (retryFiles.length > 0) {
               // recurse with fresh=true so we skip the empty check
-              return void fetchGraph(branch, true);
+              return void fetchGraph(effectiveBranch, true);
             }
           }
         }
@@ -361,7 +388,7 @@ export default function MapPage() {
               const controller = new AbortController();
               const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
               let fetchUrl = `${apiUrl}/repo/${repoId}/files/${encodeURIComponent(filePath)}`;
-              if (branch) fetchUrl += `?branch=${encodeURIComponent(branch)}`;
+              if (effectiveBranch) fetchUrl += `?branch=${encodeURIComponent(effectiveBranch)}`;
               
               const res = await fetch(fetchUrl, { signal: controller.signal });
               clearTimeout(timeout);
@@ -415,12 +442,29 @@ export default function MapPage() {
       setError("Network error fetching repository data. Is the backend running?");
       setLoading(false);
     }
-  }, [apiUrl, repoId]);
+  }, [apiUrl, repoId, defaultBranchName]);
 
   // Trigger fetchGraph when branch or repoId changes, or when indexing completes
   useEffect(() => {
     fetchGraph(selectedBranch || undefined, false);
   }, [fetchGraph, selectedBranch, repo?.lastIndexed]);
+
+  useEffect(() => {
+    if (!graphRef.current) return;
+    const linkForce = graphRef.current.d3Force("link");
+    if (linkForce?.distance) {
+      linkForce.distance((link: any) => {
+        const src = typeof link.source === "string" ? link.source : link.source?.id;
+        const tgt = typeof link.target === "string" ? link.target : link.target?.id;
+        return src === selectedNodeId || tgt === selectedNodeId ? 240 : 170;
+      });
+      if (linkForce.strength) linkForce.strength(0.12);
+    }
+    const chargeForce = graphRef.current.d3Force("charge");
+    if (chargeForce?.strength) chargeForce.strength(-680);
+    graphRef.current.d3VelocityDecay(0.4);
+    graphRef.current.d3ReheatSimulation();
+  }, [graphData.nodes.length, graphData.links.length, selectedNodeId]);
 
   const selectedNode = useMemo(
     () => graphData.nodes.find((n) => n.id === selectedNodeId),
@@ -491,23 +535,28 @@ export default function MapPage() {
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Network className="h-4 w-4 text-brand" />
                 <span>Dependency Graph</span>
-                {branches.length > 0 && (
-                  <div className="ml-2 relative">
-                    <select
-                      value={selectedBranch}
-                      onChange={(e) => setSelectedBranch(e.target.value)}
-                      className="appearance-none rounded-md border border-border bg-muted/50 px-2 py-0.5 pr-6 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-brand cursor-pointer hover:bg-muted"
-                    >
-                      <option value="">default</option>
-                      {branches.map((b) => (
-                        <option key={b.name} value={b.name}>{b.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-2.5 w-2.5 -translate-y-1/2 text-muted-foreground" />
-                  </div>
-                )}
+                <div className="ml-2 relative">
+                  <select
+                    value={selectedBranch}
+                    onChange={(e) => {
+                      const nextBranch = e.target.value;
+                      setSelectedBranch(nextBranch);
+                      localStorage.setItem(branchStorageKey, nextBranch);
+                    }}
+                    className="appearance-none rounded-md border border-border bg-muted/50 px-2 py-0.5 pr-6 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-brand cursor-pointer hover:bg-muted"
+                  >
+                    <option value="">{defaultBranchName ? `default (${defaultBranchName})` : "default"}</option>
+                    {branches.map((b) => (
+                      <option key={b.name} value={b.name}>{b.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-2.5 w-2.5 -translate-y-1/2 text-muted-foreground" />
+                </div>
               </div>
             </CardTitle>
+            {branchLoadError ? (
+              <p className="text-[10px] text-amber-500 mt-1">Branch fetch warning: {branchLoadError}</p>
+            ) : null}
           </CardHeader>
           <CardContent className="min-h-0 flex-1 p-0">
             {loading ? (
@@ -573,12 +622,6 @@ export default function MapPage() {
                     backgroundColor="transparent"
                     cooldownTicks={150}
                     d3AlphaDecay={0.01}
-                    onEngineTick={() => {
-                      if (graphRef.current) {
-                        graphRef.current.d3Force("link").distance(120);
-                        graphRef.current.d3Force("charge").strength(-300);
-                      }
-                    }}
                     nodeCanvasObjectMode={() => "after"}
                     nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                       if (globalScale < 1.8 && node.id !== selectedNodeId) return;
@@ -593,7 +636,7 @@ export default function MapPage() {
                           : "rgba(255,255,255,0.7)";
                       ctx.fillText(label, node.x, node.y + 8);
                     }}
-                    d3VelocityDecay={0.3}
+                    d3VelocityDecay={0.4}
                   />
                 </div>
 

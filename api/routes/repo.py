@@ -7,11 +7,14 @@ import uuid
 from typing import Any
 from urllib import request
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy import text
 
 from api.core.secrets import get_github_token
 from api.db.session import get_engine
+from api.db.graph_store import GraphStoreManager
+from api.ingestion.graph_builder import GraphBuilder
 from api.core.config import settings
 
 import logging
@@ -19,6 +22,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["repo"])
+
+
+def _request_user_id(request: Request | None) -> str | None:
+    if request is None:
+        return None
+    value = getattr(request.state, "user_id", None)
+    if value is None:
+        return None
+    token = str(value).strip()
+    return token or None
 
 
 async def _resolve_repo(conn: Any, repo_id: str) -> dict[str, Any]:
@@ -38,6 +51,36 @@ async def _resolve_repo(conn: Any, repo_id: str) -> dict[str, Any]:
     repo = dict(row._mapping)
     repo["id"] = str(repo["id"])
     return repo
+
+
+def _normalize_onboarding_plan_schema(plan: dict[str, Any]) -> dict[str, Any]:
+    """Map legacy onboarding plan keys to current contract."""
+    normalized = dict(plan)
+
+    if "setup_commands" not in normalized:
+        legacy_setup = normalized.get("setup")
+        if isinstance(legacy_setup, str) and legacy_setup.strip():
+            normalized["setup_commands"] = [legacy_setup.strip()]
+        else:
+            normalized["setup_commands"] = []
+
+    key_files = normalized.get("key_files")
+    if isinstance(key_files, list):
+        upgraded_key_files: list[dict[str, Any]] = []
+        for item in key_files:
+            if isinstance(item, dict):
+                upgraded = dict(item)
+                if "description" not in upgraded and isinstance(upgraded.get("why"), str):
+                    upgraded["description"] = upgraded["why"]
+                upgraded_key_files.append(upgraded)
+        normalized["key_files"] = upgraded_key_files
+
+    normalized.pop("setup", None)
+    for item in normalized.get("key_files", []):
+        if isinstance(item, dict):
+            item.pop("why", None)
+
+    return normalized
 
 
 def _repo_from_github_url(url: str | None) -> str | None:
@@ -164,25 +207,94 @@ async def get_repository(repo_id: str):
 
 
 @router.get("/repo/{repo_id}/branches")
-async def list_repository_branches(repo_id: str):
-    """Return list of branches from GitHub for this repository."""
+async def list_repository_branches(repo_id: str, request: Request):
+    """Return list of branches from GitHub for this repository.
+
+    If GitHub API is rate-limited, gracefully falls back to cached/local branch hints.
+    """
     engine = get_engine()
     if engine is None:
         raise HTTPException(status_code=500, detail="Database engine not initialized")
     try:
         async with engine.connect() as conn:
             repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
             repo_slug = _repo_from_github_url(repo.get("github_url")) or repo.get("name")
             if not repo_slug:
                 raise HTTPException(status_code=422, detail="Cannot derive GitHub slug from repository")
-            token = await get_github_token()
-            payload = await _github_get_json(
-                f"https://api.github.com/repos/{repo_slug}/branches?per_page=100",
-                token,
-            )
-            if not isinstance(payload, list):
-                raise HTTPException(status_code=502, detail="Unexpected GitHub response")
-            return [{"name": b["name"], "sha": b["commit"]["sha"]} for b in payload if isinstance(b, dict) and "name" in b]
+            token = await get_github_token(_request_user_id(request), allow_env_fallback=True)
+
+            default_branch = "main"
+            try:
+                repo_payload = await _github_get_json(
+                    f"https://api.github.com/repos/{repo_slug}",
+                    token,
+                )
+                if isinstance(repo_payload, dict):
+                    candidate = repo_payload.get("default_branch")
+                    if isinstance(candidate, str) and candidate.strip():
+                        default_branch = candidate.strip()
+            except Exception:
+                # Non-fatal: we can still list branches without explicit default marker.
+                pass
+
+            try:
+                payload = await _github_get_json(
+                    f"https://api.github.com/repos/{repo_slug}/branches?per_page=100",
+                    token,
+                )
+                if not isinstance(payload, list):
+                    raise HTTPException(status_code=502, detail="Unexpected GitHub response")
+                branches = []
+                for b in payload:
+                    if not isinstance(b, dict) or "name" not in b:
+                        continue
+                    name = b.get("name")
+                    if not isinstance(name, str):
+                        continue
+                    branches.append({
+                        "name": name,
+                        "sha": (b.get("commit") or {}).get("sha", "") if isinstance(b.get("commit"), dict) else "",
+                        "is_default": name == default_branch,
+                    })
+                return branches
+            except Exception as exc:
+                message = str(exc).lower()
+                if "rate limit" not in message and "403" not in message:
+                    raise
+
+                logger.warning("GitHub branches API rate-limited for %s, using fallback list", repo_slug)
+
+                cached_rows = await conn.execute(
+                    text(
+                        """
+                        SELECT DISTINCT branch
+                        FROM repo_file_cache
+                        WHERE repo_id = CAST(:repo_id AS uuid)
+                          AND branch IS NOT NULL
+                          AND branch <> ''
+                        ORDER BY branch
+                        """
+                    ),
+                    {"repo_id": actual_id},
+                )
+                cached_branches = [
+                    row._mapping["branch"]
+                    for row in cached_rows.fetchall()
+                    if isinstance(row._mapping.get("branch"), str) and row._mapping["branch"].strip()
+                ]
+
+                fallback_order = ["main", "master", "develop", "dev"]
+                seen: set[str] = set()
+                merged: list[str] = []
+
+                for name in cached_branches + fallback_order:
+                    clean = (name or "").strip()
+                    if clean and clean not in seen:
+                        seen.add(clean)
+                        merged.append(clean)
+
+                return [{"name": name, "sha": "", "is_default": name == default_branch} for name in merged]
     except HTTPException:
         raise
     except Exception as exc:
@@ -190,7 +302,7 @@ async def list_repository_branches(repo_id: str):
 
 
 @router.get("/repo/{repo_id}/files")
-async def list_repository_files(repo_id: str, branch: str | None = None, fresh: bool = False):
+async def list_repository_files(repo_id: str, request: Request, branch: str | None = None, fresh: bool = False):
     """Return file tree.
     - No branch param → code_chunks (indexed) first, then GitHub fallback.
     - Branch param set  → always GitHub (code_chunks are not branch-aware).
@@ -256,7 +368,7 @@ async def list_repository_files(repo_id: str, branch: str | None = None, fresh: 
 
             # ── 3. GitHub API (always for branch requests, fallback otherwise) ──
             repo_slug = _repo_from_github_url(repo_url) or repo_name
-            token = await get_github_token()
+            token = await get_github_token(_request_user_id(request), allow_env_fallback=True)
             if not repo_slug:
                 return _materialize_tree(root)
 
@@ -396,7 +508,7 @@ async def invalidate_file_cache(repo_id: str, branch: str | None = None):
 
 
 @router.get("/repo/{repo_id}/files/{file_path:path}")
-async def get_repository_file(repo_id: str, file_path: str, branch: str | None = None):
+async def get_repository_file(repo_id: str, file_path: str, request: Request, branch: str | None = None):
     engine = get_engine()
     if engine is None:
         raise HTTPException(status_code=500, detail="Database engine not initialized")
@@ -446,7 +558,7 @@ async def get_repository_file(repo_id: str, file_path: str, branch: str | None =
 
             if not row:
                 # Fallback: load raw file from GitHub.
-                token = await get_github_token()
+                token = await get_github_token(_request_user_id(request), allow_env_fallback=True)
                 if repo_slug:
                     from urllib.parse import quote as _quote
                     encoded_path = _quote(file_path, safe="/")
@@ -543,7 +655,7 @@ async def list_ingestion_jobs(repo_id: str, limit: int = 30):
 
 
 @router.post("/repo/{repo_id}/trigger-index")
-async def trigger_repository_index(repo_id: str, background_tasks: BackgroundTasks):
+async def trigger_repository_index(repo_id: str, background_tasks: BackgroundTasks, request: Request):
     """Trigger GitHub file ingestion into code_chunks. Returns immediately; work runs in background."""
     engine = get_engine()
     if engine is None:
@@ -570,7 +682,14 @@ async def trigger_repository_index(repo_id: str, background_tasks: BackgroundTas
             )
             await conn.commit()
 
-            background_tasks.add_task(_run_ingestion, engine, job_id, str(actual_id), repo_slug)
+            background_tasks.add_task(
+                _run_ingestion,
+                engine,
+                job_id,
+                str(actual_id),
+                repo_slug,
+                _request_user_id(request),
+            )
 
             return {
                 "status": "indexing_started",
@@ -584,9 +703,16 @@ async def trigger_repository_index(repo_id: str, background_tasks: BackgroundTas
         raise HTTPException(status_code=503, detail=f"Failed to trigger indexing: {exc}")
 
 
-async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str):
+async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str, user_id: str | None = None):
     """Background task: fetch files from GitHub and insert into code_chunks."""
-    token = await get_github_token()
+    if not user_id:
+        logger.warning("Ingestion %s: missing user_id, refusing GitHub sync without user OAuth context", job_id)
+        return
+
+    token = await get_github_token(user_id, allow_env_fallback=True)
+    if not token:
+        logger.warning("Ingestion %s: missing OAuth token for user %s", job_id, user_id)
+        return
     logger.info(f"Ingestion {job_id}: starting for {repo_slug} (token={'yes' if token else 'NO'})")
 
     try:
@@ -600,17 +726,17 @@ async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str):
 
         # Fetch tree
         try:
-            tree_payload = await _github_get_json(
-                f"https://api.github.com/repos/{repo_slug}/git/trees/HEAD?recursive=1",
-                token or None,
-            )
+                tree_payload = await _github_get_json(
+                    f"https://api.github.com/repos/{repo_slug}/git/trees/HEAD?recursive=1",
+                    token,
+                )
         except Exception:
             try:
-                repo_info = await _github_get_json(f"https://api.github.com/repos/{repo_slug}", token or None)
+                repo_info = await _github_get_json(f"https://api.github.com/repos/{repo_slug}", token)
                 branch = repo_info.get("default_branch", "main") if isinstance(repo_info, dict) else "main"
                 tree_payload = await _github_get_json(
                     f"https://api.github.com/repos/{repo_slug}/git/trees/{branch}?recursive=1",
-                    token or None,
+                    token,
                 )
             except Exception as e:
                 logger.error(f"Ingestion {job_id}: GitHub tree fetch failed: {e}")
@@ -732,6 +858,17 @@ async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str):
         except Exception as cache_err:
             logger.debug(f"Cache bust after ingestion failed (non-fatal): {cache_err}")
 
+        # Build and save knowledge graph (non-fatal)
+        try:
+            builder = GraphBuilder(repo_id=repo_id, engine=engine)
+            nodes, edges = await builder.build_graph()
+
+            store = GraphStoreManager()
+            await store.save_graph(repo_id, nodes, edges)
+            logger.info(f"Graph build for {repo_id} completed.")
+        except Exception as graph_err:
+            logger.error(f"Graph build failed for {repo_id} (non-fatal): {graph_err}")
+
         logger.info(f"Ingestion {job_id}: done. {inserted} inserted, {errors} errors.")
 
     except Exception as exc:
@@ -761,4 +898,84 @@ async def _fetch_github_file(repo_slug: str, file_path: str, token: str | None) 
     except Exception as e:
         logger.debug(f"Failed to fetch {file_path}: {e}")
         return None
+
+
+@router.get("/repo/{repo_id}/start-here")
+async def start_here(
+    repo_id: str,
+    focus: str = Query(default="Exploring", description="Developer focus: Backend, Frontend, Fullstack, or Exploring"),
+):
+    """SSE endpoint that streams a personalized onboarding plan for a repository.
+
+    Accepts an optional `focus` query parameter to tailor the plan to the
+    developer's area of interest. Streams status updates followed by the
+    final JSON plan (or an error event on failure).
+    """
+    from api.agents.onboarding import generate_onboarding_plan
+
+    engine = get_engine()
+    if engine is None:
+        raise HTTPException(status_code=500, detail="Database engine not initialized")
+
+    # Validate repo exists and resolve to UUID
+    try:
+        async with engine.connect() as conn:
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Repository lookup failed: {exc}")
+
+    async def _event_stream():
+        async for event in generate_onboarding_plan(actual_id, focus=focus):
+            yield f"data: {json.dumps(event)}\n\n"
+
+    return StreamingResponse(
+        _event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get("/repo/{repo_id}/onboarding-plan")
+async def get_onboarding_plan(repo_id: str):
+    """Return cached onboarding plan for repository, if present."""
+    engine = get_engine()
+    if engine is None:
+        raise HTTPException(status_code=500, detail="Database engine not initialized")
+
+    try:
+        async with engine.connect() as conn:
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+
+            result = await conn.execute(
+                text(
+                    """
+                    SELECT plan
+                    FROM repo_onboarding_plans
+                    WHERE repo_id = CAST(:repo_id AS uuid)
+                    LIMIT 1
+                    """
+                ),
+                {"repo_id": actual_id},
+            )
+            row = result.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Onboarding plan not found")
+
+            plan = row._mapping.get("plan")
+            if not isinstance(plan, dict):
+                raise HTTPException(status_code=503, detail="Stored onboarding plan is invalid")
+
+            return _normalize_onboarding_plan_schema(plan)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Onboarding plan retrieval unavailable: {exc}")
 

@@ -54,7 +54,7 @@ export default function SearchPage() {
 
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/backend";
+      const apiUrl = "/api/backend";
 
       // Simulate search by tab
       if (tab === "semantic") {
