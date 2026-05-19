@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-05-19T22:26:30.000Z"
+status: verifying
+last_updated: "2026-05-20T06:45:00.000Z"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 13
-  percent: 93
+  completed_plans: 14
+  percent: 100
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 
 ## Current Position
 
-Phase: 32 (streaming-escalation-ux) — EXECUTING
+Phase: 32 (streaming-escalation-ux) — COMPLETE
 Plan: 2 of 2
-Status: Plan 32-01 complete; ready for 32-02
+Status: Phase complete — ready for next phase planning
 **Phase**: Phase 32: Streaming Escalation UX
-**Plan**: 32-02-PLAN.md next
-**Status**: SSE metadata data-layer shipped (backend + frontend state).
+**Plan**: 32-02-SUMMARY.md complete
+**Status**: Escalation indicator UX shipped with unit + E2E coverage.
 
 ## Performance Metrics
 
-- **Phases Completed**: 3 / 4
-- **Plans Completed**: 13 / 14
+- **Phases Completed**: 4 / 4
+- **Plans Completed**: 14 / 14
 
 ## Accumulated Context
 
@@ -53,6 +53,8 @@ Status: Plan 32-01 complete; ready for 32-02
 - **D-31-03**: Stabilized memory dashboard e2e with deterministic Playwright route mocks (`@list`, `@delete`, `@edit`).
 - **D-32-01**: Emit only allowlisted SSE metadata fields (`fallback`, `model_used`, `cascaded`) via recursive extraction.
 - **D-32-02**: Merge metadata SSE events into latest assistant message state to preserve backward-compatible fallback behavior.
+- **D-32-03**: Use EscalationIndicator component as single rendering path for Fast Mode/Big Model UI state.
+- **D-32-04**: Preserve escalation metadata across history hydration and stream update paths.
 
 ### Blockers / Open Questions
 
@@ -69,3 +71,4 @@ Status: Plan 32-01 complete; ready for 32-02
 - [x] Close escalation gap with real rerun behavior and robust routing verification (Plan 30-04).
 - [x] Deliver memory curation dashboard backend + frontend + edit/delete flows (Phase 31).
 - [x] Enrich SSE protocol and frontend chat message state with escalation metadata (Plan 32-01).
+- [x] Ship escalation indicator visuals + amber pulse state with Playwright UX verification (Plan 32-02).

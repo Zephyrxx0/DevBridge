@@ -4,7 +4,7 @@
 - [x] **Phase 29: Memory Storage & Foundations** - Integrate Hindsight for persistent agent memory backed by pgvector (completed 2026-05-19)
 - [x] **Phase 30: Speculative Router Setup** - Implement Cascadeflow for dynamic, speculative model routing (completed 2026-05-19)
 - [x] **Phase 31: Memory Curation Dashboard** - Build UI for curating and editing agent mental models (completed 2026-05-19)
-- [ ] **Phase 32: Streaming Escalation UX** - Expose model escalation states to the frontend via SSE
+- [x] **Phase 32: Streaming Escalation UX** - Expose model escalation states to the frontend via SSE (completed 2026-05-19)
 
 ## Phase Details
 
@@ -60,7 +60,7 @@
   3. UI maintains a stable chat experience during model transitions
 **Plans**:
 - [x] 32-01-PLAN.md — Enrich SSE protocol and frontend message state with model metadata
-- [ ] 32-02-PLAN.md — Implement animated escalation indicators and E2E verification
+- [x] 32-02-PLAN.md — Implement animated escalation indicators and E2E verification
 **UI hint**: yes
 
 ## Progress
@@ -70,4 +70,4 @@
 | 29. Memory Storage & Foundations | 4/4 | Complete    | 2026-05-19 |
 | 30. Speculative Router Setup | 4/4 | Complete   | 2026-05-19 |
 | 31. Memory Curation Dashboard | 4/4 | Complete   | 2026-05-19 |
-| 32. Streaming Escalation UX | 1/2 | In Progress|  |
+| 32. Streaming Escalation UX | 2/2 | Complete   | 2026-05-19 |
