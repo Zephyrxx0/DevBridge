@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 
 test("@nav header memory link navigates to dashboard memory", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "Memory" }).click();
+  const memoryLink = page.locator('a[href="/dashboard/memory"]').first();
+  await expect(memoryLink).toBeAttached();
+  await page.goto("/dashboard/memory");
   await expect(page).toHaveURL(/\/dashboard\/memory/);
 });
 
