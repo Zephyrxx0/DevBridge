@@ -39,11 +39,13 @@ created: 2026-05-20
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
 | 30-01-01 | 01 | 1 | ROUT-01 | — | N/A | unit | `pip show cascadeflow` | ✅ | ⬜ pending |
-| 30-01-02 | 01 | 1 | ROUT-01 | — | N/A | integration | `pytest tests/test_phase30_routing.py` | ⬜ W0 | ⬜ pending |
+| 30-01-02 | 01 | 1 | ROUT-01 | — | N/A | integration | `pytest tests/test_phase30_routing.py` | ✅ | ⬜ pending |
 | 30-02-01 | 02 | 2 | ROUT-01 | — | N/A | unit | `python -c "from api.agents.state import AgentState"` | ✅ | ⬜ pending |
-| 30-02-02 | 02 | 2 | ROUT-01, ROUT-02 | T-30-02 | Retries configured | integration | `pytest tests/test_phase30_routing.py` | ⬜ W0 | ⬜ pending |
+| 30-02-02 | 02 | 2 | ROUT-01, ROUT-02 | T-30-02 | Retries configured | integration | `pytest tests/test_phase30_routing.py` | ✅ | ⬜ pending |
 | 30-03-01 | 03 | 3 | ROUT-01 | — | N/A | e2e | `pytest tests/test_phase21_e2e.py` | ✅ | ⬜ pending |
 | 30-03-02 | 03 | 3 | ROUT-01, ROUT-02 | T-30-03 | Auth isolation | e2e | `pytest tests/test_phase30_routing.py tests/test_phase21_e2e.py` | ✅ | ⬜ pending |
+| 30-04-01 | 04 | 4 | ROUT-01 | — | N/A | unit | `grep -n "validators=\[.*_schema_validator.*\]" api/agents/nodes/cascade.py` | ✅ | ⬜ pending |
+| 30-04-02 | 04 | 4 | ROUT-01 | — | N/A | integration | `pytest tests/test_phase30_routing.py` | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
