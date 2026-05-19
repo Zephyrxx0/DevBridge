@@ -1,27 +1,31 @@
 ---
 phase: 30-speculative-router-setup
-verified: 2026-05-20T00:00:00Z
-status: gaps_found
-score: 6/8 must-haves verified
+verified: 2026-05-19T20:46:06Z
+status: saved_for_later
+score: 7/8 must-haves verified
 overrides_applied: 0
-gaps:
-  - truth: "System automatically escalates entire conversation turns to the big model (Gemini 2.5 Flash) on validation failure"
-    status: failed
-    reason: "cascade_node validates after cascade_agent.run but does not re-run the turn with big model when validation fails; it only flips metadata flags."
-    artifacts:
-      - path: "api/agents/nodes/cascade.py"
-        issue: "Lines 55-58 set model_used/cascaded fallback without invoking big model; final response remains original possibly invalid output."
-    missing:
-      - "On failed validation, execute full-turn escalation through big model and replace final_response with big-model output."
-      - "Wire SchemaValidator into CascadeAgent validators (or equivalent) so escalation is triggered by validation gate, not metadata patching."
+re_verification:
+  previous_status: gaps_found
+  previous_score: 6/8
+  gaps_closed:
+    - "System automatically escalates entire conversation turns to the big model (Gemini 2.5 Flash) on validation failure"
+  gaps_remaining: []
+  regressions: []
+human_verification:
+  - test: "Run unmocked cascade turn where first draft fails schema and confirm second-pass big-model execution"
+    expected: "Final response content comes from big model; model_used is big model; cascaded is true"
+    why_human: "Unit test patches cascade_agent; does not prove live provider escalation behavior"
+  - test: "Run end-to-end chat flow through compiled graph with speculative routing enabled"
+    expected: "recall -> cascade -> retain executes, response returned, routing metadata preserved"
+    why_human: "Current e2e test is skipped in this environment"
 ---
 
 # Phase 30: Speculative Router Setup Verification Report
 
 **Phase Goal:** System dynamically routes to the large model only when necessary to preserve GPU VRAM  
-**Verified:** 2026-05-20T00:00:00Z  
-**Status:** gaps_found  
-**Re-verification:** No - initial verification
+**Verified:** 2026-05-19T20:46:06Z  
+**Status:** saved_for_later  
+**Re-verification:** Yes — after gap closure
 
 ## Goal Achievement
 
@@ -29,57 +33,54 @@ gaps:
 
 | # | Truth | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | System uses Cascadeflow for speculative routing setup | ✓ VERIFIED | `api/requirements.txt` line 20 includes `cascadeflow[langchain]==1.1.0`; `api/agents/nodes/cascade.py` imports `CascadeAgent`, `ModelConfig`. |
-| 2 | Fast-model outputs are validated heuristically | ✓ VERIFIED | `api/agents/utils/validation.py` defines `ValidationSchema` and `SchemaValidator.validate()` with JSON+Pydantic checks (lines 34-45). |
-| 3 | Agent graph uses cascade path instead of router/worker path | ✓ VERIFIED | `api/agents/graph.py` lines 66-72 wire `recall -> cascade -> retain`; no router/worker nodes in active graph. |
-| 4 | Routing metadata is in graph state | ✓ VERIFIED | `api/agents/state.py` lines 10-11 define `model_used`, `cascaded`; `cascade_node` returns both keys (lines 62-63). |
-| 5 | Big-model rate-limit/retry handling configured | ✓ VERIFIED | `api/agents/nodes/cascade.py` lines 36-37 set `extra.max_retries`, `retry_backoff_seconds`, `rate_limit_safe`, plus `http_config.max_retries`. |
-| 6 | Cascade node links validator + cascadeflow runtime | ✓ VERIFIED | `api/agents/nodes/cascade.py` imports `SchemaValidator` and runs `cascade_agent.run(...)` plus `_schema_validator.validate(...)`. |
-| 7 | Validation failure escalates entire turn to big model | ✗ FAILED (BLOCKER) | On fail path (lines 55-58), code only sets `model_used` and `cascaded`; no second big-model execution; response content not replaced. |
-| 8 | End-to-end chat requests verified under speculative routing | ? UNCERTAIN (WARNING) | `pytest tests/test_phase21_e2e.py -q` result: skipped. No runtime proof for integrated chat flow in this verification run. |
+| 1 | System uses Cascadeflow for speculative routing setup | ✓ VERIFIED | `api/requirements.txt:20` has `cascadeflow[langchain]==1.1.0`; `api/agents/nodes/cascade.py` imports `CascadeAgent`, `ModelConfig`. |
+| 2 | Fast-model outputs are validated heuristically | ✓ VERIFIED | `api/agents/utils/validation.py:34-45` validates JSON schema using Pydantic and completeness check. |
+| 3 | Agent graph uses cascade path instead of router/worker path | ✓ VERIFIED | `api/agents/graph.py:65-72` wires `recall -> cascade -> retain`. |
+| 4 | Routing metadata is in graph state | ✓ VERIFIED | `api/agents/state.py:10-11` defines `model_used`, `cascaded`; returned by `cascade_node` at `cascade.py:81-82`. |
+| 5 | Big-model rate-limit/retry handling configured | ✓ VERIFIED | `api/agents/nodes/cascade.py:60-62` sets `extra.max_retries`, `retry_backoff_seconds`, `rate_limit_safe`, `http_config.max_retries`. |
+| 6 | Cascade node links validator + cascadeflow runtime | ✓ VERIFIED | `cascade.py:64` wires `validators=[_schema_validator]`; `ValidatorCascadeAgent.run()` executes first pass then validation gate. |
+| 7 | Validation failure escalates entire turn to big model | ✓ VERIFIED | `cascade.py:37-46` runs first pass, validates, then reruns with `force_direct=True` on fail and returns second output. Previous metadata-only fallback removed. |
+| 8 | End-to-end chat requests verified under speculative routing | ? UNCERTAIN (WARNING) | `pytest tests/test_phase21_e2e.py -q` => `1 skipped`; no runnable e2e evidence in current env. |
 
-**Score:** 6/8 truths verified
+**Score:** 7/8 truths verified
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | --- | --- | --- | --- |
-| `api/agents/utils/validation.py` | Validation logic for speculative checks | ✓ VERIFIED | Exists; substantive (45 lines); wired via import in `cascade.py`. |
-| `api/agents/nodes/cascade.py` | Speculative cascade execution node | ⚠ HOLLOW - wired but data/behavior gap | Exists; substantive; wired to graph. Escalation failure path flips metadata only, no true turn re-execution. |
-| `api/agents/state.py` | Routing metadata fields | ✓ VERIFIED | Exists; fields present and consumed by graph/cascade flow. |
-| `api/agents/graph.py` | Graph migration to cascade topology | ✓ VERIFIED | Exists; nodes/edges wired to `cascade_node`. |
-| `tests/test_phase30_routing.py` | Routing behavior verification | ⚠ WARNING | Exists and passes, but tests monkeypatch `cascade_agent` to pre-baked `cascaded/model_used`; does not prove real validation-triggered escalation. |
+| `api/agents/nodes/cascade.py` | Native Cascadeflow escalation with wired validator | ✓ VERIFIED | Exists; substantive; wired to graph; contains two-pass escalation path with validator gate. |
+| `tests/test_phase30_routing.py` | Robust escalation path verification | ⚠ PARTIAL | Exists/substantive and passes, but monkeypatches whole `cascade_agent`; proves contract output, not live second-call behavior. |
+| `api/agents/utils/validation.py` | Heuristic schema validator | ✓ VERIFIED | Exists/substantive; imported and used in cascade node wrapper. |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 | --- | --- | --- | --- | --- |
-| `api/agents/utils/validation.py` | `cascadeflow` | inheritance/runtime compatibility | ✓ WIRED | Imports `cascadeflow.quality`; builds compatible validator/result base classes. |
-| `api/agents/nodes/cascade.py` | `api/agents/utils/validation.py` | import/use | ✓ WIRED | Imports `SchemaValidator`; invokes `_schema_validator.validate(final_response)`. |
-| `api/agents/nodes/cascade.py` | `cascadeflow` | implementation | ✓ WIRED | Instantiates `CascadeAgent` and `ModelConfig` models. |
-| `api/agents/graph.py` | `api/agents/nodes/cascade.py` | node registration | ✓ WIRED | `builder.add_node("cascade", cascade_node)` and edges into/out of cascade. |
+| `api/agents/nodes/cascade.py` | `api/agents/utils/validation.py` | `validators=[_schema_validator]` wiring | ✓ WIRED | `cascade.py:7,22,64` import + instance + constructor wiring. |
+| `api/agents/nodes/cascade.py` | `cascadeflow` runtime | `CascadeAgent.run(..., force_direct=True)` | ✓ WIRED | `cascade.py:34,37,43` runtime calls prove second-pass escalation path exists in code. |
+| `api/agents/graph.py` | `api/agents/nodes/cascade.py` | node registration | ✓ WIRED | `graph.py:66,70-71` adds node and edges. |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data Variable | Source | Produces Real Data | Status |
 | --- | --- | --- | --- | --- |
-| `api/agents/nodes/cascade.py` | `final_response` | `await cascade_agent.run(provider_messages)` | Yes (runtime call) | ✓ FLOWING |
-| `api/agents/nodes/cascade.py` | validation decision | `_schema_validator.validate(final_response)` | Yes | ✓ FLOWING |
-| `api/agents/nodes/cascade.py` | escalation output | fail branch lines 55-58 | No (metadata-only patch, no big-model rerun) | ✗ DISCONNECTED |
+| `api/agents/nodes/cascade.py` | `final_response` | `result = await cascade_agent.run(provider_messages)` | Yes | ✓ FLOWING |
+| `api/agents/nodes/cascade.py` | validation decision | `validator.validate(content).passed` | Yes | ✓ FLOWING |
+| `api/agents/nodes/cascade.py` | escalation output | `second = await self._agent.run(query, force_direct=True)` | Yes | ✓ FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 | --- | --- | --- | --- |
-| Phase routing tests execute | `pytest tests/test_phase30_routing.py -q` | `2 passed` | ✓ PASS |
+| Routing tests execute | `pytest tests/test_phase30_routing.py -q` | `2 passed` | ✓ PASS |
 | E2E chat flow executes | `pytest tests/test_phase21_e2e.py -q` | `1 skipped` | ? SKIP |
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| ROUT-01 | 30-01, 30-02, 30-03 | Dynamic model routing via Cascadeflow speculative execution | ? NEEDS HUMAN (and partial risk) | Cascadeflow node present and tests pass, but tests are mocked and do not prove real runtime escalation behavior. |
-| ROUT-02 | 30-02, 30-03 | Standard rate-limit handling for Gemini 2.5 Flash | ✓ SATISFIED | Big-model `ModelConfig` includes retry/rate-limit related config (`max_retries`, backoff/rate-limit hints). |
+| ROUT-01 | 30-01, 30-02, 30-03, 30-04 | Dynamic model routing (Gemma -> Gemini) via speculative execution | ? NEEDS HUMAN | Code path now has real second-pass rerun (`cascade.py:37-46`), but no unmocked integration/e2e proof in this environment. |
+| ROUT-02 | 30-02, 30-03, 30-04 | Standard rate-limit handling for Gemini 2.5 Flash | ✓ SATISFIED | Big model config includes retry/rate-limit hints (`cascade.py:60-62`). |
 
 Requirement-ID cross-reference check:
 - Plan frontmatter IDs found: `ROUT-01`, `ROUT-02`
@@ -90,27 +91,28 @@ Requirement-ID cross-reference check:
 
 | File | Line | Pattern | Severity | Impact |
 | --- | --- | --- | --- | --- |
-| `api/agents/nodes/cascade.py` | 55-58 | Metadata-only fallback on validation fail | blocker | Can misreport escalation without actually executing big-model turn; violates phase success criterion #2 intent. |
-| `tests/test_phase30_routing.py` | 12-53 | Fully monkeypatched cascade result path | warning | Test passes even if production escalation logic broken; weak oracle for ROUT-01 truth. |
-| `api/agents/graph.py` | 51 | `return {}` in retain wrapper client-missing path | info | Defensive no-op path; not phase blocker. |
+| `tests/test_phase30_routing.py` | 64-85 | Mock agent performs escalation internally; node only called once (`mock_agent.calls == 1`) | warning | Test oracle weaker than claimed “big-model invocation” proof; can miss runtime integration drift. |
+| `api/agents/nodes/cascade.py` | 60-62 | Retry/rate-limit hints in metadata only | info | Depends on cascadeflow/provider honoring fields; no direct runtime assertion in tests. |
 
 ### Human Verification Required
 
-1. **Real escalation path with live/unmocked cascadeflow**  
-   **Test:** Run agent flow with fast-model response intentionally schema-invalid and confirm big model actually re-runs full turn.  
-   **Expected:** Final response content changes to big-model output; `model_used` reflects big model because execution happened, not metadata patch.  
-   **Why human:** Requires live integration behavior (external model/provider semantics) not provable from mocked unit test.
+### 1. Live escalation rerun
 
-2. **End-to-end chat request through graph**  
-   **Test:** Execute real chat turn through compiled graph (`recall -> cascade -> retain`) and inspect final state/output.  
-   **Expected:** Response present, metadata persisted, no regression in recall/retain behavior.  
-   **Why human:** Existing e2e test currently skipped in this environment.
+**Test:** Run unmocked cascade turn with intentionally invalid fast-model schema output.  
+**Expected:** Wrapper performs second pass (`force_direct=True` path), final content from big model, `model_used` big model, `cascaded=true`.  
+**Why human:** Requires live provider/cascadeflow behavior; unit test uses patched agent.
+
+### 2. End-to-end graph chat run
+
+**Test:** Execute real chat through compiled graph (`recall -> cascade -> retain`).  
+**Expected:** Response returned, routing metadata persisted, no recall/retain regression.  
+**Why human:** Existing e2e test skipped in this environment.
 
 ### Gaps Summary
 
-Phase tasks mostly implemented. Goal contract not fully achieved. Core blocker: validation-failure path does not perform true turn escalation; code mutates metadata only. This breaks roadmap success criterion #2 and leaves ROUT-01 only partially evidenced.
+Previous blocker closed. Code now contains true validation-triggered second-pass rerun and response replacement. Remaining risk = runtime proof only (human/integration needed), not observable code gap.
 
 ---
 
-_Verified: 2026-05-20T00:00:00Z_  
+_Verified: 2026-05-19T20:46:06Z_  
 _Verifier: the agent (gsd-verifier)_

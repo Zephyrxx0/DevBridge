@@ -1,6 +1,6 @@
 ---
 phase: 30-speculative-router-setup
-reviewed: 2026-05-19T20:24:00.8647350Z
+reviewed: 2026-05-20T00:00:00Z
 depth: standard
 files_reviewed: 6
 files_reviewed_list:
@@ -11,62 +11,52 @@ files_reviewed_list:
   - api/agents/graph.py
   - tests/test_phase30_routing.py
 findings:
-  critical: 1
-  warning: 2
+  critical: 0
+  warning: 3
   info: 0
   total: 3
-status: issues_found
+status: saved_for_later
 ---
 
 # Phase 30: Code Review Report
 
-**Reviewed:** 2026-05-19T20:24:00.8647350Z
+**Reviewed:** 2026-05-20T00:00:00Z
 **Depth:** standard
 **Files Reviewed:** 6
-**Status:** issues_found
+**Status:** saved_for_later
 
 ## Summary
 
-Phase-30 scope reviewed from plan summaries + task commits. Focus: `cascade_node` path, validation gate, graph wiring, metadata contract. Findings non-blocking advisory requested by user, but one ship-blocking correctness defect exists.
-
-## Critical Issues
-
-### CR-01: [BLOCKER] Escalation metadata forged without actual escalation
-
-**File:** `api/agents/nodes/cascade.py:55-59`
-**Issue:** When validation fails and `cascaded` is false, code flips metadata (`model_used`, `cascaded`) but does **not** re-run big model. Output can remain invalid/fast-draft garbage while system reports escalation happened. Breaks correctness and telemetry contract.
-
-**Fix:** Actually execute fallback big-model call before returning, and only set `cascaded=True` after successful fallback.
-
-```python
-if not validation.passed and not cascaded:
-    fallback_result = await BIG_MODEL.ainvoke(provider_messages)
-    final_response = getattr(fallback_result, "content", "")
-    model_used = getattr(BIG_MODEL, "model_name", "gemini-2.5-flash")
-    cascaded = True
-```
+Re-reviewed current Phase-30 implementation state. Prior blocker (metadata-only escalation) fixed via second-pass `force_direct=True` rerun path in `ValidatorCascadeAgent`. No remaining ship blocker proven in reviewed scope. Three robustness/test-reliability defects remain.
 
 ## Warnings
 
-### WR-01: [WARNING] Provider message roles may be invalid for cascade provider adapters
+### WR-01: [WARNING] Provider roles forwarded without normalization
 
-**File:** `api/agents/nodes/cascade.py:13-16`
-**Issue:** `_to_provider_messages` forwards raw `message.type` values (e.g., `human`, `ai`) as role. Many provider APIs require canonical roles (`user`, `assistant`, `system`). Mismatch can degrade routing decisions or fail at runtime depending on adapter strictness.
+**File:** `api/agents/nodes/cascade.py:13-15`
+**Issue:** `_to_provider_messages` forwards raw message role/type strings. LangChain message types commonly appear as `human`/`ai`, while provider adapters usually expect `user`/`assistant`/`system`. This can cause routing/runtime incompatibility across adapters.
 
-**Fix:** Normalize roles explicitly.
+**Fix:** Normalize role values before appending provider payload.
 
 ```python
-role_map = {"human": "user", "ai": "assistant", "system": "system", "user": "user", "assistant": "assistant"}
+role_map = {
+    "human": "user",
+    "ai": "assistant",
+    "user": "user",
+    "assistant": "assistant",
+    "system": "system",
+}
 raw_role = str(getattr(message, "type", getattr(message, "role", "user"))).lower()
 role = role_map.get(raw_role, "user")
+provider_messages.append({"role": role, "content": content})
 ```
 
-### WR-02: [WARNING] Validation accepts empty/low-quality content as "passed"
+### WR-02: [WARNING] Validation schema allows empty content and invalid confidence ranges
 
-**File:** `api/agents/utils/validation.py:17-45`
-**Issue:** `ValidationSchema` has no constraints for `content` or `confidence`. Payload like `{ "content": "", "is_complete": true, "confidence": -99 }` passes validation and suppresses escalation path.
+**File:** `api/agents/utils/validation.py:17-20, 42-45`
+**Issue:** `ValidationSchema` uses unconstrained `str` and `float`. Payloads with empty `content` or out-of-range `confidence` still pass when `is_complete=True`. This weakens escalation gate and can accept low-quality/invalid outputs as final.
 
-**Fix:** Add schema constraints and explicit content-quality check.
+**Fix:** Add field constraints and reject blank output.
 
 ```python
 from pydantic import BaseModel, Field, constr
@@ -77,8 +67,22 @@ class ValidationSchema(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
 ```
 
+### WR-03: [WARNING] Escalation test can pass without proving two-pass runtime behavior
+
+**File:** `tests/test_phase30_routing.py:69-79, 98`
+**Issue:** `test_escalation_path` monkeypatches `cascade_agent` with a mock that returns already-escalated output on first `run()` call. Assertion `mock_agent.calls == 1` confirms single call, so test does not verify production wrapper’s expected second-pass rerun (`force_direct=True`) under failed validation.
+
+**Fix:** Test `ValidatorCascadeAgent.run()` directly with a fake inner `CascadeAgent` that records both calls and `force_direct` args; assert first call invalid, second call forced direct.
+
+```python
+assert fake_inner.calls == [
+    {"force_direct": False},
+    {"force_direct": True},
+]
+```
+
 ---
 
-_Reviewed: 2026-05-19T20:24:00.8647350Z_
+_Reviewed: 2026-05-20T00:00:00Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
