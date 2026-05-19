@@ -2,7 +2,7 @@
 
 ## Phases
 - [x] **Phase 29: Memory Storage & Foundations** - Integrate Hindsight for persistent agent memory backed by pgvector (completed 2026-05-19)
-- [ ] **Phase 30: Speculative Router Setup** - Implement Cascadeflow for dynamic, speculative model routing
+- [x] **Phase 30: Speculative Router Setup** - Implement Cascadeflow for dynamic, speculative model routing (completed 2026-05-19)
 - [ ] **Phase 31: Memory Curation Dashboard** - Build UI for curating and editing agent mental models
 - [ ] **Phase 32: Streaming Escalation UX** - Expose model escalation states to the frontend via SSE
 
@@ -33,7 +33,7 @@
 **Plans**:
 - [x] 30-01-PLAN.md — Setup Cascadeflow dependencies, validation schemas, and test scaffold
 - [x] 30-02-PLAN.md — Implement speculative cascade node with Pydantic validation
-- [ ] 30-03-PLAN.md — Integrate cascade node into LangGraph agent workflow
+- [x] 30-03-PLAN.md — Integrate cascade node into LangGraph agent workflow
 
 ### Phase 31: Memory Curation Dashboard
 **Goal**: Users can view and manage the agent's long-term memory via a dashboard
@@ -62,6 +62,6 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 29. Memory Storage & Foundations | 4/4 | Complete    | 2026-05-19 |
-| 30. Speculative Router Setup | 2/3 | In Progress|  |
+| 30. Speculative Router Setup | 3/3 | Complete   | 2026-05-19 |
 | 31. Memory Curation Dashboard | 0/0 | Not started | - |
 | 32. Streaming Escalation UX | 0/0 | Not started | - |
