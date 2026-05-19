@@ -54,9 +54,8 @@ Contextually grounded understanding and intent retrieval over simple code genera
 
 ## Constraints
 
-- **GPU**: Single MI300X, 192GB VRAM, strict partitioning (0.60/0.20/0.20)
-- **Models**: Qwen2.5-72B-Instruct-AWQ (Big), Gemma-2-9B-it (Fast)
-- **Budget**: $100 total (~50 hours of MI300X)
+- **Models**: Gemini 2.5 Flash (Big), Gemma-2-9B-it (Fast) via Google AI Studio
+- **Budget**: $100 total
 - **Caching**: Persistent Docker volume for `/app/repo_cache`
 - **Context Limit**: 48,000 tokens max per request (4.8GB KV cache)
 
@@ -64,9 +63,8 @@ Contextually grounded understanding and intent retrieval over simple code genera
 
 | Decision | Rationale |
 |----------|-----------|
-| Single GPU with VRAM partitioning | Budget constraint: $1.99/hr MI300X vs multi-GPU |
-| Qwen2.5-72B + Gemma-4-9B | Balance of reasoning capability vs. latency |
-| 48K token context cap | Prevents KV cache OOM on shared GPU |
+| Google AI Studio (Gemini 2.5 Flash + Gemma-2-9B) | Remote inference eliminates local VRAM partitioning complexity |
+| 48K token context cap | Maintains consistency with previous architectural limits |
 | Internal symbol resolution | Drops external/unresolvable CALLS edges |
 | pgvector cosine distance | Avoids huge VRAM context spikes for issue mapping |
 | APScheduler over RQ/Redis | Simpler stack, fewer external dependencies |
