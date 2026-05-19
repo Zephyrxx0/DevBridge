@@ -25,6 +25,8 @@ async def test_gemma_path(monkeypatch):
     result = await cascade_node(state)
 
     assert result["messages"][0].content
+    assert "model_used" in result
+    assert "cascaded" in result
     assert result.get("model_used") == "gemma-2-9b-it"
     assert result.get("cascaded") is False
 
@@ -45,5 +47,7 @@ async def test_escalation_path(monkeypatch):
     state = {"messages": [type("Msg", (), {"content": "complex request"})()]}
     result = await cascade_node(state)
 
+    assert "model_used" in result
+    assert "cascaded" in result
     assert result.get("model_used") == "gemini-2.5-flash"
     assert result.get("cascaded") is True
