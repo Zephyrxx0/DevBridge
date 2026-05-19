@@ -29,6 +29,10 @@ export function FloatingHeader() {
 			href: '/dashboard',
 		},
 		{
+			label: 'Memory',
+			href: '/dashboard/memory',
+		},
+		{
 			label: 'Pricing',
 			href: '/pricing',
 		},
