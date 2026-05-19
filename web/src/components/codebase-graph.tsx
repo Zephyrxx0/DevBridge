@@ -65,12 +65,12 @@ const DEMO_EDGES: GraphEdge[] = [
 ];
 
 const GROUP_COLORS: Record<string, string> = {
-  api: "#EC4E02",
-  core: "#FF7A33",
-  models: "#FFB088",
-  web: "#F06030",
-  infra: "#C74400",
-  pr: "#E85D1A",
+  api: "#B3F6E2",
+  core: "#84E4CB",
+  models: "#CBFAEC",
+  web: "#67C9AE",
+  infra: "#4FA891",
+  pr: "#2F796A",
 };
 
 /* ─── Physics constants ─── */
@@ -192,8 +192,8 @@ export function CodebaseGraph() {
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
       ctx.strokeStyle = isHighlighted
-        ? "rgba(236, 78, 2, 0.8)"
-        : "rgba(236, 78, 2, 0.15)";
+        ? "rgba(179, 246, 226, 0.8)"
+        : "rgba(179, 246, 226, 0.18)";
       ctx.lineWidth = isHighlighted ? 2 : 1;
       ctx.stroke();
       ctx.setLineDash([]);
@@ -204,7 +204,7 @@ export function CodebaseGraph() {
         const mx = (a.x + b.x) / 2;
         const my = (a.y + b.y) / 2;
         ctx.font = "10px Inter, sans-serif";
-        ctx.fillStyle = "rgba(236, 78, 2, 0.9)";
+        ctx.fillStyle = "rgba(179, 246, 226, 0.92)";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(`${dist}px`, mx, my - 6);
@@ -218,7 +218,7 @@ export function CodebaseGraph() {
       const isConnected = hovered >= 0 && DEMO_EDGES.some(
         (e) => (e.source === hovered && e.target === i) || (e.target === hovered && e.source === i)
       );
-      const color = GROUP_COLORS[node.group] || "#EC4E02";
+      const color = GROUP_COLORS[node.group] || "#B3F6E2";
       const radius = node.size * (isHovered ? 1.4 : 1);
 
       // Simple Node circle (no glow or inner highlight)

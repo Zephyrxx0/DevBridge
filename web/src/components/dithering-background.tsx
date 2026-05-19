@@ -16,8 +16,8 @@ export function DitheringBackground() {
           style={{ filter: "blur(var(--dither-blur, 0px))" }}
         >
           <Dithering
-            colorBack="#00000000"
-            colorFront="#EC4E02"
+            colorBack="#0B2133"
+            colorFront="#B3F6E2"
             shape="warp"
             type="4x4"
             speed={0.2}
