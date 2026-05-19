@@ -4,7 +4,7 @@
 
 ### Routing
 - [x] **ROUT-01**: User can experience dynamic model routing (Gemma to Gemini 2.5 Flash) via Cascadeflow speculative execution.
-- [ ] **ROUT-02**: System implements standard rate-limit handling for Gemini 2.5 Flash requests via Google AI Studio.
+- [x] **ROUT-02**: System implements standard rate-limit handling for Gemini 2.5 Flash requests via Google AI Studio.
 
 ### Memory
 - [x] **MEM-01**: System invokes Hindsight recall() before execution and retain() post-execution for agent memory.
@@ -27,7 +27,7 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | ROUT-01 | Phase 30 | Complete |
-| ROUT-02 | Phase 30 | Pending |
+| ROUT-02 | Phase 30 | Complete |
 | MEM-01 | Phase 29 | Complete |
 | MEM-02 | Phase 29 | Complete |
 | MEM-03 | Phase 29 | Complete |
