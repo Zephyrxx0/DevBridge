@@ -34,7 +34,7 @@
 - [x] 30-01-PLAN.md — Setup Cascadeflow dependencies, validation schemas, and test scaffold
 - [x] 30-02-PLAN.md — Implement speculative cascade node with Pydantic validation
 - [x] 30-03-PLAN.md — Integrate cascade node into LangGraph agent workflow
-- [ ] 30-04-PLAN.md — Fix escalation logic and implement robust routing tests (GAP CLOSURE)
+- [x] 30-04-PLAN.md — Fix escalation logic and implement robust routing tests (GAP CLOSURE)
 
 ### Phase 31: Memory Curation Dashboard
 **Goal**: Users can view and manage the agent's long-term memory via a dashboard
@@ -63,6 +63,6 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 29. Memory Storage & Foundations | 4/4 | Complete    | 2026-05-19 |
-| 30. Speculative Router Setup | 3/4 | Verifying   | 2026-05-19 |
+| 30. Speculative Router Setup | 4/4 | Complete   | 2026-05-19 |
 | 31. Memory Curation Dashboard | 0/0 | Not started | - |
 | 32. Streaming Escalation UX | 0/0 | Not started | - |

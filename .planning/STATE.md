@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-05-19T20:22:02.628Z"
+status: executing
+last_updated: "2026-05-20T06:42:00Z"
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 8
+  completed_plans: 8
   percent: 100
 ---
 
@@ -21,9 +21,9 @@ progress:
 
 ## Current Position
 
-Phase: 30 (speculative-router-setup) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
+Phase: 30 (speculative-router-setup) — COMPLETE
+Plan: 4 of 4
+Status: Plan 30-04 executed and summarized
 **Phase**: Phase 30: Speculative Router Setup
 **Plan**: None
 **Status**: Context gathered; model migration to AI Studio reflected.
@@ -46,6 +46,8 @@ Status: Phase complete — ready for verification
 - **D-29-03**: Enforce memory isolation with endpoint behavioral tests for per-user config propagation.
 - **D-30-01**: Add cascadeflow validator compatibility shim to handle v1.1.0 export drift while preserving schema-gate behavior.
 - **D-30-02**: Lock `model_used` and `cascaded` metadata expectations in scaffold tests before cascade node implementation.
+- **D-30-04-01**: Use `ValidatorCascadeAgent` wrapper to inject schema-validator gating with cascadeflow 1.1.0 API constraints.
+- **D-30-04-02**: On schema failure, rerun full turn with direct big-model path and return replaced content.
 
 ### Blockers / Open Questions
 
@@ -59,3 +61,4 @@ Status: Phase complete — ready for verification
 - [x] Integrate LangGraph recall/retain nodes.
 - [x] Close isolation safety gaps and implement tests (Plan 29-04).
 - [x] Setup cascadeflow dependency, validator schema utility, and phase-30 routing test scaffold (Plan 30-01).
+- [x] Close escalation gap with real rerun behavior and robust routing verification (Plan 30-04).
