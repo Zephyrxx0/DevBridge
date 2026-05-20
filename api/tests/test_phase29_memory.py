@@ -148,7 +148,7 @@ def test_hindsight_initialize_returns_false_when_db_url_missing(monkeypatch) -> 
     assert manager.initialize() is False
 
 
-def test_recall_hindsight_memory_binding_in_chat_response(monkeypatch) -> None:
+def test_uat4_recall_hindsight_memory_binding_in_chat_response(monkeypatch) -> None:
     monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
     monkeypatch.setenv("TRUSTED_PROXY_IPS", "testclient")
 
@@ -186,7 +186,7 @@ def test_recall_hindsight_memory_binding_in_chat_response(monkeypatch) -> None:
     ]
 
 
-def test_recall_hindsight_memory_user_isolation(monkeypatch) -> None:
+def test_uat4_recall_hindsight_memory_user_isolation(monkeypatch) -> None:
     monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
     monkeypatch.setenv("TRUSTED_PROXY_IPS", "testclient")
 
@@ -221,7 +221,7 @@ def test_recall_hindsight_memory_user_isolation(monkeypatch) -> None:
     assert ("user-b", "user-a memory") not in seen
 
 
-def test_retain_non_blocking_response_completes_before_reflection(monkeypatch) -> None:
+def test_uat5_retain_non_blocking_response_completes_before_reflection(monkeypatch) -> None:
     monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
     monkeypatch.setenv("TRUSTED_PROXY_IPS", "testclient")
 
@@ -259,7 +259,7 @@ def test_retain_non_blocking_response_completes_before_reflection(monkeypatch) -
     assert "reflect_done" not in names
 
 
-def test_retain_non_blocking_ordering_response_before_reflect_completion(monkeypatch) -> None:
+def test_uat5_retain_non_blocking_ordering_response_before_reflect_completion(monkeypatch) -> None:
     monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
     monkeypatch.setenv("TRUSTED_PROXY_IPS", "testclient")
 
