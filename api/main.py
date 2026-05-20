@@ -50,6 +50,19 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
+def _dispatch_reflection_task() -> None:
+    async def _run_reflect() -> None:
+        try:
+            await hindsight_db.reflect()
+        except Exception:
+            logger.exception("Async hindsight reflect failed")
+
+    try:
+        asyncio.create_task(_run_reflect())
+    except RuntimeError:
+        logger.warning("No running loop available for async hindsight reflect dispatch")
+
+
 def _extract_metadata(value) -> dict:
     """Extracts only allowed SSE metadata fields from nested graph events."""
     metadata = {"fallback": False, "model_used": None, "cascaded": False}
@@ -439,6 +452,7 @@ async def chat(request: Request, payload: ChatRequest):
             await _persist_chat_turn(payload.repo_id, payload.thread_id, payload.message, response)
         except Exception:
             logger.exception("Failed to persist chat turn for /chat")
+        _dispatch_reflection_task()
 
         return {
             "response": response,
