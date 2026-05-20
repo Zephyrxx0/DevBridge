@@ -5,7 +5,7 @@
 ## Decisions
 
 ### Validation Strategy
-- **D-30-01: Schema Validation:** Use Pydantic/JSON schema to detect malformed or incomplete outputs from the "Fast" model (Gemma-2-9B-it) before deciding to escalate to "Big" (Gemini 2.5 Flash).
+- **D-30-01: Schema Validation:** Use Pydantic/JSON schema to detect malformed or incomplete outputs from the "Fast" model (Gemma 4) before deciding to escalate to "Big" (Gemini 2.5 Flash).
 
 ### Concurrency Enforcement
 - **D-30-02: Remote Model (AI Studio):** Strict local concurrency limits (Semaphores/Redis) are not required as inference is offloaded to Google AI Studio. Standard rate-limit handling applies.
@@ -15,7 +15,7 @@
 
 ## Codebase Context
 - **Reusable assets:** `api/agents/graph.py` (LangGraph graph), `api/agents/nodes/router.py` (Intent Router), `api/agents/nodes/fast.py` (Fast Worker), `api/agents/nodes/big.py` (Big Worker).
-- **Established patterns:** Router-Worker pattern with dual models (Gemini 2.5 Flash + Gemma-2-9B-it).
+- **Established patterns:** Router-Worker pattern with dual models (Gemini 2.5 Flash + Gemma 4).
 - **Integration points:** `api/agents/graph.py` (where Cascadeflow speculative routing logic will be integrated).
 
 ## Canonical Refs

@@ -13,7 +13,7 @@ interface OnboardingGuideProps {
   repoId: string;
 }
 
-type FlowState = "IDLE" | "QUALIFYING" | "STREAMING" | "PLAN_READY";
+type FlowState = "IDLE" | "QUALIFYING" | "STREAMING" | "PLAN_READY" | "DONE";
 
 export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
   const [flowState, setFlowState] = useState<FlowState>("IDLE");
@@ -35,10 +35,14 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
     startGeneration(focus);
   };
 
+  if (flowState === "DONE") {
+    return null;
+  }
+
   if (flowState === "IDLE") {
     return (
       <div className="h-full flex items-center justify-center p-8">
-        <Card className="w-full max-w-xl border-[var(--border)] bg-[var(--surface-1)]">
+        <Card className="mx-auto w-full max-w-xl border-[var(--border)] bg-[var(--surface-1)]">
           <CardHeader>
             <CardTitle className="text-[var(--text-heading)]">Ready to start a conversation?</CardTitle>
           </CardHeader>
@@ -78,7 +82,11 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
     
     return (
       <div className="mx-auto max-w-4xl p-6 h-full flex flex-col animate-in slide-in-from-bottom-4 duration-500">
-        <Onboarding totalSteps={totalSteps} className="flex-1 overflow-hidden flex flex-col border-[var(--border)] bg-[var(--surface-1)]">
+        <Onboarding
+          totalSteps={totalSteps}
+          onComplete={() => setFlowState("DONE")}
+          className="flex-1 overflow-hidden flex flex-col border-[var(--border)] bg-[var(--surface-1)]"
+        >
           <div className="mb-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
             <Onboarding.StepIndicator className="w-full sm:w-auto" variant="pills" />
           </div>
@@ -132,7 +140,7 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
           </div>
 
           <div className="mt-4 pt-4 border-t border-[var(--border)]">
-            <Onboarding.Navigation />
+            <Onboarding.Navigation completeLabel="Done" />
           </div>
         </Onboarding>
       </div>

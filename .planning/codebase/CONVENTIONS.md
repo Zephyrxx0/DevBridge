@@ -1,100 +1,105 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-05-24
+**Analysis Date:** 2026-05-20
 
 ## Naming Patterns
 
 **Files:**
-- Python: `snake_case.py` (e.g., `api/main.py`, `api/agents/orchestrator.py`)
-- TypeScript/React: `kebab-case.tsx` or `kebab-case.ts` (e.g., `web/src/components/hero-dithering-card.tsx`, `web/src/hooks/useOnboarding.ts`)
-- Tests: `test_*.py` for Python, `*.test.ts` or `*.spec.ts` for TypeScript.
+- React component files use PascalCase for feature components: `web/src/components/chat/ChatStream.tsx`, `web/src/components/onboarding/OnboardingGuide.tsx`.
+- UI primitive files use kebab-case: `web/src/components/ui/button.tsx`, `web/src/components/ui/context-menu.tsx`.
+- Next.js route files follow App Router conventions: `web/src/app/page.tsx`, `web/src/app/repo/[id]/page.tsx`, `web/src/app/auth/callback/route.ts`.
+- Python backend files use snake_case: `api/routes/chats.py`, `api/core/config.py`, `api/utils/tokenizer.py`.
 
 **Functions:**
-- Python: `snake_case` (e.g., `sync_issues`, `_repo_slug_from_github_url`)
-- React Components: `PascalCase` (e.g., `HomePage`, `SectionHeading`)
-- TypeScript Helpers/Hooks: `camelCase` (e.g., `useOnboarding`, `getGithubToken`)
+- TypeScript/React functions use camelCase: `countTreeFiles`, `detectLanguage`, `createSession` in `web/src/app/repo/[id]/page.tsx`.
+- React components use PascalCase function names and default export for page components: `RootLayout` in `web/src/app/layout.tsx`, `RepoWorkspacePage` in `web/src/app/repo/[id]/page.tsx`.
+- Python functions use snake_case: `stream_graph_events`, `_resolve_repo_uuid` in `api/routes/chats.py`; `_extract_metadata` in `api/main.py`.
 
 **Variables:**
-- Python: `snake_case` (e.g., `allowed_origins`, `client_is_trusted`)
-- TypeScript: `camelCase` (e.g., `cachedPlan`, `mockPlan`)
-- Constants: `UPPER_CASE` (e.g., `BIG_MODEL_PORT` in `api/core/config.py`)
+- Local variables are camelCase in frontend (`apiUrl`, `activeSessionId`, `selectedBranch` in `web/src/app/repo/[id]/page.tsx`).
+- Module constants are UPPER_SNAKE_CASE in Python (`BIG_MODEL`, `FAST_MODEL` in `api/utils/tokenizer.py`).
 
 **Types:**
-- Python (Pydantic): `PascalCase` (e.g., `ChatRequest`, `Settings`)
-- TypeScript: `PascalCase` for Interfaces and Types (e.g., `interface StatusStep` in `useOnboarding.ts`)
+- Frontend alias/type objects use PascalCase (`Message`, `SourceReference`, `SnippetChip` in `web/src/components/chat/types.ts`, imported in `web/src/app/repo/[id]/page.tsx`).
+- Python request bodies are `BaseModel` classes with PascalCase (`ChatSessionCreate`, `InferenceContextRequest` in `api/routes/chats.py`).
 
 ## Code Style
 
 **Formatting:**
-- Python: Ruff (indicated by `.ruff_cache`)
-- Frontend: Prettier (implied by Next.js defaults and `package.json`)
+- Frontend formatting style is Prettier-like (double quotes, semicolons, trailing commas in multiline objects), enforced implicitly by repository style examples in `web/src/app/layout.tsx` and `web/src/app/repo/[id]/page.tsx`.
+- UI primitive subtree has files without semicolons in some modules (`web/src/components/ui/button.tsx`, `web/src/lib/utils.ts`), indicating mixed formatting source style.
+- No dedicated Prettier config detected in repo root or `web/` (`.prettierrc*` / `prettier.config.*` not detected).
 
 **Linting:**
-- Python: Ruff
-- Frontend: ESLint with `eslint-config-next` (configured in `web/eslint.config.mjs`)
+- Use ESLint flat config in `web/eslint.config.mjs`.
+- Baseline rules come from Next presets: `eslint-config-next/core-web-vitals` and `eslint-config-next/typescript` in `web/eslint.config.mjs`.
+- Keep ignores aligned with config (`.next/**`, `out/**`, `build/**`, `next-env.d.ts`).
 
 ## Import Organization
 
-**Order (Python):**
-1. Standard library imports
-2. Third-party library imports
-3. Local module imports (using `api.*` prefix)
-
-**Order (TypeScript):**
-1. External React/Next.js imports
-2. Third-party libraries (e.g., `lucide-react`, `motion`)
-3. Internal components (`@/components/...`)
-4. UI primitives (`@/components/ui/...`)
-5. Internal hooks/utils (`@/hooks/...`, `@/utils/...`)
+**Order:**
+1. External packages first (`next/*`, `react`, vendor libs) in `web/src/app/layout.tsx`, `web/src/app/repo/[id]/page.tsx`.
+2. Internal aliases via `@/` next (`@/components/*`, `@/lib/utils`, `@/contexts/*`).
+3. Type imports are grouped with normal imports, with `import type` used selectively (`web/src/app/layout.tsx`, `web/src/app/repo/[id]/page.tsx`).
 
 **Path Aliases:**
-- `@/*` maps to `web/src/*` (configured in `web/tsconfig.json`)
+- Use `@/*` alias mapped to `./src/*` in `web/tsconfig.json`.
+- Prefer `@/` imports in frontend modules and tests (`web/src/components/chat/__tests__/ChatStream.test.tsx`).
 
 ## Error Handling
 
 **Patterns:**
-- Backend: Use `logger.exception("...")` for internal errors and raise `fastapi.HTTPException` for client-facing errors.
-- Frontend: Use try/catch blocks within hooks and async functions, setting local `error` states to display in the UI.
+- Frontend async flows use `try/finally` for loading flags and `try/catch` where user-facing continuation needed (`loadSessions`, `loadMessages`, `renameChat`, `deleteChat` in `web/src/app/repo/[id]/page.tsx`).
+- Backend API routes raise `HTTPException` with explicit status codes and service-unavailable wrappers (`api/routes/chats.py`).
+- Lower-level backend utilities log and degrade gracefully for non-critical failures (`_dispatch_reflection_task` and `_embed_issue` in `api/main.py`; exception fallback in `api/utils/tokenizer.py`).
 
 ## Logging
 
-**Framework:** `logging` (Standard Python library)
+**Framework:** logging + console
 
 **Patterns:**
-- Use module-level loggers: `logger = logging.getLogger(__name__)`.
-- Log exceptions with stack traces using `logger.exception()`.
-- Use `logger.info()` and `logger.warning()` for significant lifecycle events.
+- Backend uses module logger (`logger = logging.getLogger(__name__)`) and structured exception logging (`api/main.py`, `api/utils/tokenizer.py`).
+- Frontend uses `console.error` for UI-side action failures (`renameChat`, `deleteChat` in `web/src/app/repo/[id]/page.tsx`).
 
 ## Comments
 
 **When to Comment:**
-- Use docstrings for major functions and background jobs (e.g., `api/main.py`'s `sync_issues`).
-- Use block comments for major sections in large files (e.g., `web/src/app/page.tsx`).
+- Use short operational comments for constraints/integration points (Windows event loop compatibility in `api/main.py:45-47`; branch-loading non-critical note in `web/src/app/repo/[id]/page.tsx:256-257`).
 
 **JSDoc/TSDoc:**
-- Minimal usage, primarily relying on TypeScript types for documentation.
+- Minimal in frontend runtime files.
+- Python docstrings appear for key utility behavior (`_extract_metadata` in `api/main.py`, `enforce_cap` in `api/utils/tokenizer.py`).
 
 ## Function Design
 
-**Size:** React components are often modularized into smaller sub-components within the same file or moved to `src/components`.
+**Size:**
+- Keep UI logic in hooks/helpers when possible; large route page file exists (`web/src/app/repo/[id]/page.tsx`) and should be extended via extracted functions/components, not by adding more inline logic.
 
 **Parameters:**
-- Python: Extensive use of Type Hinting and Pydantic models for request bodies.
-- TypeScript: Use of object destructuring for component props with explicit type definitions.
+- Use typed object payloads for API boundaries (`ChatSessionCreate`, `ChatMessageCreate`, `InferenceContextRequest` in `api/routes/chats.py`).
+- Use explicit primitive parameters for helper utilities (`stream_graph_events(message, thread_id, user_id)` in `api/routes/chats.py`).
 
 **Return Values:**
-- Python: Type-hinted return values, often `dict`, `StreamingResponse`, or Pydantic models.
+- Frontend helper functions return concrete primitives (`countTreeFiles` returns `number` in `web/src/app/repo/[id]/page.tsx`).
+- Backend helpers return typed tuple/object forms (`enforce_cap(...) -> tuple[list, bool]` in `api/utils/tokenizer.py`).
 
 ## Module Design
 
 **Exports:**
-- React: Prefer `export default function Name()` for the main component of a file.
-- TypeScript: Named exports for utilities and constants.
-- Python: Direct imports from modules, using `__init__.py` (if present) to manage package visibility.
+- Frontend UI modules commonly use named exports (`Button`, `buttonVariants` in `web/src/components/ui/button.tsx`).
+- App route modules use default export page component (`web/src/app/page.tsx`, `web/src/app/repo/[id]/page.tsx`).
+- Backend modules expose route-level `router` and helper functions (`api/routes/chats.py`).
 
 **Barrel Files:**
-- Limited usage (e.g., `api/routes/__init__.py` might exist but routes are often imported individually in `api/main.py`).
+- Not detected as dominant pattern in inspected frontend/backend paths.
+
+## Model Naming Convention Drift (Quality Risk)
+
+- Model labels now standardized on AI Studio names in tests and runtime:
+  - Fast: `gemma-4-26b-a4b-it`
+  - Big: `gemini-2.5-flash`
+- Runtime defaults updated to `model_type="gemini"` in `api/routes/chats.py` + `api/utils/tokenizer.py`.
 
 ---
 
-*Convention analysis: 2026-05-24*
+*Convention analysis: 2026-05-20*

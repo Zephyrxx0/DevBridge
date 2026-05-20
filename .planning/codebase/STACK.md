@@ -1,82 +1,96 @@
 # Technology Stack
 
-**Analysis Date:** 2025-05-15
+**Analysis Date:** 2026-05-20
 
 ## Languages
 
 **Primary:**
-- Python 3.11 - Backend API and Agents (`api/`)
-- TypeScript - Frontend and Shared Types (`web/`, `api/`)
+- Python 3.11 - Backend API, jobs, ingestion, agents in `api/*.py` and `api/**/**/*.py` (runtime pinned by `Dockerfile` and `api/Dockerfile`)
+- TypeScript - Frontend app/router/components in `web/src/**/*.ts` and `web/src/**/*.tsx`
 
 **Secondary:**
-- SQL - Database migrations and hybrid search logic (`sql/`, `supabase/`)
-- Shell/Bash - Build and utility scripts (`scripts/`)
+- SQL - Embedded query layer through SQLAlchemy `text(...)` in files like `api/routes/chats.py`, `api/main.py`, `api/reports/generator.py`
+- JavaScript (config) - Tooling/config files in `web/jest.config.js`, `web/eslint.config.mjs`, `web/postcss.config.mjs`
 
 ## Runtime
 
 **Environment:**
-- Node.js (version not explicitly pinned, typically >= 18 for Next.js 16)
-- Python 3.11 (specified in `api/Dockerfile`)
+- Python 3.11 slim container for API (`Dockerfile`, `api/Dockerfile`)
+- Node.js runtime for Next.js app (`web/package.json` scripts)
 
 **Package Manager:**
-- npm - Frontend package management (`web/`)
-- pip - Backend package management (`api/requirements.txt`)
-- Lockfile: `package-lock.json` (root/web), `api/requirements.txt` (versions pinned for some deps)
+- npm (root and web workspaces)
+- Lockfile: present (`package-lock.json`, `web/package-lock.json`)
 
 ## Frameworks
 
 **Core:**
-- Next.js 16.2.3 - Frontend Framework (`web/`)
-- FastAPI - Backend API Framework (`api/main.py`)
-- LangGraph 1.1.7 - LLM Orchestration and Agent workflows (`api/agents/`)
+- FastAPI - HTTP API and route layer (`api/main.py`, `api/routes/*.py`)
+- Next.js 16 (App Router) - Web UI and server routes (`web/src/app/**`)
+- LangGraph - Agent graph orchestration (`api/agents/graph.py`, `api/agents/orchestrator.py`)
 
 **Testing:**
-- Pytest - Backend unit and integration testing (`tests/`, `pytest.ini`)
-- Jest - Frontend unit testing (`web/jest.config.js`)
-- Playwright - End-to-end testing (`web/playwright.config.ts`)
+- Pytest - Python tests in `tests/*.py` and `api/tests/*.py`
+- Jest + Testing Library - UI/unit tests (`web/src/**/__tests__/*`, `web/src/hooks/*.test.ts`)
+- Playwright - E2E tests (`web/tests/*.spec.ts`, config `web/playwright.config.ts`)
 
 **Build/Dev:**
-- Docker - Containerization (`Dockerfile`, `docker-compose.yml`)
-- Tailwind CSS 4 - Utility-first CSS framework (`web/`)
+- Uvicorn - API server dependency in `api/requirements.txt`
+- ESLint - Frontend linting in `web/eslint.config.mjs`
+- Tailwind CSS v4 - Styling deps in `web/package.json`
 
 ## Key Dependencies
 
 **Critical:**
-- Pydantic / Pydantic Settings - Data validation and configuration management (`api/core/config.py`)
-- SQLAlchemy / asyncpg - Database ORM and async driver (`api/db/`)
-- pgvector - Vector similarity search in PostgreSQL (`api/db/vector_store.py`)
-- LangChain - LLM abstractions and tools (`api/agents/orchestrator.py`)
-- Tree-sitter - Code parsing for chunking and analysis (`api/ingest/`)
+- `google-genai` - Gemini/Gemma remote inference client in `api/agents/utils/llm.py`, `api/utils/tokenizer.py`
+- `cascadeflow[langchain]` - Fast/Big model cascade orchestration in `api/agents/nodes/cascade.py`
+- `hindsight-all-slim` + `hindsight-langgraph` - Memory/recall integration in `api/db/hindsight.py`, `api/agents/graph.py`
 
 **Infrastructure:**
-- Radix UI - Primitive UI components (`web/`)
-- Framer Motion (motion) - Animation library (`web/`)
-- Tiptap - Rich-text editor components (`web/`)
-- Shiki - Syntax highlighting (`web/`)
+- `sqlalchemy` + `asyncpg` + `psycopg` - DB access + scheduler job store (`api/db/session.py`, `api/core/scheduler.py`)
+- `fastapi-cache2[redis]` - cache abstraction (`api/main.py`, `api/db/cache.py`)
+- `@supabase/ssr` + `@supabase/supabase-js` - auth/session + DB access on web (`web/src/utils/supabase/*.ts`)
 
 ## Configuration
 
 **Environment:**
-- `.env` files (managed via `python-dotenv` in API, Next.js built-in for Web)
-- `api/core/config.py` - Centralized Pydantic-based configuration
+- Centralized app settings in `api/core/config.py` via pydantic settings
+- Required integration config keys referenced in code:
+  - `SUPABASE_CONNECTION_STRING` (`api/core/config.py`, `api/db/session.py`)
+  - `GEMINI_API_KEY` (`api/core/config.py`, `api/agents/utils/llm.py`, `api/utils/tokenizer.py`)
+  - `GITHUB_WEBHOOK_SECRET` (`api/core/config.py`, `api/routes/webhooks.py`)
+  - `GITHUB_TOKEN`/`GITHUB_API_TOKEN`/`GITHUB_SYNC_USER_ID` (`api/ingestion/history.py`, `api/main.py`)
+  - `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` (`web/src/utils/supabase/client.ts`, `web/src/utils/supabase/server.ts`)
+- `.env` files are present (`.env`, `web/.env`, `web/.env.local`, `web/.env.vercel.production`) and must remain secret-managed
 
 **Build:**
-- `next.config.ts` - Next.js build configuration
-- `tsconfig.json` - TypeScript configuration
-- `Dockerfile` / `docker-compose.yml` - Container orchestration
+- API image/build: `Dockerfile`, `api/Dockerfile`, `docker-compose.yml`
+- Web build/dev: `web/package.json`, `web/next.config.ts`, `web/tsconfig.json`
 
 ## Platform Requirements
 
 **Development:**
-- Docker Desktop or equivalent
-- Node.js environment
-- Python 3.11 environment
-- Local LLM server (optional, e.g., Ollama/vLLM) for big/fast model routing
+- Python 3.11 + pip for API (`Dockerfile`, `api/requirements.txt`)
+- Node/npm for web (`web/package.json`)
+- Local ports expected by E2E: `3000` web, `8000` API (`web/playwright.config.ts`)
 
 **Production:**
-- Google Cloud Platform (Cloud Run recommended based on `Procfile` and `Dockerfile` patterns)
-- Supabase (PostgreSQL + pgvector)
+- Containerized API on port 8080 (`Dockerfile`, `api/run_server.py`)
+- Supabase Postgres required for runtime DB (`api/core/config.py`, `api/db/session.py`)
+- Remote model inference via Google AI Studio/Gemini API key (no local GPU model runtime in active code path)
+
+## Model Inventory & Migration Status
+
+**Current target models (active):**
+- Big: `gemini-2.5-flash` in `api/agents/utils/llm.py` and `api/utils/tokenizer.py`
+- Fast: `gemma-4-26b-a4b-it` in `api/agents/utils/llm.py` and `api/utils/tokenizer.py`
+- Access mode: remote Gemini API client `genai.Client(api_key=settings.gemini_api_key)` in `api/agents/utils/llm.py`
+
+**Deprecated model references removed:**
+- Default model type now `"gemini"` in `api/routes/chats.py` and `api/utils/tokenizer.py`.
+- Tests now assert `gemini-2.5-flash` and `gemma-4-26b-a4b-it`.
+- Legacy specs updated to AI Studio model pair where applicable.
 
 ---
 
-*Stack analysis: 2025-05-15*
+*Stack analysis: 2026-05-20*

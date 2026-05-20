@@ -58,4 +58,4 @@ def test_tokenizer_uses_sdk_count_tokens(monkeypatch) -> None:
         models = FakeModels()
 
     monkeypatch.setattr(tokenizer_module.genai, "Client", lambda api_key: FakeClient())
-    assert tokenizer_module._count_tokens("hello world", "qwen") == 77
+    assert tokenizer_module._count_tokens("hello world", "gemini") == 77

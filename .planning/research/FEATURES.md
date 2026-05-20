@@ -42,7 +42,7 @@ Cascadeflow Agent Loop → Streaming Escalation UX
 
 Prioritize:
 1. Basic Hindsight `recall()` in the system prompt.
-2. Replace static router with Cascadeflow using Gemma-4-9B -> Qwen2.5-72B.
+2. Replace static router with Cascadeflow using Gemma 4 -> Gemini 2.5 Flash (AI Studio).
 3. Call `retain()` asynchronously after each turn.
 
 Defer: Memory Curation Dashboard (build API first, UI later).

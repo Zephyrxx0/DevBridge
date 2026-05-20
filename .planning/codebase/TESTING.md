@@ -1,147 +1,136 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-05-24
+**Analysis Date:** 2026-05-20
 
 ## Test Framework
 
 **Runner:**
-- Backend: `pytest` 8.x (configured in `pytest.ini`)
-- Frontend: `Jest` (for unit tests, configured in `web/jest.config.js`) and `Playwright` (for E2E tests, configured in `web/playwright.config.ts`)
+- Frontend unit/integration runner: Jest `^30.4.2` via `web/package.json` script `test`.
+- Frontend e2e runner: Playwright `^1.59.1` via `web/package.json` script `test:e2e`.
+- Backend runner: Pytest via `pytest.ini` + `tests/` and `api/tests/` suites.
+- Config files: `web/jest.config.js`, `web/playwright.config.ts`, `pytest.ini`.
 
 **Assertion Library:**
-- Python: Built-in `assert`
-- TypeScript: `expect` (Jest/Playwright)
+- Jest + Testing Library assertions (`@testing-library/jest-dom`) in `web/src/components/chat/__tests__/ChatStream.test.tsx`.
+- Playwright `expect` in `web/tests/*.spec.ts`.
+- Pytest native `assert` style in `api/tests/*.py` and `tests/e2e/*.py`.
 
 **Run Commands:**
 ```bash
-pytest                  # Run backend tests
-pytest -m e2e           # Run backend E2E tests
-npm test                # Run frontend unit tests (Jest)
-npm run test:e2e        # Run frontend E2E tests (Playwright)
+npm run test --prefix web                    # Run frontend Jest tests
+npm run test:e2e --prefix web               # Run Playwright browser tests
+pytest                                       # Run python tests under pytest.ini testpaths
 ```
 
 ## Test File Organization
 
 **Location:**
-- Backend: `tests/` directory at root (e.g., `tests/test_annotations.py`).
-- Frontend Unit: Co-located with implementation (e.g., `web/src/hooks/useOnboarding.test.ts`).
-- Frontend E2E: `web/tests/` (e.g., `web/tests/admin.spec.ts`).
+- Frontend unit tests are mixed between co-located and near-source:
+  - `web/src/components/chat/__tests__/ChatStream.test.tsx`
+  - `web/src/hooks/useOnboarding.test.ts`
+- Frontend e2e tests are centralized in `web/tests/*.spec.ts`.
+- Backend/API tests sit under `api/tests/*.py`.
+- Additional root e2e pytest suite uses `tests/e2e/*.py` with shared fixtures in `tests/e2e/conftest.py`.
 
 **Naming:**
-- Backend: `test_*.py`
-- Frontend Unit: `*.test.ts` or `*.test.tsx`
-- Frontend E2E: `*.spec.ts`
+- Jest includes `.test.ts(x)` and excludes `.spec.ts` by config (`web/jest.config.js` `testPathIgnorePatterns`).
+- Playwright uses `.spec.ts` in `web/tests` (`web/playwright.config.ts` `testDir: './tests'`).
+- Pytest uses `test_*.py` patterns in `api/tests/` and `tests/e2e/`.
 
 **Structure:**
 ```
-[project-root]/
-├── tests/              # Backend tests
-│   ├── e2e/            # Backend E2E
-│   └── conftest.py     # Pytest fixtures
-└── web/
-    ├── src/
-    │   └── hooks/
-    │       └── name.test.ts  # Co-located unit tests
-    └── tests/          # Frontend E2E tests
+web/src/**/__tests__/*.test.tsx
+web/src/**/*.test.ts
+web/tests/*.spec.ts
+api/tests/test_*.py
+tests/e2e/test_*.py
 ```
 
 ## Test Structure
 
 **Suite Organization:**
-```python
-# Backend (pytest)
-@pytest.mark.asyncio
-async def test_feature_name(monkeypatch):
-    # Setup
-    # Execute
-    # Assert
-```
-
 ```typescript
-// Frontend (Jest)
-describe("ComponentOrHook", () => {
-  it("should do something", () => {
-    // Setup
-    // Execute
-    // Assert
+describe("ChatStream escalation indicator", () => {
+  it("renders escalation indicator when metadata is present", () => {
+    render(<ChatStream ... />);
+    expect(screen.getByTestId("escalation-indicator")).toBeInTheDocument();
   });
 });
 ```
+Pattern source: `web/src/components/chat/__tests__/ChatStream.test.tsx`.
 
 **Patterns:**
-- **Async Testing:** Use `@pytest.mark.asyncio` in Python and `async/await` with `act` in React.
-- **Setup:** Use `beforeEach` in Jest and `conftest.py` or direct setup in pytest functions.
+- Setup pattern: define base fixtures in-closure (`baseMessage`) and render components with minimal prop surface (`web/src/components/chat/__tests__/ChatStream.test.tsx`).
+- Teardown pattern: explicit global restore in lifecycle hooks (`beforeAll`/`afterAll`) for global APIs in `web/src/hooks/useOnboarding.test.ts`.
+- Assertion pattern: use semantic queries (`getByText`, `getByTestId`, `queryByTestId`) in UI tests.
 
 ## Mocking
 
-**Framework:**
-- Python: `monkeypatch` (pytest fixture).
-- TypeScript: `jest.fn()` and manual class mocks.
+**Framework:** Jest mock system + Playwright route interception + Pytest monkeypatch
 
 **Patterns:**
-```python
-# Backend: Mocking DB engine in routes
-def test_something(monkeypatch):
-    conn = FakeConnection()
-    monkeypatch.setattr(annotation_routes, "get_engine", lambda: FakeEngine(conn))
-```
-
 ```typescript
-// Frontend: Mocking global EventSource
-class MockEventSource { ... }
-beforeAll(() => {
-  (global as any).EventSource = MockEventSource;
+jest.mock("@/components/chat/ArtifactViewer", () => ({ ArtifactViewer: () => null }));
+
+await page.route("**/api/backend/**", async (route) => {
+  await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
 });
 ```
+Pattern sources: `web/src/components/chat/__tests__/ChatStream.test.tsx`, `web/tests/escalation-ux.spec.ts`.
+
+```python
+monkeypatch.setattr(main.graph, "ainvoke", fake_ainvoke)
+monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
+```
+Pattern source: `api/tests/test_phase29_memory.py`.
 
 **What to Mock:**
-- Database connections (`FakeConnection`).
-- External APIs (GitHub, EventSource).
-- Environment variables.
+- UI child components not under test (`@/components/ai-elements/*`, feedback/artifact helpers) in `web/src/components/chat/__tests__/ChatStream.test.tsx`.
+- Network boundaries in e2e via route stubs for deterministic UI state in `web/tests/escalation-ux.spec.ts`.
+- Expensive/side-effecting backend collaborators (`main.graph.ainvoke`, reflection tasks) in `api/tests/test_phase29_memory.py`.
 
 **What NOT to Mock:**
-- Pydantic models and data structures.
-- Internal utility functions (unless they hit network/disk).
+- Do not mock the component/hook under direct behavioral assertion.
+- Do not bypass authorization flows in API tests when verifying auth and user isolation (`api/tests/test_phase29_memory.py`).
 
 ## Fixtures and Factories
 
 **Test Data:**
 ```python
-# Manual creation of dicts/models in tests
-created = await annotation_routes.create_annotation(
-    annotation_routes.AnnotationCreate(
-        repo_id=str(uuid4()),
-        file_path="api/main.py",
-        comment="Test",
-    ),
-    request=make_request("user-123"),
-)
+def _chat_payload() -> dict:
+    return {"message": "hello", "thread_id": "thread-1", "repo_id": None}
 ```
+Pattern source: `api/tests/test_phase29_memory.py`.
+
+```typescript
+const repoId = process.env.E2E_REPO_ID ?? "11111111-1111-1111-1111-111111111111";
+```
+Pattern source: `web/tests/chat.spec.ts`, `web/tests/escalation-ux.spec.ts`.
 
 **Location:**
-- Backend fixtures often in `tests/conftest.py` (though currently sparse).
+- Backend helper fixtures are local to file (e.g., `_chat_payload` in `api/tests/test_phase29_memory.py`).
+- Cross-suite pytest fixtures live in `tests/e2e/conftest.py` and `tests/conftest.py`.
 
 ## Coverage
 
-**Requirements:** Not strictly enforced in visible configs, but `fallow` is used for general health checks.
+**Requirements:** None enforced in inspected configs.
 
 **View Coverage:**
 ```bash
-pytest --cov=api tests/
+npm run test --prefix web -- --coverage
 ```
 
 ## Test Types
 
 **Unit Tests:**
-- Backend: Testing route handlers and logic with faked dependencies.
-- Frontend: Testing hooks (`renderHook`) and utility functions.
+- React rendering and state logic checks with deep component mocking (`web/src/components/chat/__tests__/ChatStream.test.tsx`, `web/src/hooks/useOnboarding.test.ts`).
 
 **Integration Tests:**
-- Backend: Testing model interactions and complex flows (e.g., `test_assemble_context_includes_annotations`).
+- FastAPI `TestClient` tests validating auth, isolation, reflection dispatch, and DB-adjacent behavior through monkeypatched dependencies (`api/tests/test_phase29_memory.py`, `api/tests/test_phase31_memory.py`, `api/tests/test_phase32_sse.py`).
 
 **E2E Tests:**
-- Playwright: Testing API endpoints and UI flows from a browser perspective.
-- Backend E2E: Markers used in pytest for network-heavy or long-running tests.
+- Browser workflow checks with Playwright in `web/tests/*.spec.ts`.
+- Additional python e2e suite marked with `@pytest.mark.e2e` and configured via `pytest.ini` + `tests/e2e/conftest.py`.
 
 ## Common Patterns
 
@@ -151,14 +140,39 @@ await act(async () => {
   await result.current.startGeneration("Backend");
 });
 ```
+Pattern source: `web/src/hooks/useOnboarding.test.ts`.
+
+```python
+async def fake_ainvoke(input_data, config):
+    return {"messages": [SimpleNamespace(content="ok")]}
+```
+Pattern source: `api/tests/test_phase29_memory.py`.
 
 **Error Testing:**
-```python
-with pytest.raises(HTTPException) as exc:
-    await annotation_routes.update_annotation(...)
-assert exc.value.status_code == 403
+```typescript
+act(() => {
+  es.onerror?.(new Event("error"));
+});
+expect(result.current.error).toBe("Connection lost. Please try again.");
 ```
+Pattern source: `web/src/hooks/useOnboarding.test.ts`.
+
+```python
+assert response.status_code == 401
+assert response.json()["detail"] == "Authentication required"
+```
+Pattern source: `api/tests/test_phase29_memory.py`.
+
+## Model Assumption Drift: Resolution
+
+**Current runtime model contract (source of truth):**
+- Fast path model: `gemma-4-26b-a4b-it` in `api/agents/utils/llm.py` and `api/utils/tokenizer.py`.
+- Big path model: `gemini-2.5-flash` in `api/agents/utils/llm.py` and `api/utils/tokenizer.py`.
+
+**Outdated assumptions resolved:**
+- Test fixtures now use `gemini-2.5-flash` and `gemma-4-26b-a4b-it`.
+- `model_type` default set to `"gemini"` in runtime request schema.
 
 ---
 
-*Testing analysis: 2026-05-24*
+*Testing analysis: 2026-05-20*

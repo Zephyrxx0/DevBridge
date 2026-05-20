@@ -54,7 +54,7 @@ Contextually grounded understanding and intent retrieval over simple code genera
 
 ## Constraints
 
-- **Models**: Gemini 2.5 Flash (Big), Gemma-2-9B-it (Fast) via Google AI Studio
+- **Models**: Gemini 2.5 Flash (Big), Gemma 4 (Fast) via Google AI Studio
 - **Budget**: $100 total
 - **Caching**: Persistent Docker volume for `/app/repo_cache`
 - **Context Limit**: 48,000 tokens max per request (4.8GB KV cache)
@@ -63,7 +63,7 @@ Contextually grounded understanding and intent retrieval over simple code genera
 
 | Decision | Rationale |
 |----------|-----------|
-| Google AI Studio (Gemini 2.5 Flash + Gemma-2-9B) | Remote inference eliminates local VRAM partitioning complexity |
+| Google AI Studio (Gemini 2.5 Flash + Gemma 4) | Remote inference eliminates local VRAM partitioning complexity |
 | 48K token context cap | Maintains consistency with previous architectural limits |
 | Internal symbol resolution | Drops external/unresolvable CALLS edges |
 | pgvector cosine distance | Avoids huge VRAM context spikes for issue mapping |

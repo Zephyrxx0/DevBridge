@@ -54,14 +54,14 @@ export function ChatInput({
         
         <div className="flex items-end gap-[var(--space-sm)]">
           <PromptInput
-            className="flex-1 border-transparent ring-0 shadow-none focus-within:border-transparent focus-within:ring-0 focus-within:shadow-none [&_[data-slot=input-group]]:border-transparent [&_[data-slot=input-group]]:ring-0 [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:has-[[data-slot=input-group-control]:focus-visible]:border-transparent [&_[data-slot=input-group]]:has-[[data-slot=input-group-control]:focus-visible]:ring-0 [&_[data-slot=input-group-addon][data-align=inline-end]]:border-l-0 [&_[data-slot=input-group-addon][data-align=inline-end]]:pl-0"
+            className="flex-1 ring-0 shadow-none [&_[data-slot=input-group]]:border-[var(--border-strong)] [&_[data-slot=input-group]]:bg-[var(--surface-2)] [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:has-[[data-slot=input-group-control]:focus-visible]:ring-0 [&_[data-slot=input-group-addon][data-align=inline-end]]:border-l-0 [&_[data-slot=input-group-addon][data-align=inline-end]]:pl-0 [&_[data-slot=input-group-addon][data-align=inline-end]]:pr-1"
             onSubmit={(msg, e) => onSubmit(e)}
           >
             <PromptInputTextarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your code or drop snippet here..."
-              className="min-h-[44px] max-h-48 border-0 bg-transparent resize-none focus-visible:ring-0 p-3 shadow-none"
+              placeholder="Ask about your code, use @path/to/file, or drop snippet here..."
+              className="min-h-[44px] max-h-48 border-0 bg-transparent resize-none focus-visible:ring-0 px-3 py-3 shadow-none"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -80,7 +80,7 @@ export function ChatInput({
               disabled={!isLoading && !input.trim()}
               status={isLoading ? "streaming" : "ready"}
               onStop={onStopGenerating}
-              className="mb-1 mr-1 size-11 shrink-0 rounded-md border-0 border-l-0 bg-[var(--brand)] text-white ring-0 shadow-none outline-none focus-visible:border-transparent focus-visible:ring-0 before:hidden after:hidden hover:bg-[var(--brand)]/90"
+              className="mb-1 mr-1 size-11 shrink-0 rounded-md border border-[var(--border-strong)] border-l-0 bg-[var(--brand)] text-[var(--icon-contrast)] ring-0 shadow-none outline-none focus-visible:border-transparent focus-visible:ring-0 before:hidden after:hidden hover:bg-[var(--brand-hover)]"
             >
               {isLoading ? <Square className="size-4" /> : <ArrowUp className="size-4" />}
             </PromptInputSubmit>

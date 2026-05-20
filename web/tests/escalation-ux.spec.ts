@@ -26,7 +26,7 @@ async function mockWorkspace(page: import("@playwright/test").Page, cascaded: bo
           {
             role: "assistant",
             content: cascaded ? "Escalated answer" : "Fast answer",
-            model_used: cascaded ? "qwen2.5-72b" : "gemma-2-9b",
+            model_used: cascaded ? "gemini-2.5-flash" : "gemma-4-26b-a4b-it",
             cascaded,
             fallback: !cascaded,
           },

@@ -13,7 +13,7 @@ def _mock_stream_event() -> dict:
         "data": {
             "output": {
                 "fallback": True,
-                "model_used": "qwen2.5-72b",
+                "model_used": "gemini-2.5-flash",
                 "cascaded": True,
             }
         },
@@ -25,7 +25,7 @@ def _mock_stream_event() -> dict:
     [
         (
             _mock_stream_event(),
-            {"fallback": True, "model_used": "qwen2.5-72b", "cascaded": True},
+            {"fallback": True, "model_used": "gemini-2.5-flash", "cascaded": True},
         )
     ],
 )
@@ -55,7 +55,7 @@ def test_phase32_extract_metadata_recurses_nested_payload():
                 {
                     "output": {
                         "fallback": True,
-                        "model_used": "qwen2.5-72b",
+                        "model_used": "gemini-2.5-flash",
                         "cascaded": True,
                         "internal_prompt": "must-not-leak",
                     }
@@ -66,6 +66,6 @@ def test_phase32_extract_metadata_recurses_nested_payload():
 
     assert _extract_metadata(nested_event) == {
         "fallback": True,
-        "model_used": "qwen2.5-72b",
+        "model_used": "gemini-2.5-flash",
         "cascaded": True,
     }

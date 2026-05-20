@@ -38,7 +38,7 @@
 
 | Component | Responsibility | Communicates With |
 |-----------|---------------|-------------------|
-| **Cascadeflow Router** | Replaces static routing. Uses Gemma-2-9B (Fast) for drafts, evaluates quality, and escalates to Qwen2.5-72B (Big) if needed. | LangGraph nodes, LLMs (vLLM/Ollama). |
+| **Cascadeflow Router** | Replaces static routing. Uses Gemma 4 (Fast, AI Studio) for drafts, evaluates quality, and escalates to Gemini 2.5 Flash (Big, AI Studio) if needed. | LangGraph nodes, Gemini API. |
 | **Hindsight System** | Biomimetic persistent memory. Manages "World Facts" and "Experiences". | LangGraph state, Vector Store, LLM nodes. |
 | **Memory Injector (Hindsight)** | Calls `hindsight.recall()` before agent execution to ground prompts with past insights. | Cascadeflow worker, DB. |
 | **Experience Recorder (Hindsight)**| Calls `hindsight.retain()` post-turn to consolidate interactions into memory. | LangGraph edge/end node. |
@@ -47,9 +47,9 @@
 
 1. **Pre-processing (Memory Injection):** When a user queries, the LangGraph flow triggers a `recall()` to Hindsight, injecting relevant "World Facts" and past "Experiences" into the `AgentState`.
 2. **Execution (Speculative Routing):** The query (enriched with Hindsight context) is passed to `Cascadeflow`. 
-   - **Draft Phase:** Gemma-2-9B-it generates a fast response.
+   - **Draft Phase:** Gemma 4 generates a fast response via AI Studio.
    - **Validation Phase:** Cascadeflow evaluates completeness and correctness.
-   - **Escalation Phase:** If validation fails, Qwen2.5-72B-Instruct processes the query.
+   - **Escalation Phase:** If validation fails, Gemini 2.5 Flash processes the query.
 3. **Tool Invocations:** If the model requires codebase context, it triggers existing `hybrid_search` pgvector tools.
 4. **Post-processing (Memory Consolidation):** The final answer and tool calls are fed to `hindsight.retain()` to build new observations and mental models.
 
@@ -64,8 +64,8 @@ from cascadeflow import CascadeAgent, ModelConfig
 
 agent = CascadeAgent(
     models=[
-        ModelConfig(name="gemma-2-9b-it", provider="vllm"),
-        ModelConfig(name="qwen2.5-72b-instruct", provider="vllm"),
+        ModelConfig(name="gemma-4-26b-a4b-it", provider="google"),
+        ModelConfig(name="gemini-2.5-flash", provider="google"),
     ],
     quality_threshold=0.8
 )
@@ -91,7 +91,7 @@ agent = CascadeAgent(
 
 | Concern | Limitation | Mitigation |
 |---------|------------|------------|
-| **VRAM Partitioning** | MI300X (192GB) partitioned 60/20/20. Escalations require concurrent model memory. | Cascadeflow runs sequentially; ensure VRAM KV cache limits (48K tokens) aren't exceeded by memory injection. |
+| **Runtime Budgeting** | AI Studio (remote) manages inference; local VRAM constraints removed. | Cascadeflow runs sequentially; ensure max context and rate limits are respected. |
 | **Latency Spikes** | Escalation means user waits for both Fast and Big model generation. | Stream the Fast model output immediately. If escalation happens, notify UI via SSE (`{"type": "status", "message": "Thinking deeper..."}`). |
 | **Memory Growth** | Hindsight "Experiences" grow infinitely. | Rely on Hindsight's auto-consolidation (`reflect()`) to compress Experiences into "Mental Models" periodically. |
 

@@ -14,7 +14,7 @@
   - Worker Semaphore (Use an in-memory Semaphore in the worker node. Simple and effective for single-GPU.)
   - Redis Limiter (Use an external Redis-based rate limiter. Better for multi-node but adds complexity.)
 - **Selected:** None required (Remote models via AI Studio)
-- **Note:** User clarified that Qwen model is replaced by Gemini 2.5 Flash + Gemma-2-9B-it via Google AI Studio.
+- **Note:** User clarified that Qwen/local Gemma models are replaced by Gemini 2.5 Flash + Gemma 4 via Google AI Studio.
 
 ## Area: Escalation Scope
 - **Options presented:**

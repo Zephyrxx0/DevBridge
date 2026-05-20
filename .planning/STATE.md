@@ -37,7 +37,7 @@ Status: Executing Phase 29
 
 ### Key Decisions
 
-- Adopted Cascadeflow for speculative execution (Gemma-2-9B to Qwen2.5-72B) to conserve MI300X VRAM.
+- Adopted Cascadeflow for speculative execution (Gemma 4 fast path to Gemini 2.5 Flash) to conserve context spend while preserving quality.
 - Integrated Hindsight for long-term biomimetic memory, backed by the existing Supabase pgvector instance.
 - Offloaded Hindsight's `reflect()` operation to APScheduler to prevent HTTP request blocking.
 - Avoided replacing the standard routing mid-tool-call to preserve tool schemas during escalation.

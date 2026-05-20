@@ -8,7 +8,7 @@
 Mistakes that cause rewrites or major issues.
 
 ### Pitfall 1: Tool Schema Inconsistency Across Cascade
-**What goes wrong:** Gemma (9B) and Qwen (72B) interpret function calling schemas differently. If Cascadeflow escalates mid-tool-call, state gets corrupted.
+**What goes wrong:** Gemma 4 and Gemini 2.5 Flash interpret function calling schemas differently. If Cascadeflow escalates mid-tool-call, state gets corrupted.
 **Why it happens:** Different models have different tool-following capabilities.
 **Consequences:** LangGraph tool execution crashes with `ValidationError`.
 **Prevention:** Let the Fast model draft the *entire* response. If it fails, restart the reasoning loop with the Big model, rather than transferring half-finished tool calls.
@@ -17,9 +17,9 @@ Mistakes that cause rewrites or major issues.
 ### Pitfall 2: Context Window Overflow (48K Limit)
 **What goes wrong:** Hindsight's `recall()` injects too many "World Facts" and "Experiences", leaving no room for the pgvector code chunks.
 **Why it happens:** Hindsight memory grows over time.
-**Consequences:** MI300X vLLM backend throws OOM or truncates the prompt.
+**Consequences:** Remote Gemini requests can truncate or reject oversized prompts; ensure cap enforcement is aligned with AI Studio limits.
 **Prevention:** Implement strict token counting on Hindsight payloads. Prioritize Hindsight "Mental Models" over raw "Experiences".
-**Detection:** Responses cut off mid-sentence or 400 Bad Request from vLLM.
+**Detection:** Responses cut off mid-sentence or HTTP 400/429 from AI Studio.
 
 ## Moderate Pitfalls
 

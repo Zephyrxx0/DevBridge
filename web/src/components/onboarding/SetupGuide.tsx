@@ -31,9 +31,9 @@ export function SetupGuide({ commands }: SetupGuideProps) {
         {commands.map((cmd, i) => (
           <div 
             key={i} 
-            className="group relative flex items-center justify-between rounded-lg border border-[var(--border)] bg-[#0d0d0d] px-4 py-3 font-mono text-sm text-[var(--foreground)]"
+            className="group relative flex items-center justify-between rounded-lg border border-[#1c2e4f] bg-[#050b16] px-4 py-3 font-mono text-sm text-[#dbe9ff]"
           >
-            <span className="mr-8 overflow-x-auto whitespace-pre">{cmd}</span>
+            <span className="mr-8 overflow-x-auto whitespace-pre text-[#dbe9ff]">{cmd}</span>
             <Button
               variant="ghost"
               size="icon"

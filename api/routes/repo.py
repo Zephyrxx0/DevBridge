@@ -3,9 +3,12 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import random
+import time
 import uuid
 from typing import Any
 from urllib import request
+from urllib.error import HTTPError, URLError
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -22,6 +25,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["repo"])
+
+SUPPORTED_EXTENSIONS = {
+    ".py", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".cjs",
+    ".go", ".java", ".rs", ".cpp", ".c", ".h", ".rb", ".php", ".cs", ".swift", ".kt",
+    ".md", ".yaml", ".yml", ".toml", ".json", ".sql", ".sh", ".html", ".css",
+}
+MAX_FILE_SIZE_BYTES = 500_000
+SKIP_PATH_MARKERS = (
+    "node_modules/", "dist/", ".next/", "build/", "__pycache__/", ".git/", "vendor/", "coverage/",
+    ".min.", "bundle.", "-lock.",
+)
 
 
 def _request_user_id(request: Request | None) -> str | None:
@@ -99,13 +113,86 @@ def _repo_from_github_url(url: str | None) -> str | None:
 
 async def _github_get_json(url: str, token: str | None = None) -> Any:
     def _request() -> Any:
-        req = request.Request(url)
-        req.add_header("Accept", "application/vnd.github+json")
-        if token:
-            req.add_header("Authorization", f"Bearer {token}")
-        req.add_header("X-GitHub-Api-Version", "2022-11-28")
-        with request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+        max_attempts = 5
+        base_sleep = 1.0
+        for attempt in range(1, max_attempts + 1):
+            req = request.Request(url)
+            req.add_header("Accept", "application/vnd.github+json")
+            if token:
+                req.add_header("Authorization", f"Bearer {token}")
+            req.add_header("X-GitHub-Api-Version", "2022-11-28")
+
+            try:
+                with request.urlopen(req, timeout=30) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except HTTPError as exc:
+                status = getattr(exc, "code", None)
+                headers = getattr(exc, "headers", None)
+                remaining = headers.get("X-RateLimit-Remaining") if headers else None
+                reset_raw = headers.get("X-RateLimit-Reset") if headers else None
+                retry_after_raw = headers.get("Retry-After") if headers else None
+
+                if status == 403 and remaining == "0":
+                    wait_seconds = 0.0
+                    if retry_after_raw:
+                        try:
+                            wait_seconds = float(retry_after_raw)
+                        except ValueError:
+                            wait_seconds = 0.0
+                    if wait_seconds <= 0 and reset_raw:
+                        try:
+                            reset_epoch = float(reset_raw)
+                            wait_seconds = max(0.0, reset_epoch - time.time())
+                        except ValueError:
+                            wait_seconds = 0.0
+                    if wait_seconds <= 0:
+                        wait_seconds = base_sleep * (2 ** (attempt - 1))
+
+                    if attempt == max_attempts:
+                        raise
+
+                    sleep_for = min(wait_seconds + 1.0, 60.0)
+                    sleep_for = min(sleep_for * random.uniform(1.0, 1.25), 60.0)
+                    logger.warning(
+                        "GitHub rate limit hit for %s; sleeping %.1fs before retry (%s/%s)",
+                        url,
+                        sleep_for,
+                        attempt,
+                        max_attempts,
+                    )
+                    time.sleep(sleep_for)
+                    continue
+
+                if status in {429, 500, 502, 503, 504} and attempt < max_attempts:
+                    sleep_for = min(base_sleep * (2 ** (attempt - 1)), 20.0)
+                    sleep_for = min(sleep_for * random.uniform(1.0, 1.25), 20.0)
+                    logger.warning(
+                        "GitHub transient HTTP %s for %s; retry in %.1fs (%s/%s)",
+                        status,
+                        url,
+                        sleep_for,
+                        attempt,
+                        max_attempts,
+                    )
+                    time.sleep(sleep_for)
+                    continue
+
+                raise
+            except URLError:
+                if attempt == max_attempts:
+                    raise
+                sleep_for = min(base_sleep * (2 ** (attempt - 1)), 20.0)
+                sleep_for = min(sleep_for * random.uniform(1.0, 1.25), 20.0)
+                logger.warning(
+                    "GitHub network error for %s; retry in %.1fs (%s/%s)",
+                    url,
+                    sleep_for,
+                    attempt,
+                    max_attempts,
+                )
+                time.sleep(sleep_for)
+
+        raise RuntimeError("GitHub request retries exhausted")
 
     return await asyncio.to_thread(_request)
 
@@ -749,14 +836,23 @@ async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str, user
                 return
 
         tree_nodes = tree_payload.get("tree", []) if isinstance(tree_payload, dict) else []
-        code_extensions = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".py", ".go", ".rs", ".java", ".css", ".html", ".json", ".md", ".sql", ".sh", ".yaml", ".yml", ".toml")
-        blob_files = [
-            n.get("path")
-            for n in tree_nodes
-            if n.get("type") == "blob"
-            and isinstance(n.get("path"), str)
-            and any(n["path"].endswith(ext) for ext in code_extensions)
-        ]
+        blob_files = []
+        for node in tree_nodes:
+            if node.get("type") != "blob":
+                continue
+            file_path = node.get("path")
+            blob_sha = node.get("sha")
+            size = int(node.get("size") or 0)
+            if not isinstance(file_path, str) or not isinstance(blob_sha, str):
+                continue
+            file_path_lower = file_path.lower()
+            if any(marker in file_path_lower for marker in SKIP_PATH_MARKERS):
+                continue
+            if not any(file_path_lower.endswith(ext) for ext in SUPPORTED_EXTENSIONS):
+                continue
+            if size >= MAX_FILE_SIZE_BYTES:
+                continue
+            blob_files.append({"path": file_path, "sha": blob_sha})
 
         # Cap at 200 files
         blob_files = blob_files[:200]
@@ -793,12 +889,13 @@ async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str, user
         for i in range(0, len(blob_files), BATCH):
             batch = blob_files[i:i + BATCH]
             results = await asyncio.gather(
-                *[_fetch_github_file(repo_slug, fp, token) for fp in batch],
+                *[_fetch_github_file(repo_slug, item["path"], item["sha"], token) for item in batch],
                 return_exceptions=True,
             )
 
             rows_to_insert = []
-            for fp, result in zip(batch, results):
+            for item, result in zip(batch, results):
+                fp = item["path"]
                 if isinstance(result, Exception) or result is None:
                     errors += 1
                     continue
@@ -884,19 +981,17 @@ async def _run_ingestion(engine, job_id: str, repo_id: str, repo_slug: str, user
             pass
 
 
-async def _fetch_github_file(repo_slug: str, file_path: str, token: str | None) -> str | None:
-    """Fetch a single file's content from GitHub Contents API."""
+async def _fetch_github_file(repo_slug: str, file_path: str, blob_sha: str, token: str | None) -> str | None:
+    """Fetch a single file's content from GitHub Blobs API."""
     try:
-        from urllib.parse import quote
-        encoded_path = quote(file_path, safe="/")
-        url = f"https://api.github.com/repos/{repo_slug}/contents/{encoded_path}?ref=HEAD"
+        url = f"https://api.github.com/repos/{repo_slug}/git/blobs/{blob_sha}"
         payload = await _github_get_json(url, token)
         raw = payload.get("content", "") if isinstance(payload, dict) else ""
         if not raw:
             return None
         return base64.b64decode(raw).decode("utf-8", errors="replace")
     except Exception as e:
-        logger.debug(f"Failed to fetch {file_path}: {e}")
+        logger.debug(f"Failed to fetch {file_path} ({blob_sha}): {e}")
         return None
 
 

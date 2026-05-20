@@ -5,14 +5,14 @@
 
 ## Executive Summary
 
-DevBridge AMD Edition aims to enhance the multi-agent coding experience by replacing static model routing with Cascadeflow and naive agent memory with Hindsight. Experts build this by employing speculative execution where a smaller, faster model (Gemma-2-9B-it) drafts responses and escalates to a larger model (Qwen2.5-72B-Instruct) only when validation fails. This approach preserves valuable MI300X VRAM limits and accelerates reasoning loops. Concurrently, long-term persistent memory is established via Hindsight, separating raw codebase knowledge (kept in pgvector) from agent mental models and user interaction experiences.
+DevBridge AMD Edition enhances the multi-agent coding experience by replacing static model routing with Cascadeflow and naive agent memory with Hindsight. It now uses speculative execution where a smaller, faster model (Gemma 4 via AI Studio) drafts responses and escalates to a larger model (Gemini 2.5 Flash via AI Studio) only when validation fails. This approach preserves budget and accelerates reasoning loops while keeping everything remote-first. Concurrently, long-term persistent memory is established via Hindsight, separating raw codebase knowledge (kept in pgvector) from agent mental models and user interaction experiences.
 
 The recommended integration uses Cascadeflow within the existing LangGraph orchestration layer. The workflow starts by invoking Hindsight's `recall()` for contextual priming, executes speculative routing, and ends with an asynchronous `retain()` call. Key risks involve context window overflows due to unbounded memory growth and tool schema inconsistencies during model escalation. These can be mitigated by strict token limits, regular Hindsight auto-consolidation, and escalating entire conversation turns rather than switching models mid-tool-call.
 
 ## Key Findings
 
 ### Stack & Technologies
-- **Cascadeflow:** A dynamic evaluation engine that replaces static routing, routing drafts from a fast model (Gemma-2-9B) to a big model (Qwen2.5-72B) only when necessary.
+- **Cascadeflow:** A dynamic evaluation engine that replaces static routing, routing drafts from a fast model (Gemma 4) to a big model (Gemini 2.5 Flash) only when necessary.
 - **Hindsight:** Upgrades LangGraph's naive `MemorySaver` to a structured, biomimetic persistent knowledge graph tracking "World Facts" and "Experiences".
 
 ### Feature Landscape
@@ -40,7 +40,7 @@ The recommended integration uses Cascadeflow within the existing LangGraph orche
 
 2. **Phase 2: Speculative Router Setup**
    - **Rationale:** Core AI engine optimization for MI300X VRAM.
-   - **Deliverables:** Replace static router with Cascadeflow. Configure Gemma-2-9B to Qwen2.5-72B pipeline.
+   - **Deliverables:** Replace static router with Cascadeflow. Configure Gemma 4 to Gemini 2.5 Flash pipeline via AI Studio.
    - **Features:** Speculative Execution.
    - **Pitfalls to Avoid:** Tool schema inconsistency during escalation, and validation latency nullifying the Fast model's speed.
 

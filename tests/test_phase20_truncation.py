@@ -6,13 +6,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import api.utils.tokenizer as tokenizer_mod
 
 
-class FakeTokenizer:
-    def encode(self, text, add_special_tokens=False):
-        return text.split()
-
-
 def _patch_tokenizer(monkeypatch):
-    monkeypatch.setattr(tokenizer_mod, "_get_tokenizer", lambda model_type: FakeTokenizer())
+    monkeypatch.setattr(tokenizer_mod, "_count_tokens", lambda text, model_type: len((text or "").split()))
 
 
 def test_enforce_cap_truncates_oldest_and_preserves_recent(monkeypatch):
@@ -29,7 +24,7 @@ def test_enforce_cap_truncates_oldest_and_preserves_recent(monkeypatch):
         messages=messages,
         codebase_chunk=codebase_chunk,
         max_tokens=12,
-        model_type="qwen",
+        model_type="gemini",
     )
 
     assert warning is True

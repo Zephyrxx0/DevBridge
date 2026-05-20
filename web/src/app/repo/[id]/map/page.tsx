@@ -462,8 +462,14 @@ export default function MapPage() {
     }
     const chargeForce = graphRef.current.d3Force("charge");
     if (chargeForce?.strength) chargeForce.strength(-680);
-    graphRef.current.d3VelocityDecay(0.4);
-    graphRef.current.d3ReheatSimulation();
+    if (typeof graphRef.current.d3VelocityDecay === "function") {
+      graphRef.current.d3VelocityDecay(0.4);
+    } else if (typeof graphRef.current.d3AlphaDecay === "function") {
+      graphRef.current.d3AlphaDecay(0.03);
+    }
+    if (typeof graphRef.current.d3ReheatSimulation === "function") {
+      graphRef.current.d3ReheatSimulation();
+    }
   }, [graphData.nodes.length, graphData.links.length, selectedNodeId]);
 
   const selectedNode = useMemo(

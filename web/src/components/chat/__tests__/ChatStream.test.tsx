@@ -66,7 +66,7 @@ describe("ChatStream escalation indicator", () => {
   it("renders escalation indicator when metadata is present", () => {
     render(
       <ChatStream
-        messages={[{ ...baseMessage, model_used: "qwen2.5-72b", cascaded: true }]}
+        messages={[{ ...baseMessage, model_used: "gemini-2.5-flash", cascaded: true }]}
         isLoading={false}
         repoId="repo-1"
         onOpenArtifact={jest.fn()}

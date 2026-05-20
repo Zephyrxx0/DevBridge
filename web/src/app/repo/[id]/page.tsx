@@ -768,7 +768,7 @@ export default function RepoWorkspacePage() {
   };
 
   return (
-    <div className="h-dvh w-full overflow-hidden p-1 sm:p-2">
+    <div className="h-dvh w-full overflow-hidden p-0">
       <ChatLayout 
         sidebar={
           <HistorySidebar 
@@ -805,7 +805,7 @@ export default function RepoWorkspacePage() {
         }
         rightPanel={
           selectedSource || selectedFilePath ? (
-            <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-1)]">
+            <>
               <div className="border-b border-[var(--border)] px-[var(--space-lg)] py-[var(--space-md)]">
                 <button
                   type="button"
@@ -853,7 +853,7 @@ export default function RepoWorkspacePage() {
                   <Button type="button" variant="outline" size="sm" onClick={addCurrentSelectionToChat}>Add selection</Button>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             <FileExplorer 
               fileTree={fileTree}

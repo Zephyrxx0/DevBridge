@@ -25,7 +25,7 @@ async def test_gemma_path(monkeypatch):
             self.calls += 1
             return CascadeResult(
                 content='{"content":"quick answer","is_complete":true,"confidence":0.95}',
-                model_used="gemma-2-9b-it",
+                model_used="gemma-4-26b-a4b-it",
                 cascaded=False,
             )
 
@@ -38,7 +38,7 @@ async def test_gemma_path(monkeypatch):
     assert result["messages"][0].content
     assert "model_used" in result
     assert "cascaded" in result
-    assert result.get("model_used") == "gemma-2-9b-it"
+    assert result.get("model_used") == "gemma-4-26b-a4b-it"
     assert result.get("cascaded") is False
     assert mock_agent.calls == 1
 
@@ -80,7 +80,7 @@ async def test_escalation_path(monkeypatch):
 
             return CascadeResult(
                 content='{"content":"quick answer","is_complete":true,"confidence":0.95}',
-                model_used="gemma-2-9b-it",
+                model_used="gemma-4-26b-a4b-it",
                 cascaded=False,
             )
 

@@ -6,7 +6,7 @@
 
 ## Summary
 
-Phase 30 implements speculative routing using **Cascadeflow** to optimize GPU/VRAM utilization and response latency. The system will leverage a "Fast" model (Gemma-2-9B-it) for initial drafts and heauristically/structurally validate outputs using Pydantic. If validation fails, the turn escalates to the "Big" model (Gemini 2.5 Flash).
+Phase 30 implements speculative routing using **Cascadeflow** to optimize response latency. The system leverages a "Fast" model (Gemma 4 via AI Studio) for initial drafts and heuristically/structurally validates outputs using Pydantic. If validation fails, the turn escalates to the "Big" model (Gemini 2.5 Flash).
 
 Research confirms that Cascadeflow 1.1.0 supports Google Gemini via the `google-adk` or `openai` provider configurations (using `GOOGLE_API_KEY`). Integration involves replacing the current `intent_classifier` node in `api/agents/graph.py` with a Cascadeflow-managed execution loop that bubbles up escalation states via SSE.
 
@@ -16,7 +16,7 @@ Research confirms that Cascadeflow 1.1.0 supports Google Gemini via the `google-
 ## User Constraints (from CONTEXT.md)
 
 ### Locked Decisions
-- **Schema Validation:** Use Pydantic/JSON schema to detect malformed or incomplete outputs from the "Fast" model (Gemma-2-9B-it) before deciding to escalate to "Big" (Gemini 2.5 Flash).
+- **Schema Validation:** Use Pydantic/JSON schema to detect malformed or incomplete outputs from the "Fast" model (Gemma 4) before deciding to escalate to "Big" (Gemini 2.5 Flash).
 - **Remote Model (AI Studio):** Strict local concurrency limits (Semaphores/Redis) are not required as inference is offloaded to Google AI Studio. Standard rate-limit handling applies.
 - **Per-Turn Escalation:** Only escalate the specific turn that failed validation. This minimizes compute usage while allowing subsequent turns to attempt speculative execution again.
 
@@ -92,7 +92,7 @@ class SchemaValidator(CustomValidator):
         return CustomValidationResult(passed=True, score=1.0)
 
 agent = CascadeAgent(models=[
-    ModelConfig(name="gemma-2-9b-it", provider="google", cost=0.0),
+    ModelConfig(name="gemma-4-26b-a4b-it", provider="google", cost=0.0),
     ModelConfig(name="gemini-2.5-flash", provider="google", cost=0.0001)
 ], validators=[SchemaValidator()])
 ```

@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
 
 interface ChatLayoutProps {
   sidebar: React.ReactNode;
@@ -13,7 +12,7 @@ interface ChatLayoutProps {
 export function ChatLayout({ sidebar, chatArea, rightPanel }: ChatLayoutProps) {
   return (
     <SidebarProvider defaultCollapsed={false}>
-      <div className="flex h-[calc(100vh-1rem)] min-h-0 w-full flex-row overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-1)]">
+      <div className="flex h-full min-h-0 w-full flex-row overflow-hidden bg-[var(--surface-1)]">
         {/* Left Sidebar (History) */}
         {sidebar}
         

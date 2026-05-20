@@ -1,11 +1,18 @@
 "use client";
 
-export function AgentationMount() {
-  const enabled = process.env.NEXT_PUBLIC_AGENTATION_ENABLED === "true";
+import { useEffect, useState } from "react";
+import { Agentation } from "agentation";
 
-  if (!enabled || process.env.NODE_ENV !== "development") {
+export function AgentationMount() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || process.env.NODE_ENV !== "development") {
     return null;
   }
 
-  return null;
+  return <Agentation />;
 }

@@ -135,25 +135,26 @@ export function FileExplorer({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_90%,transparent)] p-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <GitBranch className="h-3.5 w-3.5 text-[var(--foreground-subtle)]" />
-          <p className="text-[var(--text-h3)] font-semibold text-[var(--foreground)]">Files</p>
-        </div>
+    <div className="flex h-full min-h-0 flex-col p-0">
+      <div className="relative">
+        <GitBranch className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-subtle)]" />
         <div className="relative">
           <select
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-            className="appearance-none rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2.5 py-1 pr-6 text-[10px] text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)] cursor-pointer"
+            className="h-9 w-full cursor-pointer appearance-none rounded-md border border-[var(--border)] bg-[var(--surface-2)] py-1 pl-8 pr-8 text-xs font-medium text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
           >
             <option value="">{defaultBranchName ? `default (${defaultBranchName})` : "default"}</option>
             {branches.map((b) => (
               <option key={b.name} value={b.name}>{b.name}</option>
             ))}
           </select>
-          <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--foreground-subtle)]" />
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-subtle)]" />
         </div>
+      </div>
+
+      <div className="mb-2 mt-3 flex items-center justify-between px-1">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--foreground-subtle)]">Files</p>
       </div>
 
       {branchLoadError ? (
@@ -167,7 +168,7 @@ export function FileExplorer({
         </p>
       ) : null}
 
-      <div className="mt-3 min-h-0 flex-1 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-2">
+      <div className="mt-2 min-h-0 flex-1 overflow-auto rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-1.5">
         {loadingFiles ? (
           <div className="space-y-2 px-1 py-1">
             <Skeleton className="h-3 w-28" />

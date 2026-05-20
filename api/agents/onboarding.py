@@ -100,7 +100,7 @@ async def generate_onboarding_plan(
     system_prompt = _build_system_prompt(focus)
     user_prompt = _build_user_prompt(focus, code_context)
 
-    # Get Big Model (Qwen2.5-72B)
+    # Get Big Model (Gemini 2.5 Flash via AI Studio)
     llm = get_model(is_fast=False)
 
     messages = [

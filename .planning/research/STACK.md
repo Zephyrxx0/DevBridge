@@ -15,7 +15,7 @@
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
 | LangGraph | Existing | Orchestration | Wrapping Hindsight and Cascadeflow into the existing multi-agent DAG. |
-| vLLM / Ollama | Existing | Inference backend | Cascadeflow integrates seamlessly with OpenAI-compatible endpoints served by vLLM. |
+| Google AI Studio (Gemini) | Active | Inference backend | Remote Gemini/Gemma models accessed via GenAI SDK. |
 
 ## Alternatives Considered
 

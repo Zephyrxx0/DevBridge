@@ -1,96 +1,92 @@
 # Codebase Concerns
 
-**Analysis Date:** 2024-05-18
+**Analysis Date:** 2026-05-20
 
 ## Tech Debt
 
-**Legacy Orchestrator:**
-- Issue: `api/agents/orchestrator.py` is marked as a "Legacy orchestrator module" in the docstring. It uses a `MockLLM` by default and contains hardcoded logic that has been superseded by the `api/agents/graph.py` implementation.
-- Files: `api/agents/orchestrator.py`
-- Impact: Maintenance burden and potential confusion for developers. Tests still reference this module, creating a dependency on legacy code.
-- Fix approach: Migrate all tests and tools to use the `api.agents.graph` system and remove the legacy module.
+**Model reference drift (target vs legacy labels):**
+- Status: Resolved. Runtime + tests now aligned to AI Studio names (`gemini-2.5-flash`, `gemma-4-26b-a4b-it`).
+- Follow-up: Keep a single source of truth for model IDs to prevent regressions.
 
-**Hardcoded LLM Infrastructure:**
-- Issue: LLM model ports, base URLs, and model names are partially hardcoded in the codebase instead of being purely configuration-driven.
-- Files: `api/agents/utils/llm.py`, `api/core/config.py`
-- Impact: Difficult to deploy in environments where ports 8000/8001 are occupied or where model names differ. Hardcoding `localhost` prevents easy containerization/scaling of the model server.
-- Fix approach: Move all model server settings (base URL, ports, specific model names) into `.env` and `api/core/config.py` with no local-only defaults.
+**Legacy routing path still present beside cascade graph:**
+- Issue: Cascade path is active in `api/agents/graph.py`, but legacy router/worker modules remain and expose incompatible control flow.
+- Files: `api/agents/graph.py`, `api/agents/nodes/router.py`, `api/agents/nodes/fast.py`, `api/agents/nodes/big.py`, `api/agents/utils/fallback.py`, `api/agents/orchestrator.py`
+- Impact: Mixed routing behavior risk during refactors/tests; stale imports can reintroduce deprecated path by accident.
+- Fix approach: Remove or hard-deprecate legacy nodes; keep single graph entry (`cascade`) and delete dead `goto` targets.
 
-**Simplified Intent Classification:**
-- Issue: The router uses a very basic string-based classification ("FAST" or "DEEP") which may not be robust enough for complex queries.
-- Files: `api/agents/nodes/router.py`
-- Impact: Queries might be routed to the wrong worker, leading to either slow responses for simple queries or poor analysis for complex ones.
-- Fix approach: Implement a more robust classifier using structured output (Pydantic) or a few-shot prompting strategy.
+## Known Bugs
+
+**Fallback command targets non-existent node in current graph:**
+- Symptoms: If `fallback_to_fast_worker()` command path is executed, command points to `fast_worker`, but compiled graph only contains `recall`, `cascade`, `retain`.
+- Files: `api/agents/utils/fallback.py`, `api/agents/graph.py`
+- Trigger: Any runtime path invoking `fallback_to_fast_worker()` with current graph wiring.
+- Workaround: Avoid command-goto fallback in current graph; perform fallback inside `cascade_node`/model adapter and return normal state update.
 
 ## Security Considerations
 
-**Header-based User Context:**
-- Risk: The API trusts the `X-User-Id` header if an `INTERNAL_AUTH_TOKEN` is present and the client IP is in a trusted list.
-- Files: `api/main.py`
-- Current mitigation: Basic check of `INTERNAL_AUTH_TOKEN` and `TRUSTED_PROXY_IPS`.
-- Recommendations: Implement a more robust JWT-based authentication for user identity or ensure strict network-level isolation (e.g., VPC) if relying on header injection.
-
-**Hardcoded Local API Keys:**
-- Risk: Using `api_key="local-dev"` in production-like configurations.
-- Files: `api/agents/utils/llm.py`
-- Current mitigation: None.
-- Recommendations: Ensure all API keys are loaded from environment variables and never have "dev" defaults in production mode.
+**Model metadata is client-visible and trust boundary is weakly typed:**
+- Risk: `model_used` is emitted to clients via SSE from nested event payload scans; unexpected provider payload shape could leak confusing or spoofed metadata labels.
+- Files: `api/main.py`, `api/tests/test_phase32_sse.py`, `web/src/app/repo/[id]/page.tsx`
+- Current mitigation: Allowlist extraction in `_extract_metadata` limits fields to `fallback`, `model_used`, `cascaded`.
+- Recommendations: Enforce enum/regex validation for `model_used` before emit; add contract tests for approved model IDs only.
 
 ## Performance Bottlenecks
 
-**Sequential Issue Sync:**
-- Problem: The GitHub issue sync process iterates through all repositories and all issues sequentially, performing embeddings one by one.
-- Files: `api/main.py` (sync_issues)
-- Cause: Lack of batching in embedding generation and sequential processing.
-- Improvement path: Implement batch embedding calls and use `asyncio.gather` for repository-level parallelism.
-
-**Blocking Embedding Calls:**
-- Problem: Embedding generation is a CPU/network intensive task called synchronously within an async environment.
-- Files: `api/db/vector_store.py`
-- Cause: `self._vectorstore.embedding_service.embed_query` is synchronous.
-- Improvement path: Use a truly async embedding client or move the calls to a dedicated worker pool with `asyncio.to_thread` (already partially done, but should be consistent).
-
-**Large Frontend Component:**
-- Problem: The main repository workspace page is a single large component (~800 lines) handling chat, file tree, file viewing, and branch management.
-- Files: `web/src/app/repo/[id]/page.tsx`
-- Cause: Consolidation of too many responsibilities in one component.
-- Improvement path: Decompose into smaller, focused components (e.g., `ChatContainer`, `FileTreeSidebar`, `SourceViewer`).
+**Duplicate model invocation path in streaming fallback:**
+- Problem: `/chat/stream` consumes `graph.astream_events`; when no chunks, endpoint invokes `graph.ainvoke` again.
+- Files: `api/main.py`, `api/routes/chats.py`
+- Cause: Streaming provider modes with no incremental chunks trigger second full graph execution.
+- Improvement path: Persist final state from first stream pass or use terminal event payload to avoid second invocation.
 
 ## Fragile Areas
 
-**Database Normalization Logic:**
-- Files: `api/db/session.py`
-- Why fragile: Complex regex and string manipulation for connection strings (`_normalize_connection_string`, `_conninfo_to_url`) are prone to edge-case failures.
-- Safe modification: Add exhaustive unit tests for various connection string formats (Supabase, local PG, PgBouncer).
-- Test coverage: Partially covered in `tests/test_db_session_normalization.py`.
-
-**Vector Store Initialization:**
-- Files: `api/db/vector_store.py`
-- Why fragile: Uses `loop.create_task` for table creation during initialization, which could allow the app to start accepting requests before the schema is ready.
-- Safe modification: Ensure initialization is fully awaited before the API starts accepting traffic.
-- Test coverage: Gaps in startup race condition testing.
+**Frontend/backend route indirection split across rewrites and direct fetch strings:**
+- Files: `web/next.config.ts`, `web/src/app/repo/[id]/page.tsx`, `web/src/app/repo/[id]/files/page.tsx`, `web/src/app/dashboard/memory/page.tsx`, `web/src/components/RepoConfig.tsx`
+- Why fragile: Many hardcoded `/api/backend` callsites depend on rewrite behavior and env-specific `BACKEND_URL`; drift breaks subsets of pages.
+- Safe modification: Centralize API base path helper in `web/src/lib` and route all fetch calls through it.
+- Test coverage: E2E mocks cover selected routes (`web/tests/escalation-ux.spec.ts`, `web/tests/memory-dashboard.spec.ts`) but not full route matrix.
 
 ## Scaling Limits
 
-**Postgres Cache Backend:**
-- Current capacity: Limited by DB storage and single-table performance.
-- Limit: Large volumes of chat history and cached responses will eventually slow down the `cache_entries` table.
-- Scaling path: Implement a TTL-based cleanup job (already exists in `api/jobs/cleanup.py`) and consider Redis for high-throughput caching if DB load becomes a bottleneck.
+**Schema evolution currently migration-script heavy with no runtime version gate:**
+- Current capacity: SQL files present through `sql/migrations/0032_create_hindsight_schema.sql`.
+- Limit: App startup (`api/main.py` lifespan) does not verify required migration level before serving endpoints.
+- Scaling path: Add startup schema-version check and fail-fast for missing required migrations tied to chat/model metadata contracts.
+
+## Dependencies at Risk
+
+**cascadeflow 1.1.0 compatibility shim locked in production path:**
+- Risk: `ValidatorCascadeAgent` exists to patch missing validator hooks in `cascadeflow==1.1.0`.
+- Impact: Upgrade or behavior change in cascadeflow can break escalation guarantees or double-run logic.
+- Migration plan: Track cascadeflow API upgrades; replace shim when native validator injection supported.
+- Files: `api/agents/nodes/cascade.py`, `api/requirements.txt`
+
+## Missing Critical Features
+
+**Migration artifact for model metadata persistence in chat history:**
+- Problem: Runtime/UI handle `model_used` + `cascaded`, but `chat_messages` schema migration has no columns for model metadata.
+- Blocks: Durable audit/history of actual model routing per assistant turn; postmortem and analytics on escalation quality.
+- Files: `sql/migrations/0022_add_chat_sessions_tables.sql`, `api/routes/chats.py`, `web/src/app/repo/[id]/page.tsx`
+
+**Target-model configuration policy not codified:**
+- Problem: No single declarative mapping for “fast” and “big” model targets for AI Studio rollout.
+- Blocks: Safe migration to `gemini-2.5-flash` + Gemma4 across runtime/tests.
+- Files: `api/agents/utils/llm.py`, `api/core/config.py`, `api/tests/test_phase32_sse.py`, `web/tests/escalation-ux.spec.ts`
 
 ## Test Coverage Gaps
 
-**Streaming Response Errors:**
-- What's not tested: Failure modes of SSE (Server-Sent Events) when the LLM stream is interrupted.
-- Files: `api/main.py` (`chat_stream`), `web/src/app/repo/[id]/page.tsx`
-- Risk: UI might hang or show incomplete states if the stream breaks.
-- Priority: Medium
+**Routing compatibility tests focus on metadata, not graph/node integrity:**
+- What's not tested: Assertion that all command `goto` targets exist in compiled graph.
+- Files: `api/agents/graph.py`, `api/agents/utils/fallback.py`, `api/tests/test_phase32_sse.py`, `tests/test_phase30_routing.py`
+- Risk: Dead-path command failures surface only at runtime.
+- Priority: High
 
-**Branch Indexing Race Conditions:**
-- What's not tested: Rapid switching between branches while indexing is in progress.
-- Files: `web/src/app/repo/[id]/page.tsx`
-- Risk: File tree might show inconsistent states or data from the wrong branch.
+**Model migration tests not aligned to target IDs:**
+- What's not tested: End-to-end assertion with canonical target pair (Gemini-2.5-flash + Gemma4 AI Studio IDs).
+- Files: `api/tests/test_phase32_sse.py`, `web/tests/escalation-ux.spec.ts`, `web/src/components/chat/__tests__/ChatStream.test.tsx`
+- Risk: Stale fixture names hide rollout regressions.
 - Priority: High
 
 ---
 
-*Concerns audit: 2024-05-18*
+*Concerns audit: 2026-05-20*

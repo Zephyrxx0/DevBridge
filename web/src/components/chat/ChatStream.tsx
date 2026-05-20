@@ -73,11 +73,32 @@ export function ChatStream({
     });
   };
 
+  const renderUserMessage = (content: string) => {
+    const mentionRegex = /(@[\w./-]+)/g;
+    const parts = content.split(mentionRegex);
+    return (
+      <p className="whitespace-pre-wrap break-words">
+        {parts.map((part, idx) => {
+          if (!part) return null;
+          const isMention = mentionRegex.test(part);
+          mentionRegex.lastIndex = 0;
+          return isMention ? (
+            <span key={`${part}-${idx}`} className="rounded px-1 py-0.5 text-[var(--icon-contrast)] bg-[var(--brand)]/80">
+              {part}
+            </span>
+          ) : (
+            <span key={`${part}-${idx}`}>{part}</span>
+          );
+        })}
+      </p>
+    );
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1 py-1">
       <Conversation>
         <ConversationContent className="p-0">
-          <div className="space-y-[var(--space-md)]">
+          <div className="h-full space-y-[var(--space-md)]">
             {messages.length === 0 && !isLoading ? (
               isInitializing ? (
                 <div className="flex h-full flex-col gap-4 p-3">
@@ -147,7 +168,7 @@ export function ChatStream({
                       </Avatar>
                     ) : null}
 
-                    <div className={cn("min-w-0", isUser ? "ml-auto max-w-[92%]" : "flex-1")}>
+                    <div className={cn("min-w-0", isUser ? "ml-auto max-w-[60%]" : "flex-1")}>
                       {!isUser && (typeof message.cascaded !== "undefined" || typeof message.model_used !== "undefined" || message.fallback) ? (
                         <EscalationIndicator
                           modelUsed={message.model_used}
@@ -158,13 +179,13 @@ export function ChatStream({
                       <MessageContent className={cn(
                         "px-0 py-0 text-[var(--text-body)] leading-[1.62] max-w-full",
                         isUser
-                          ? "rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-4 py-3 text-[var(--foreground)]"
+                          ? "rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-4 py-3 text-[var(--foreground)] my-1"
                           : "border-0 bg-transparent text-[var(--foreground)]"
                       )}>
                         {!isUser ? (
                           <MessageResponse>{message.content}</MessageResponse>
                         ) : (
-                          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                          renderUserMessage(message.content)
                         )}
                       </MessageContent>
 

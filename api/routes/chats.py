@@ -226,7 +226,7 @@ class ChatSessionUpdate(BaseModel):
 class InferenceContextRequest(BaseModel):
     messages: list[dict]
     codebase_chunk: str = ""
-    model_type: str = "qwen"
+    model_type: str = "gemini"
 
 
 @router.patch("/repo/{repo_id}/chats/{session_id}")

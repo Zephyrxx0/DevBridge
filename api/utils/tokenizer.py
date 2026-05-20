@@ -43,7 +43,7 @@ def enforce_cap(
     messages: list,
     codebase_chunk: str,
     max_tokens: int = 48000,
-    model_type: str = "qwen",
+    model_type: str = "gemini",
 ) -> tuple[list, bool]:
     """Drop oldest chat history until token budget fits.
 
