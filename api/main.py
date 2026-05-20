@@ -434,6 +434,7 @@ async def chat(request: Request, payload: ChatRequest):
         input_data = {"messages": [HumanMessage(content=payload.message)]}
         result = await graph.ainvoke(input_data, config=config)
         response = str(result["messages"][-1].content)
+        hindsight_memory = result.get("hindsight_memory") if isinstance(result, dict) else None
         try:
             await _persist_chat_turn(payload.repo_id, payload.thread_id, payload.message, response)
         except Exception:
@@ -441,7 +442,8 @@ async def chat(request: Request, payload: ChatRequest):
 
         return {
             "response": response,
-            "thread_id": payload.thread_id
+            "thread_id": payload.thread_id,
+            "hindsight_memory": hindsight_memory,
         }
     except HTTPException:
         raise
