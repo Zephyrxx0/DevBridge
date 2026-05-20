@@ -9,6 +9,7 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 
 from api import main
+from api.db import hindsight as hindsight_module
 
 
 def _chat_payload() -> dict:
@@ -75,3 +76,71 @@ def test_user_isolation(monkeypatch) -> None:
 
     assert chat_user_ids == ["user-a", "user-b"]
     assert stream_user_ids == ["user-a", "user-b"]
+
+
+def test_hindsight_initialize_sets_schema_and_returns_true(monkeypatch) -> None:
+    manager = hindsight_module.HindsightManager()
+    constructed_profiles: list[str] = []
+
+    class FakeHindsightEmbedded:
+        def __init__(self, profile: str) -> None:
+            constructed_profiles.append(profile)
+
+    monkeypatch.setattr(hindsight_module, "HindsightEmbedded", FakeHindsightEmbedded)
+    monkeypatch.setattr(
+        hindsight_module,
+        "settings",
+        SimpleNamespace(
+            sync_supabase_connection_string="postgresql://example",
+            report_summary_model="gemini-2.5-flash",
+            gemini_api_key="test-key",
+        ),
+    )
+    monkeypatch.delenv("HINDSIGHT_API_DATABASE_SCHEMA", raising=False)
+
+    assert manager.initialize() is True
+    assert constructed_profiles == ["devbridge"]
+    assert hindsight_module.os.environ["HINDSIGHT_API_DATABASE_SCHEMA"] == "hindsight"
+
+
+def test_hindsight_initialize_returns_false_when_constructor_raises(monkeypatch) -> None:
+    manager = hindsight_module.HindsightManager()
+
+    class BoomEmbedded:
+        def __init__(self, profile: str) -> None:
+            _ = profile
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(hindsight_module, "HindsightEmbedded", BoomEmbedded)
+    monkeypatch.setattr(
+        hindsight_module,
+        "settings",
+        SimpleNamespace(
+            sync_supabase_connection_string="postgresql://example",
+            report_summary_model="gemini-2.5-flash",
+            gemini_api_key="test-key",
+        ),
+    )
+
+    assert manager.initialize() is False
+
+
+def test_hindsight_initialize_returns_false_when_db_url_missing(monkeypatch) -> None:
+    manager = hindsight_module.HindsightManager()
+
+    class FakeHindsightEmbedded:
+        def __init__(self, profile: str) -> None:
+            _ = profile
+
+    monkeypatch.setattr(hindsight_module, "HindsightEmbedded", FakeHindsightEmbedded)
+    monkeypatch.setattr(
+        hindsight_module,
+        "settings",
+        SimpleNamespace(
+            sync_supabase_connection_string="",
+            report_summary_model="gemini-2.5-flash",
+            gemini_api_key="test-key",
+        ),
+    )
+
+    assert manager.initialize() is False
