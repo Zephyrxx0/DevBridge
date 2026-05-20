@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from fastapi.testclient import TestClient
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
+import time
 
 from api import main
 from api.db import hindsight as hindsight_module
@@ -144,3 +145,144 @@ def test_hindsight_initialize_returns_false_when_db_url_missing(monkeypatch) -> 
     )
 
     assert manager.initialize() is False
+
+
+def test_recall_hindsight_memory_binding_in_chat_response(monkeypatch) -> None:
+    monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
+    monkeypatch.setenv("TRUSTED_PROXY_IPS", "testclient")
+
+    recall_observations: list[dict] = []
+
+    async def fake_ainvoke(input_data, config):
+        _ = input_data
+        recall_observations.append(
+            {
+                "user_id": config["configurable"]["user_id"],
+                "hindsight_memory": "prior note: user prefers concise replies",
+            }
+        )
+        return {
+            "messages": [SimpleNamespace(content="ok")],
+            "hindsight_memory": "prior note: user prefers concise replies",
+        }
+
+    monkeypatch.setattr(main.graph, "ainvoke", fake_ainvoke)
+
+    FastAPICache.init(InMemoryBackend(), prefix="phase29-test")
+    with TestClient(main.app) as client:
+        headers = {"X-Internal-Auth": "test-token", "X-User-Id": "user-a"}
+        response = client.post("/chat", json=_chat_payload(), headers=headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["response"] == "ok"
+    assert body["hindsight_memory"] == "prior note: user prefers concise replies"
+    assert recall_observations == [
+        {
+            "user_id": "user-a",
+            "hindsight_memory": "prior note: user prefers concise replies",
+        }
+    ]
+
+
+def test_recall_hindsight_memory_user_isolation(monkeypatch) -> None:
+    monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
+    monkeypatch.setenv("TRUSTED_PROXY_IPS", "testclient")
+
+    recalls_by_user = {
+        "user-a": "user-a memory",
+        "user-b": "user-b memory",
+    }
+    seen: list[tuple[str, str]] = []
+
+    async def fake_ainvoke(input_data, config):
+        _ = input_data
+        user_id = config["configurable"]["user_id"]
+        recalled = recalls_by_user[user_id]
+        seen.append((user_id, recalled))
+        return {"messages": [SimpleNamespace(content=f"ok-{user_id}")], "hindsight_memory": recalled}
+
+    monkeypatch.setattr(main.graph, "ainvoke", fake_ainvoke)
+
+    FastAPICache.init(InMemoryBackend(), prefix="phase29-test")
+    with TestClient(main.app) as client:
+        headers_a = {"X-Internal-Auth": "test-token", "X-User-Id": "user-a"}
+        headers_b = {"X-Internal-Auth": "test-token", "X-User-Id": "user-b"}
+
+        response_a = client.post("/chat", json=_chat_payload(), headers=headers_a)
+        response_b = client.post("/chat", json=_chat_payload(), headers=headers_b)
+
+    assert response_a.status_code == 200
+    assert response_b.status_code == 200
+    assert response_a.json()["hindsight_memory"] == "user-a memory"
+    assert response_b.json()["hindsight_memory"] == "user-b memory"
+    assert ("user-a", "user-b memory") not in seen
+    assert ("user-b", "user-a memory") not in seen
+
+
+def test_retain_non_blocking_response_completes_before_reflection(monkeypatch) -> None:
+    monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
+    monkeypatch.setenv("TRUSTED_PROXY_IPS", "testclient")
+
+    events: list[tuple[str, float]] = []
+
+    async def fake_ainvoke(input_data, config):
+        _ = input_data
+        _ = config
+        events.append(("ainvoke_done", time.perf_counter()))
+        return {"messages": [SimpleNamespace(content="ok")], "hindsight_memory": "mem"}
+
+    async def slow_reflect():
+        events.append(("reflect_start", time.perf_counter()))
+        await asyncio.sleep(0.25)
+        events.append(("reflect_done", time.perf_counter()))
+
+    monkeypatch.setattr(main.graph, "ainvoke", fake_ainvoke)
+    monkeypatch.setattr(main.hindsight_db, "reflect", slow_reflect)
+
+    FastAPICache.init(InMemoryBackend(), prefix="phase29-test")
+    with TestClient(main.app) as client:
+        headers = {"X-Internal-Auth": "test-token", "X-User-Id": "user-a"}
+        start = time.perf_counter()
+        response = client.post("/chat", json=_chat_payload(), headers=headers)
+        end = time.perf_counter()
+
+    assert response.status_code == 200
+    assert (end - start) < 0.20
+    assert response.json()["response"] == "ok"
+
+    names = [name for name, _ in events]
+    assert "ainvoke_done" in names
+    assert "reflect_start" in names
+    assert "reflect_done" not in names
+
+
+def test_retain_non_blocking_ordering_response_before_reflect_completion(monkeypatch) -> None:
+    monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
+    monkeypatch.setenv("TRUSTED_PROXY_IPS", "testclient")
+
+    call_log: list[str] = []
+
+    async def fake_ainvoke(input_data, config):
+        _ = input_data
+        _ = config
+        call_log.append("ainvoke_done")
+        return {"messages": [SimpleNamespace(content="ok")], "hindsight_memory": "mem"}
+
+    async def slow_reflect():
+        call_log.append("reflect_start")
+        await asyncio.sleep(0.15)
+        call_log.append("reflect_done")
+
+    monkeypatch.setattr(main.graph, "ainvoke", fake_ainvoke)
+    monkeypatch.setattr(main.hindsight_db, "reflect", slow_reflect)
+
+    FastAPICache.init(InMemoryBackend(), prefix="phase29-test")
+    with TestClient(main.app) as client:
+        headers = {"X-Internal-Auth": "test-token", "X-User-Id": "user-a"}
+        response = client.post("/chat", json=_chat_payload(), headers=headers)
+
+    assert response.status_code == 200
+    assert call_log[0] == "ainvoke_done"
+    assert call_log[1] == "reflect_start"
+    assert "reflect_done" not in call_log
