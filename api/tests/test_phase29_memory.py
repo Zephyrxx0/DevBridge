@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 import time
+import asyncio
 
 from api import main
 from api.db import hindsight as hindsight_module
@@ -239,6 +240,7 @@ def test_retain_non_blocking_response_completes_before_reflection(monkeypatch) -
 
     monkeypatch.setattr(main.graph, "ainvoke", fake_ainvoke)
     monkeypatch.setattr(main.hindsight_db, "reflect", slow_reflect)
+    monkeypatch.setattr(main.settings, "supabase_connection_string", "")
 
     FastAPICache.init(InMemoryBackend(), prefix="phase29-test")
     with TestClient(main.app) as client:
@@ -276,6 +278,7 @@ def test_retain_non_blocking_ordering_response_before_reflect_completion(monkeyp
 
     monkeypatch.setattr(main.graph, "ainvoke", fake_ainvoke)
     monkeypatch.setattr(main.hindsight_db, "reflect", slow_reflect)
+    monkeypatch.setattr(main.settings, "supabase_connection_string", "")
 
     FastAPICache.init(InMemoryBackend(), prefix="phase29-test")
     with TestClient(main.app) as client:
