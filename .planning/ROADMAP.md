@@ -21,6 +21,8 @@
 - [x] 29-02-PLAN.md — Define memory state in AgentState and implement HindsightManager service
 - [x] 29-03-PLAN.md — Integrate recall/retain nodes into LangGraph and schedule async reflection
 - [x] 29-04-PLAN.md — Enforce authentication in chat endpoints and implement isolation tests
+- [x] 29-05-PLAN.md — Gap closure: startup smoke + Hindsight initialization contract tests
+- [x] 29-06-PLAN.md — Gap closure: recall binding + retain non-blocking behavioral tests
 
 ### Phase 30: Speculative Router Setup
 **Goal**: System dynamically routes to the large model only when necessary to preserve GPU VRAM
@@ -67,7 +69,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 29. Memory Storage & Foundations | 4/4 | Complete    | 2026-05-19 |
+| 29. Memory Storage & Foundations | 6/6 | Complete   | 2026-05-20 |
 | 30. Speculative Router Setup | 4/4 | Complete   | 2026-05-19 |
 | 31. Memory Curation Dashboard | 4/4 | Complete   | 2026-05-19 |
 | 32. Streaming Escalation UX | 2/2 | Complete   | 2026-05-19 |

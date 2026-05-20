@@ -85,10 +85,7 @@ export default function RepoWorkspacePage() {
   const [fileContent, setFileContent] = useState<FileContent | null>(null);
   const [loadingFileContent, setLoadingFileContent] = useState(false);
   const [branches, setBranches] = useState<BranchInfo[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem(`repo:${repoId}:selectedBranch`) || "";
-  });
+  const [selectedBranch, setSelectedBranch] = useState<string>("");
   const [branchIndexing, setBranchIndexing] = useState(false);
   const [branchIndexMsg, setBranchIndexMsg] = useState("");
   const [branchLoadError, setBranchLoadError] = useState("");
@@ -102,6 +99,12 @@ export default function RepoWorkspacePage() {
 
   const apiUrl = "/api/backend";
   const branchStorageKey = `repo:${repoId}:selectedBranch`;
+
+  useEffect(() => {
+    if (!repoId) return;
+    const savedBranch = localStorage.getItem(`repo:${repoId}:selectedBranch`) || "";
+    setSelectedBranch(savedBranch);
+  }, [repoId]);
 
   const createSession = useCallback(async () => {
     const response = await fetch(`${apiUrl}/repo/${repoId}/chats`, {

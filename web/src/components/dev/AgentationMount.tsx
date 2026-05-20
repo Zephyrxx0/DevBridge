@@ -1,18 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Agentation } from "agentation";
-
 export function AgentationMount() {
-  const [mounted, setMounted] = useState(false);
+  const enabled = process.env.NEXT_PUBLIC_AGENTATION_ENABLED === "true";
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted || process.env.NODE_ENV !== "development") {
+  if (!enabled || process.env.NODE_ENV !== "development") {
     return null;
   }
 
-  return <Agentation endpoint="http://localhost:4747" />;
+  return null;
 }
