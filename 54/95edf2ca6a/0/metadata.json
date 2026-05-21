@@ -1,0 +1,57 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "5495edf2ca6a",
+  "session_id": "9b1d7472-3f50-46ef-a89d-c3452954ca84",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-21T13:16:09.516022Z",
+  "branch": "bugs/fixes",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/src/app/dashboard/layout.tsx",
+    "web/src/app/dashboard/memory/page.tsx",
+    "web/src/app/dashboard/page.tsx",
+    "web/src/app/globals.css",
+    "web/src/app/layout.tsx",
+    "web/src/app/page.tsx",
+    "web/src/app/pricing/page.tsx",
+    "web/src/app/profile/page.tsx",
+    "web/src/app/signin/page.tsx",
+    "web/src/components/add-repo-modal.tsx",
+    "web/src/components/ai-elements/inline-citation.tsx",
+    "web/src/components/auth-button.tsx",
+    "web/src/components/chat/HistorySidebar.tsx",
+    "web/src/components/codebase-graph.tsx",
+    "web/src/components/dithering-background.tsx",
+    "web/src/components/floating-header.tsx",
+    "web/src/components/hero-dithering-card.tsx",
+    "web/src/components/landing/HeroSection.tsx",
+    "web/src/components/navbar.tsx",
+    "web/src/components/onboarding/OnboardingTrigger.tsx",
+    "web/src/components/sheet.tsx",
+    "web/src/components/ui/dialog.tsx",
+    "web/src/components/ui/intro-disclosure.tsx",
+    "web/src/components/ui/sidebar.tsx"
+  ],
+  "agent": "Claude Code",
+  "model": "auto",
+  "turn_id": "0ee3332632c9",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-21T13:16:09.4788279Z",
+    "agent_lines": 270,
+    "human_added": 406,
+    "human_modified": 4262,
+    "human_removed": 0,
+    "total_committed": 4938,
+    "agent_percentage": 5.467800729040097
+  }
+}

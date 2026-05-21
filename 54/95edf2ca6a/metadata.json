@@ -1,0 +1,48 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "5495edf2ca6a",
+  "strategy": "manual-commit",
+  "branch": "bugs/fixes",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "web/src/app/dashboard/layout.tsx",
+    "web/src/app/dashboard/memory/page.tsx",
+    "web/src/app/dashboard/page.tsx",
+    "web/src/app/globals.css",
+    "web/src/app/layout.tsx",
+    "web/src/app/page.tsx",
+    "web/src/app/pricing/page.tsx",
+    "web/src/app/profile/page.tsx",
+    "web/src/app/signin/page.tsx",
+    "web/src/components/add-repo-modal.tsx",
+    "web/src/components/ai-elements/inline-citation.tsx",
+    "web/src/components/auth-button.tsx",
+    "web/src/components/chat/HistorySidebar.tsx",
+    "web/src/components/codebase-graph.tsx",
+    "web/src/components/dithering-background.tsx",
+    "web/src/components/floating-header.tsx",
+    "web/src/components/hero-dithering-card.tsx",
+    "web/src/components/landing/HeroSection.tsx",
+    "web/src/components/navbar.tsx",
+    "web/src/components/onboarding/OnboardingTrigger.tsx",
+    "web/src/components/sheet.tsx",
+    "web/src/components/ui/dialog.tsx",
+    "web/src/components/ui/intro-disclosure.tsx",
+    "web/src/components/ui/sidebar.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/54/95edf2ca6a/0/metadata.json",
+      "transcript": "/54/95edf2ca6a/0/full.jsonl",
+      "content_hash": "/54/95edf2ca6a/0/content_hash.txt",
+      "prompt": "/54/95edf2ca6a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
