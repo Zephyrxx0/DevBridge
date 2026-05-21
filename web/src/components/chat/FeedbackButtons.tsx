@@ -41,7 +41,7 @@ export function FeedbackButtons({ messageIndex, messagePreview }: FeedbackButton
         aria-pressed={value === "helpful"}
         onClick={() => submitFeedback("helpful")}
         disabled={isSubmitting}
-        className="group h-8 w-8 min-w-8 justify-start overflow-hidden px-2 text-[var(--icon-contrast)] transition-all duration-200 hover:w-fit"
+        className="group h-8 w-8 min-w-8 justify-start overflow-hidden px-2 transition-all duration-200 hover:w-fit"
         title="Helpful"
       >
         <ThumbsUp className="size-3.5 shrink-0" />
@@ -56,7 +56,7 @@ export function FeedbackButtons({ messageIndex, messagePreview }: FeedbackButton
         aria-pressed={value === "not_helpful"}
         onClick={() => submitFeedback("not_helpful")}
         disabled={isSubmitting}
-        className="group h-8 w-8 min-w-8 justify-start overflow-hidden px-2 text-[var(--icon-contrast)] transition-all duration-200 hover:w-fit"
+        className="group h-8 w-8 min-w-8 justify-start overflow-hidden px-2 transition-all duration-200 hover:w-fit"
         title="Not Helpful"
       >
         <ThumbsDown className="size-3.5 shrink-0" />
