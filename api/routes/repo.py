@@ -293,6 +293,66 @@ async def get_repository(repo_id: str):
         raise HTTPException(status_code=503, detail=f"Repository detail unavailable: {exc}")
 
 
+@router.delete("/repo/{repo_id}")
+async def delete_repository(repo_id: str):
+    engine = get_engine()
+    if engine is None:
+        raise HTTPException(status_code=500, detail="Database engine not initialized")
+
+    try:
+        async with engine.connect() as conn:
+            repo = await _resolve_repo(conn, repo_id)
+            actual_id = repo["id"]
+            repo_name = repo["name"]
+
+            await conn.execute(
+                text(
+                    """
+                    DELETE FROM chat_messages cm
+                    USING chat_sessions cs
+                    WHERE cm.session_id = cs.id
+                      AND cs.repo_id = CAST(:repo_id AS uuid)
+                    """
+                ),
+                {"repo_id": actual_id},
+            )
+            await conn.execute(
+                text("DELETE FROM chat_sessions WHERE repo_id = CAST(:repo_id AS uuid)"),
+                {"repo_id": actual_id},
+            )
+            await conn.execute(
+                text("DELETE FROM annotations WHERE repo_id = CAST(:repo_id AS uuid)"),
+                {"repo_id": actual_id},
+            )
+            await conn.execute(
+                text("DELETE FROM repo_file_cache WHERE repo_id = CAST(:repo_id AS uuid)"),
+                {"repo_id": actual_id},
+            )
+            await conn.execute(
+                text("DELETE FROM code_chunks WHERE repo IN (:repo_name, :repo_id)"),
+                {"repo_name": repo_name, "repo_id": actual_id},
+            )
+            await conn.execute(
+                text("DELETE FROM ingestion_jobs WHERE repo IN (:repo_name, :repo_id)"),
+                {"repo_name": repo_name, "repo_id": actual_id},
+            )
+            result = await conn.execute(
+                text("DELETE FROM repositories WHERE id = CAST(:repo_id AS uuid)"),
+                {"repo_id": actual_id},
+            )
+
+            await conn.commit()
+
+            if result.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Repository not found")
+
+        return {"status": "ok"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Repository delete unavailable: {exc}")
+
+
 @router.get("/repo/{repo_id}/branches")
 async def list_repository_branches(repo_id: str, request: Request):
     """Return list of branches from GitHub for this repository.

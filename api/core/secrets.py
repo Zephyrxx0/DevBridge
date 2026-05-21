@@ -3,6 +3,7 @@ import os
 from uuid import UUID
 
 from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError, ProgrammingError
 
 from api.core.config import settings
 from api.db.session import get_engine
@@ -59,13 +60,18 @@ async def get_github_token(
             query = text(
                 "SELECT get_github_token_for_user(CAST(:user_id AS uuid)) AS provider_token"
             )
-            async with engine.connect() as conn:
-                result = await conn.execute(query, {"user_id": str(user_uuid)})
-                row = result.fetchone()
-                if row:
-                    token = (row._mapping.get("provider_token") or "").strip()
-                    if token:
-                        return token
+            try:
+                async with engine.connect() as conn:
+                    result = await conn.execute(query, {"user_id": str(user_uuid)})
+                    row = result.fetchone()
+                    if row:
+                        token = (row._mapping.get("provider_token") or "").strip()
+                        if token:
+                            return token
+            except (ProgrammingError, DBAPIError):
+                # Some environments don't have the RPC helper function.
+                # Fall through to env token when allowed.
+                pass
 
     if allow_env_fallback:
         return (os.getenv("GITHUB_TOKEN") or "").strip()

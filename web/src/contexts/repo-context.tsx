@@ -72,7 +72,17 @@ export function RepoProvider({ children, repoId }: { children: React.ReactNode; 
       setError(null);
       const res = await fetch(`/api/backend/repo/${repoId}`);
       if (!res.ok) {
-        throw new Error("Failed to fetch repository");
+        let detail = "";
+        try {
+          const payload = (await res.json()) as { detail?: string };
+          detail = typeof payload?.detail === "string" ? payload.detail : "";
+        } catch {
+          // ignore
+        }
+        if (detail) {
+          throw new Error(`Failed to fetch repository (${res.status}): ${detail}`);
+        }
+        throw new Error(`Failed to fetch repository (${res.status})`);
       }
       const data = await res.json();
 

@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     gcs_bucket_name: str | None = Field(default=None, validation_alias="GCS_BUCKET_NAME")
     external_doc_urls: str = Field(default="", validation_alias="EXTERNAL_DOC_URLS")
     internal_auth_token: str | None = Field(default=None, validation_alias="INTERNAL_AUTH_TOKEN")
-    report_summary_model: str = Field(default="gemma-4-26b-a4b-it", validation_alias="REPORT_SUMMARY_MODEL")
+    report_summary_model: str = Field(default="gemini-2.5-flash", validation_alias="REPORT_SUMMARY_MODEL")
     gemini_api_key: str | None = Field(default=None, validation_alias="GEMINI_API_KEY")
     fast_model_timeout: float = Field(default=20.0, validation_alias="FAST_MODEL_TIMEOUT")
 

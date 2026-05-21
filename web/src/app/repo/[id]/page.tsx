@@ -68,7 +68,7 @@ export default function RepoWorkspacePage() {
   const router = useRouter();
   const repoId = String(params.id ?? "");
 
-  const { repo } = useRepo();
+  const { repo, error: repoError, loading: repoLoading } = useRepo();
   const { resolvedTheme, theme, setTheme } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -107,6 +107,12 @@ export default function RepoWorkspacePage() {
     const savedBranch = localStorage.getItem(`repo:${repoId}:selectedBranch`) || "";
     setSelectedBranch(savedBranch);
   }, [repoId]);
+
+  useEffect(() => {
+    if (repoLoading) return;
+    if (!repoError) return;
+    router.replace("/dashboard");
+  }, [repoError, repoLoading, router]);
 
   const createSession = useCallback(async () => {
     const response = await fetch(`${apiUrl}/repo/${repoId}/chats`, {
@@ -497,6 +503,25 @@ export default function RepoWorkspacePage() {
       });
 
       if (!response.ok) {
+        let detail = "";
+        try {
+          const errPayload = (await response.json()) as { detail?: string };
+          detail = typeof errPayload?.detail === "string" ? errPayload.detail : "";
+        } catch {
+          // Ignore non-JSON error payloads.
+        }
+
+        if (response.status === 401) {
+          if (detail) {
+            throw new Error(`Unauthorized: ${detail}`);
+          }
+          throw new Error("Unauthorized: Authentication required.");
+        }
+
+        if (detail) {
+          throw new Error(`Server error: ${response.status} (${detail})`);
+        }
+
         throw new Error(`Server error: ${response.status}`);
       }
 
@@ -509,79 +534,85 @@ export default function RepoWorkspacePage() {
 
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
+      let streamBuffer = "";
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const events = chunk.split("\n\n");
+        streamBuffer += decoder.decode(value, { stream: true });
+        const events = streamBuffer.split("\n\n");
+        streamBuffer = events.pop() ?? "";
 
         for (const eventChunk of events) {
           if (!eventChunk.startsWith("data: ")) continue;
 
+          let data: {
+            type: string;
+            content?: string;
+            fallback?: boolean;
+            model_used?: string;
+            cascaded?: boolean;
+            sources?: SourceReference[];
+            message?: string;
+          };
+
           try {
-            const data = JSON.parse(eventChunk.slice(6)) as {
-              type: string;
-              content?: string;
-              fallback?: boolean;
-              model_used?: string;
-              cascaded?: boolean;
-              sources?: SourceReference[];
-              message?: string;
-            };
-
-            if (data.type === "chunk" && data.content) {
-              if (!firstChunkReceived) {
-                firstChunkReceived = true;
-                setIsLoading(false);
-              }
-
-              accumulatedContent += data.content;
-              setMessages((prev) => {
-                const next = [...prev];
-                const last = next[next.length - 1];
-                next[next.length - 1] = {
-                  ...last,
-                  role: "assistant",
-                  content: accumulatedContent,
-                  sources: accumulatedSources.length > 0 ? accumulatedSources : undefined,
-                };
-                return next;
-              });
-            } else if (data.type === "metadata") {
-              setMessages((prev) => {
-                const next = [...prev];
-                const last = next[next.length - 1];
-                if (last?.role === "assistant") {
-                  next[next.length - 1] = {
-                    ...last,
-                    fallback: data.fallback ?? last.fallback,
-                    model_used: data.model_used ?? last.model_used,
-                    cascaded: data.cascaded ?? last.cascaded,
-                  };
-                }
-                return next;
-              });
-            } else if (data.type === "sources" && data.sources) {
-              accumulatedSources = data.sources;
-              setMessages((prev) => {
-                const next = [...prev];
-                const last = next[next.length - 1];
-                next[next.length - 1] = {
-                  ...last,
-                  role: "assistant",
-                  content: accumulatedContent,
-                  sources: accumulatedSources,
-                };
-                return next;
-              });
-            } else if (data.type === "done") {
-              setIsLoading(false);
-            } else if (data.type === "error") {
-              throw new Error(data.message || "Streaming error occurred");
-            }
+            data = JSON.parse(eventChunk.slice(6));
           } catch {
             // Ignore malformed stream events and continue.
+            continue;
+          }
+
+          if (data.type === "chunk" && data.content) {
+            if (!firstChunkReceived) {
+              firstChunkReceived = true;
+              setIsLoading(false);
+            }
+
+            accumulatedContent += data.content;
+            setMessages((prev) => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              next[next.length - 1] = {
+                ...last,
+                role: "assistant",
+                content: accumulatedContent,
+                sources: accumulatedSources.length > 0 ? accumulatedSources : undefined,
+              };
+              return next;
+            });
+          } else if (data.type === "metadata") {
+            setMessages((prev) => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === "assistant") {
+                next[next.length - 1] = {
+                  ...last,
+                  fallback: data.fallback ?? last.fallback,
+                  model_used: data.model_used ?? last.model_used,
+                  cascaded: data.cascaded ?? last.cascaded,
+                };
+              }
+              return next;
+            });
+          } else if (data.type === "sources" && data.sources) {
+            accumulatedSources = data.sources;
+            setMessages((prev) => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              next[next.length - 1] = {
+                ...last,
+                role: "assistant",
+                content: accumulatedContent,
+                sources: accumulatedSources,
+              };
+              return next;
+            });
+          } else if (data.type === "done") {
+            setIsLoading(false);
+          } else if (data.type === "error") {
+            throw new Error(data.message || "Streaming error occurred");
           }
         }
       }
@@ -813,7 +844,7 @@ export default function RepoWorkspacePage() {
       }
       localStorage.removeItem(`repo:${repoId}:activeSessionId`);
       localStorage.removeItem(`repo:${repoId}:selectedBranch`);
-      router.push("/dashboard");
+      window.location.assign(`/dashboard?removed=${encodeURIComponent(repoId)}`);
     } catch {
       window.alert("Failed to remove repository from workspace.");
     }

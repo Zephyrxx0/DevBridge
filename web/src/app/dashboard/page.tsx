@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ArrowRight, Clock3, GitBranch, LayoutGrid, List } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { AddRepoModal } from "@/components/add-repo-modal";
@@ -51,6 +52,8 @@ function getRepoMeta(repo: Repo) {
 
 export default function DashboardPage() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const removedRepoId = searchParams.get("removed") || "";
   const [repos, setRepos] = useState<Repo[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -69,15 +72,24 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false });
 
       const raw = (data ?? []) as Repo[];
+      const deduped = new Map<string, Repo>();
+      for (const repo of raw) {
+        if (removedRepoId && repo.id === removedRepoId) continue;
+        const key = (repo.github_url || repo.name || repo.id).trim().toLowerCase();
+        if (!deduped.has(key)) {
+          deduped.set(key, repo);
+        }
+      }
+      const uniqueRepos = Array.from(deduped.values());
       const recent = JSON.parse(localStorage.getItem("devbridge.recentRepos") ?? "[]") as string[];
       const byRecent = new Map(recent.map((id, idx) => [id, idx]));
-      raw.sort((a, b) => (byRecent.get(a.id) ?? 9999) - (byRecent.get(b.id) ?? 9999));
-      setRepos(raw);
+      uniqueRepos.sort((a, b) => (byRecent.get(a.id) ?? 9999) - (byRecent.get(b.id) ?? 9999));
+      setRepos(uniqueRepos);
       setLoading(false);
     }
 
     load();
-  }, [supabase]);
+  }, [supabase, removedRepoId]);
 
   const empty = !loading && repos.length === 0;
   const title = useMemo(() => (viewMode === "list" ? "List view" : "Grid view"), [viewMode]);

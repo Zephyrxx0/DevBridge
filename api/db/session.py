@@ -45,11 +45,10 @@ def _conninfo_to_url(connection_string: str) -> str:
         if key not in reserved:
             query.setdefault(key, value)
 
-    query.pop("sslmode", None)
-    query.pop("ssl", None)
+    query = {k: v for k, v in query.items() if k.lower() not in {"sslmode", "ssl"}}
     return urlunsplit(
         (
-            "postgresql+asyncpg",
+            "postgresql+psycopg",
             f"{auth}{hostport}",
             f"/{quote(dbname, safe='')}",
             urlencode(query),
@@ -67,11 +66,9 @@ def _normalize_connection_string(connection_string: str) -> str:
         return _conninfo_to_url(normalized)
 
     if normalized.startswith("postgres://"):
-        normalized = normalized.replace("postgres://", "postgresql+asyncpg://", 1)
+        normalized = normalized.replace("postgres://", "postgresql+psycopg://", 1)
     if normalized.startswith("postgresql://"):
-        normalized = normalized.replace("postgresql://", "postgresql+asyncpg://", 1)
-    if normalized.startswith("postgresql+psycopg://"):
-        normalized = normalized.replace("postgresql+psycopg://", "postgresql+asyncpg://", 1)
+        normalized = normalized.replace("postgresql://", "postgresql+psycopg://", 1)
 
     parts = urlsplit(normalized)
     netloc = parts.netloc
@@ -86,13 +83,12 @@ def _normalize_connection_string(connection_string: str) -> str:
             netloc = f"{username}:{safe_password}@{hostinfo}"
 
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
-    query.pop("sslmode", None)
-    query.pop("ssl", None)
+    query = {k: v for k, v in query.items() if k.lower() not in {"sslmode", "ssl"}}
 
     # Supabase transaction pooler (PgBouncer) does not support prepared
     # statements in the default asyncpg mode. Disable statement caches.
     host = (parts.hostname or "").lower()
-    if "pooler.supabase.com" in host:
+    if "pooler.supabase.com" in host and parts.scheme.endswith("+asyncpg"):
         query.setdefault("prepared_statement_cache_size", "0")
 
     return urlunsplit((parts.scheme, netloc, parts.path, urlencode(query), parts.fragment))
@@ -114,8 +110,7 @@ def normalize_sync_url(connection_string: str) -> str:
 
     parts = urlsplit(normalized)
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
-    query.pop("sslmode", None)
-    query.pop("ssl", None)
+    query = {k: v for k, v in query.items() if k.lower() not in {"sslmode", "ssl"}}
 
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
@@ -133,13 +128,19 @@ async def init_db_pool(connection_string: str) -> AsyncEngine:
         raise RuntimeError(f"FATAL: normalization failed!! String is: {normalized!r}")
 
     try:
+        if normalized.startswith("postgresql+asyncpg://"):
+            connect_args = {
+                "ssl": "require",
+                "statement_cache_size": 0,
+            }
+        else:
+            # psycopg expects sslmode, not ssl
+            connect_args = {"sslmode": "require"}
+
         engine = create_async_engine(
             normalized,
             pool_size=10,
-            connect_args={
-                "ssl": "require",
-                "statement_cache_size": 0,
-            },
+            connect_args=connect_args,
         )
     except Exception as e:
         raise RuntimeError(f"FATAL: create_async_engine failed on string: {normalized!r}") from e

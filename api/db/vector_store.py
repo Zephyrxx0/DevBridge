@@ -3,7 +3,10 @@ import inspect
 import asyncio
 import json
 from typing import List, Optional, Dict, Any
-from langchain_postgres import PGVectorStore
+try:
+    from langchain_postgres import PGVectorStore
+except ImportError:  # pragma: no cover - optional dependency
+    PGVectorStore = None
 from langchain_core.documents import Document
 from sqlalchemy import text
 from api.core.config import settings
@@ -23,7 +26,7 @@ class VectorStoreManager:
     """
     def __init__(self):
         self.collection_name = "devbridge_codebase"
-        self._vectorstore: Optional[PGVectorStore] = None
+        self._vectorstore: Optional[Any] = None
         self._embedding_service = None
 
     def initialize(self) -> bool:
@@ -39,6 +42,14 @@ class VectorStoreManager:
         try:
             embeddings = self.get_embedding_service()
             self._embedding_service = embeddings
+
+            if PGVectorStore is None:
+                logger.warning(
+                    "langchain_postgres is not installed. "
+                    "PGVectorStore API is disabled; raw-SQL vector paths remain available."
+                )
+                logger.info("Vector store initialized successfully (raw SQL path enabled).")
+                return True
 
             try:
                 self._vectorstore = PGVectorStore(

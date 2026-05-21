@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: devbridge-amd-web
+    runtime: node
+    rootDir: web
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    autoDeploy: true

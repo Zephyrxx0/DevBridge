@@ -5,9 +5,11 @@ from typing import Any
 from api.core.config import settings
 
 try:
-    from hindsight import HindsightEmbedded
+    from hindsight_client import Hindsight
+    from hindsight_embed import get_embed_manager
 except ImportError:  # pragma: no cover - validated in runtime logs/tests
-    HindsightEmbedded = None
+    Hindsight = None
+    get_embed_manager = None
 
 
 logger = logging.getLogger(__name__)
@@ -21,8 +23,8 @@ class HindsightManager:
 
     def initialize(self) -> bool:
         """Initialize Hindsight embedded client for Supabase-backed memory."""
-        if HindsightEmbedded is None:
-            logger.warning("hindsight package not installed. Hindsight memory is disabled.")
+        if Hindsight is None or get_embed_manager is None:
+            logger.warning("hindsight packages not installed. Hindsight memory is disabled.")
             return False
 
         database_url = settings.sync_supabase_connection_string
@@ -31,19 +33,31 @@ class HindsightManager:
             return False
 
         try:
-            os.environ["HINDSIGHT_API_DATABASE_URL"] = database_url
-            os.environ["HINDSIGHT_API_DATABASE_SCHEMA"] = "hindsight"
+            config = {
+                "HINDSIGHT_API_DATABASE_URL": database_url,
+                "HINDSIGHT_API_DATABASE_SCHEMA": "hindsight",
+            }
 
-            llm_provider = "google"
+            llm_provider = "gemini"
             llm_model = settings.report_summary_model
             if llm_provider:
-                os.environ["HINDSIGHT_API_LLM_PROVIDER"] = llm_provider
+                config["HINDSIGHT_API_LLM_PROVIDER"] = llm_provider
             if llm_model:
-                os.environ["HINDSIGHT_API_LLM_MODEL"] = llm_model
+                config["HINDSIGHT_API_LLM_MODEL"] = llm_model
             if settings.gemini_api_key:
-                os.environ["HINDSIGHT_API_LLM_API_KEY"] = settings.gemini_api_key
+                config["HINDSIGHT_API_LLM_API_KEY"] = settings.gemini_api_key
 
-            self._client = HindsightEmbedded(profile="devbridge")
+            for key, value in config.items():
+                os.environ[key] = value
+
+            profile = "devbridge"
+            embed_manager = get_embed_manager()
+            if not embed_manager.ensure_running(config=config, profile=profile):
+                logger.error("Failed to start embedded Hindsight daemon.")
+                return False
+            base_url = embed_manager.get_url(profile)
+
+            self._client = Hindsight(base_url=base_url)
             logger.info("Hindsight embedded client initialized successfully.")
             return True
         except Exception as e:
