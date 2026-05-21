@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, Clock3, GitBranch, LayoutGrid, List } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
@@ -50,7 +50,7 @@ function getRepoMeta(repo: Repo) {
   };
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const supabase = createClient();
   const searchParams = useSearchParams();
   const removedRepoId = searchParams.get("removed") || "";
@@ -231,5 +231,13 @@ export default function DashboardPage() {
         ) : null}
       </section>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="h-44 animate-pulse rounded-2xl bg-[var(--muted)]" />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
