@@ -48,6 +48,7 @@ if sys.platform == "win32":
 
 load_dotenv()
 logger = logging.getLogger(__name__)
+STREAM_HEARTBEAT_SECONDS = 10.0
 
 
 def _dispatch_reflection_task() -> None:
@@ -596,40 +597,74 @@ async def chat_stream(request: Request, payload: ChatRequest):
                 metadata_sent = {"fallback": False, "model_used": None, "cascaded": False}
                 yield f"data: {json.dumps({'type': 'metadata', **metadata_sent})}\n\n"
 
+                event_queue: asyncio.Queue[tuple[str, object | None]] = asyncio.Queue()
+
+                async def _produce_graph_events() -> None:
+                    try:
+                        async with asyncio.timeout(120):
+                            async for event in stream_graph_events(payload.message, payload.thread_id, user_id):
+                                await event_queue.put(("event", event))
+                    except TimeoutError as timeout_error:
+                        await event_queue.put(("timeout", timeout_error))
+                    except Exception as error:
+                        await event_queue.put(("error", error))
+                    finally:
+                        await event_queue.put(("done", None))
+
                 chunk_count = 0
                 accumulated_response = ""
                 final_response = ""
+                producer_task = asyncio.create_task(_produce_graph_events())
                 try:
-                    async with asyncio.timeout(120):
-                        async for event in stream_graph_events(payload.message, payload.thread_id, user_id):
-                            extracted = _extract_metadata(event)
-                            if _has_stream_metadata(extracted) and extracted != metadata_sent:
-                                metadata_sent = extracted
-                                yield f"data: {json.dumps({'type': 'metadata', **metadata_sent})}\n\n"
+                    while True:
+                        try:
+                            item_type, item = await asyncio.wait_for(
+                                event_queue.get(),
+                                timeout=STREAM_HEARTBEAT_SECONDS,
+                            )
+                        except asyncio.TimeoutError:
+                            yield ": keep-alive\n\n"
+                            continue
 
-                            if not chunk_count:
-                                final_response = _extract_response_text(event) or final_response
+                        if item_type == "done":
+                            break
+                        if item_type == "timeout":
+                            logger.error("chat stream timeout after 120s for thread_id=%s", payload.thread_id)
+                            if not accumulated_response:
+                                yield f"data: {json.dumps({'type': 'error', 'message': 'Response timed out'})}\n\n"
+                            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+                            return
+                        if item_type == "error":
+                            if isinstance(item, Exception):
+                                raise item
+                            raise RuntimeError("Graph stream failed")
 
-                            event_name = str(event.get("event", ""))
-                            if event_name != "on_chat_model_stream":
-                                continue
+                        event = item if isinstance(item, dict) else {}
+                        extracted = _extract_metadata(event)
+                        if _has_stream_metadata(extracted) and extracted != metadata_sent:
+                            metadata_sent = extracted
+                            yield f"data: {json.dumps({'type': 'metadata', **metadata_sent})}\n\n"
 
-                            message_chunk = event.get("data", {}).get("chunk")
-                            if message_chunk is None:
-                                continue
+                        if not chunk_count:
+                            final_response = _extract_response_text(event) or final_response
 
-                            chunk_text = _extract_chunk_text(getattr(message_chunk, "content", ""))
-                            if chunk_text:
-                                chunk_count += 1
-                                accumulated_response += chunk_text
-                                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk_text})}\n\n"
-                                await asyncio.sleep(0.02)
-                except TimeoutError:
-                    logger.error("chat stream timeout after 120s for thread_id=%s", payload.thread_id)
-                    if not accumulated_response:
-                        yield f"data: {json.dumps({'type': 'error', 'message': 'Response timed out'})}\n\n"
-                    yield f"data: {json.dumps({'type': 'done'})}\n\n"
-                    return
+                        event_name = str(event.get("event", ""))
+                        if event_name != "on_chat_model_stream":
+                            continue
+
+                        message_chunk = event.get("data", {}).get("chunk")
+                        if message_chunk is None:
+                            continue
+
+                        chunk_text = _extract_chunk_text(getattr(message_chunk, "content", ""))
+                        if chunk_text:
+                            chunk_count += 1
+                            accumulated_response += chunk_text
+                            yield f"data: {json.dumps({'type': 'chunk', 'content': chunk_text})}\n\n"
+                            await asyncio.sleep(0.02)
+                finally:
+                    if not producer_task.done():
+                        producer_task.cancel()
 
                 # Fallback for providers/modes that produce no incremental chunks.
                 if chunk_count == 0:

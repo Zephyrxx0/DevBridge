@@ -70,7 +70,8 @@ class GeminiModel:
             return "".join(chunks)
 
         last_error: Exception | None = None
-        for _ in range(2):
+        attempts = 1 if self.model_name == "gemma-4-26b-a4b-it" else 2
+        for _ in range(attempts):
             try:
                 text = await asyncio.wait_for(asyncio.to_thread(_stream_once), timeout=settings.fast_model_timeout)
                 return AIMessage(content=text)

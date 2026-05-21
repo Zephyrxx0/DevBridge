@@ -116,6 +116,32 @@ def test_stream_emits_final_graph_output_without_incremental_chunks(monkeypatch)
     assert '"type": "done"' in body
 
 
+def test_stream_sends_heartbeat_while_graph_waits(monkeypatch) -> None:
+    monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
+    monkeypatch.setenv("TRUSTED_PROXY_IPS", "testclient")
+    monkeypatch.setattr(main, "STREAM_HEARTBEAT_SECONDS", 0.01)
+
+    async def delayed_stream_graph_events(message, thread_id, user_id):
+        _ = message, thread_id, user_id
+        await asyncio.sleep(0.03)
+        yield {
+            "event": "on_chain_end",
+            "data": {"output": {"messages": [SimpleNamespace(content="delayed answer")]}},
+        }
+
+    monkeypatch.setattr(main, "stream_graph_events", delayed_stream_graph_events)
+
+    FastAPICache.init(InMemoryBackend(), prefix="phase29-test")
+    with TestClient(main.app) as client:
+        headers = {"X-Internal-Auth": "test-token", "X-User-Id": "user-a"}
+        response = client.post("/chat/stream", json=_chat_payload(), headers=headers)
+
+    assert response.status_code == 200
+    body = response.text
+    assert ": keep-alive" in body
+    assert '"type": "chunk", "content": "delayed answer"' in body
+
+
 def test_hindsight_initialize_sets_schema_and_returns_true(monkeypatch) -> None:
     manager = hindsight_module.HindsightManager()
     constructed_profiles: list[str] = []
