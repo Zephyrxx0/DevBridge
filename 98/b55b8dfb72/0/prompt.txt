@@ -1,0 +1,56 @@
+does python stuff happen in a venv or what
+
+---
+
+Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... done
+  Using cached Jinja2-2.7.2.tar.gz (378 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... done
+  Using cached Jinja2-2.7.1.tar.gz (377 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... done
+  Using cached Jinja2-2.7.tar.gz (377 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... done
+  Using cached Jinja2-2.6.tar.gz (389 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... error
+  error: subprocess-exited-with-error
+
+  × Getting requirements to build wheel did not run successfully.
+  │ exit code: 1
+  ╰─> [20 lines of output]
+      Traceback (most recent call last):
+        File "D:\Codes\Personal\DevBridge\.venv\Lib\site-packages\pip\_vendor\pyproject_hooks\_in_process\_in_process.py", line 389, in <module>
+          main()
+        File "D:\Codes\Personal\DevBridge\.venv\Lib\site-packages\pip\_vendor\pyproject_hooks\_in_process\_in_process.py", line 373, in main
+          json_out["return_val"] = hook(**hook_input["kwargs"])
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "D:\Codes\Personal\DevBridge\.venv\Lib\site-packages\pip\_vendor\pyproject_hooks\_in_process\_in_process.py", line 143, in get_requires_for_build_wheel
+          return hook(config_settings)
+                 ^^^^^^^^^^^^^^^^^^^^^
+        File "C:\Users\tronl\AppData\Local\Temp\pip-build-env-vks0eetw\overlay\Lib\site-packages\setuptools\build_meta.py", line 333, in get_requires_for_build_wheel
+          return self._get_build_requires(config_settings, requirements=[])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "C:\Users\tronl\AppData\Local\Temp\pip-build-env-vks0eetw\overlay\Lib\site-packages\setuptools\build_meta.py", line 301, in _get_build_requires
+          self.run_setup()
+        File "C:\Users\tronl\AppData\Local\Temp\pip-build-env-vks0eetw\overlay\Lib\site-packages\setuptools\build_meta.py", line 520, in run_setup
+          super().run_setup(setup_script=setup_script)
+        File "C:\Users\tronl\AppData\Local\Temp\pip-build-env-vks0eetw\overlay\Lib\site-packages\setuptools\build_meta.py", line 317, in run_setup
+          exec(code, locals())
+        File "<string>", line 40, in <module>
+      ImportError: cannot import name 'Feature' from 'setuptools' (C:\Users\tronl\AppData\Local\Temp\pip-build-env-vks0eetw\overlay\Lib\site-packages\setuptools\__init__.py)
+      [end of output]
+
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+
+[notice] A new release of pip is available: 26.0.1 -> 26.1.1
+[notice] To update, run: D:\Codes\Personal\DevBridge\.venv\Scripts\python.exe -m pip install --upgrade pip
+ERROR: Failed to build 'jinja2' when getting requirements to build wheel
+(.venv) 
+
+error when installing requirements in venv
