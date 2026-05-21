@@ -471,12 +471,44 @@ export default function RepoWorkspacePage() {
       })
     );
 
+    const mentionRegex = /@([\w.\/-]+)/g;
+    const mentionMatches = [...userMessage.matchAll(mentionRegex)];
+    const uniqueMentionPaths = [...new Set(mentionMatches.map((m) => m[1]))];
+
+    let mentionResolvedMessage = userMessage;
+    const mentionContextParts: string[] = [];
+
+    if (uniqueMentionPaths.length > 0) {
+      const fileResults = await Promise.allSettled(
+        uniqueMentionPaths.map(async (path) => {
+          const resp = await fetch(`${apiUrl}/repo/${repoId}/files/${encodeURIComponent(path)}`);
+          if (!resp.ok) return null;
+          const data = (await resp.json()) as FileContent;
+          return data.content || null;
+        })
+      );
+
+      fileResults.forEach((result, idx) => {
+        if (result.status === "fulfilled" && result.value) {
+          const path = uniqueMentionPaths[idx];
+          mentionContextParts.push(`## ${path}\n\`\`\`\n${result.value}\n\`\`\``);
+          mentionResolvedMessage = mentionResolvedMessage.replace(
+            new RegExp(`@${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "g"),
+            path
+          );
+        }
+      });
+    }
+
     const snippetContext = snippetPayloads.length
       ? `\n\nReferenced snippets:\n${snippetPayloads
           .map((payload) => `- ${payload.label}\n\`\`\`\n${payload.content}\n\`\`\``)
           .join("\n")}`
       : "";
-    const fullPrompt = `${userMessage}${snippetContext}`;
+    const mentionContext = mentionContextParts.length
+      ? `\n\nReferenced files:\n${mentionContextParts.join("\n")}`
+      : "";
+    const fullPrompt = `${mentionResolvedMessage}${snippetContext}${mentionContext}`;
     const artifactsForMessage = snippetChips.map((chip) => ({ ...chip }));
     setInput("");
     setSnippetChips([]);
@@ -888,6 +920,7 @@ export default function RepoWorkspacePage() {
               onDropSnippet={handleDropSnippet}
               onSubmit={handleSubmit}
               onStopGenerating={stopGenerating}
+              fileTree={fileTree}
             />
           </div>
         }

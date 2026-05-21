@@ -1,15 +1,11 @@
 "use client";
 
+import { getClassWithColor } from "file-icons-js";
 import {
   ChevronDown,
-  Code2,
-  FileArchive,
-  FileCode2,
-  FileImage,
-  FileJson,
-  FileText,
   Folder,
   GitBranch,
+  FileCode2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,26 +51,6 @@ export function FileExplorer({
   branchLoadError,
   defaultBranchName,
 }: FileExplorerProps) {
-  const getFileIcon = (name: string) => {
-    const ext = name.split(".").pop()?.toLowerCase() || "";
-    if (["ts", "tsx", "js", "jsx", "py", "go", "rs", "java", "c", "cpp", "cs"].includes(ext)) {
-      return FileCode2;
-    }
-    if (["json", "jsonc", "yaml", "yml", "toml"].includes(ext)) {
-      return FileJson;
-    }
-    if (["md", "mdx", "txt", "rst"].includes(ext)) {
-      return FileText;
-    }
-    if (["png", "jpg", "jpeg", "gif", "svg", "webp", "ico"].includes(ext)) {
-      return FileImage;
-    }
-    if (["zip", "tar", "gz", "7z"].includes(ext)) {
-      return FileArchive;
-    }
-    return Code2;
-  };
-
   const renderTreeNode = (node: FileNode, depth = 0): React.ReactNode => {
     const isDirectory = node.type === "directory";
     const isExpanded = expandedFolders.has(node.path);
@@ -108,7 +84,7 @@ export function FileExplorer({
       );
     }
 
-    const Icon = getFileIcon(node.name);
+    const iconClass = getClassWithColor(node.name) || "text-icon medium-blue";
 
     return (
       <button
@@ -128,7 +104,11 @@ export function FileExplorer({
         )}
         style={{ paddingLeft: `${depth * 12}px` }}
       >
-        <Icon className="size-3.5" />
+        {iconClass ? (
+          <i className={cn(iconClass, "text-[14px]")} />
+        ) : (
+          <FileCode2 className="size-3.5" />
+        )}
         <span className="truncate">{node.name}</span>
       </button>
     );

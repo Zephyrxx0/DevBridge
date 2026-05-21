@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
+import "file-icons-js/css/style.css";
 import { cn } from "@/lib/utils";
 import { LayoutTransition } from "@/components/layout/LayoutTransition";
 import { ResilienceHandler } from "@/components/ui/ResilienceHandler";

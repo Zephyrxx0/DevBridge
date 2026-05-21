@@ -6,11 +6,11 @@ interface EscalationIndicatorProps {
 }
 
 export function EscalationIndicator({ modelUsed, cascaded }: EscalationIndicatorProps) {
-  if (!modelUsed && typeof cascaded === "undefined") {
+  if (!cascaded) {
     return null;
   }
 
-  const label = cascaded ? "Big Model" : "Fast Mode";
+  const label = "Big Model";
 
   return (
     <div className="mb-1 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]" data-testid="escalation-indicator">
@@ -19,10 +19,10 @@ export function EscalationIndicator({ modelUsed, cascaded }: EscalationIndicator
         data-testid="escalation-indicator-dot"
         className={cn(
           "inline-block h-2 w-2 rounded-full animate-pulse",
-          cascaded ? "bg-amber-500" : "bg-[var(--brand)]"
+          "bg-amber-500"
         )}
       />
-      <span className={cn("inline-flex rounded-md border px-2 py-0.5 font-medium", cascaded ? "border-amber-500/20 bg-amber-500/10 text-amber-600" : "border-[var(--brand-muted)] bg-[var(--brand-muted)] text-[var(--brand)]")}>{label}</span>
+      <span className={cn("inline-flex rounded-md border px-2 py-0.5 font-medium", "border-amber-500/20 bg-amber-500/10 text-amber-600")}>{label}</span>
     </div>
   );
 }

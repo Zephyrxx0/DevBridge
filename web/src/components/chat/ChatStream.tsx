@@ -42,6 +42,19 @@ interface ChatStreamProps {
   onOnboardingComplete: (plan: OnboardingPlan) => void;
 }
 
+const ThinkingIndicator = () => {
+  const [dots, setDots] = useState("");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots((prev) => (prev.length >= 3 ? "" : prev + "."));
+    }, 400);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <span>Thinking{dots}</span>;
+};
+
 export function ChatStream({
   messages,
   isLoading,
@@ -405,15 +418,20 @@ const onboardingSummaryToken = "__DEVBRIDGE_ONBOARDING_READY__";
 
             {isLoading ? (
               <ElementsMessage from="assistant">
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   <Avatar>
                     <AvatarFallback className="bg-[var(--brand-muted)] text-[var(--brand)]">DB</AvatarFallback>
                   </Avatar>
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-1)] px-[var(--space-lg)] py-[var(--space-md)]">
-                    <div className="flex gap-1.5">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:0ms]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:150ms]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:300ms]" />
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex w-fit items-center rounded-xl border border-[var(--border)] bg-[var(--surface-1)] px-[var(--space-lg)] py-[var(--space-md)] h-10">
+                      <div className="flex gap-1.5">
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:0ms]" />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:150ms]" />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:300ms]" />
+                      </div>
+                    </div>
+                    <div className="pl-1 text-[12px] font-medium tracking-wide text-[var(--foreground-subtle)]">
+                      <ThinkingIndicator />
                     </div>
                   </div>
                 </div>

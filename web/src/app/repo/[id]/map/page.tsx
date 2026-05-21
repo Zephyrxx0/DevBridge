@@ -9,6 +9,7 @@ import { ChevronDown, ChevronLeft, RefreshCw, ZoomIn, ZoomOut, Network } from "l
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRepo } from "@/contexts/repo-context";
+import { getIconInfo } from "@/lib/icon-utils";
 
 // Dynamic import — react-force-graph-2d uses Canvas/window APIs
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
@@ -598,22 +599,22 @@ export default function MapPage() {
                     nodeLabel={(node: any) => node.id}
                     nodeColor={(node: any) =>
                       node.id === selectedNodeId
-                        ? "#ec4e02"
-                        : getExtColor(node.id)
+                        ? "rgba(236,78,2,0.2)" // selected
+                        : "rgba(30, 30, 35, 0.9)" // dark bubble
                     }
                     nodeVal={(node: any) => node.val}
-                    nodeRelSize={12}
+                    nodeRelSize={4}
                     // Edges: always visible, highlight selected
                     linkColor={(link: any) => {
                       const src = typeof link.source === "string" ? link.source : link.source?.id;
                       const tgt = typeof link.target === "string" ? link.target : link.target?.id;
-                      if (src === selectedNodeId || tgt === selectedNodeId) return "rgba(236,78,2,1)";
-                      return "rgba(180,180,200,0.5)";
+                      if (src === selectedNodeId || tgt === selectedNodeId) return "rgba(236,78,2,0.8)";
+                      return "rgba(100,100,120,0.3)";
                     }}
                     linkWidth={(link: any) => {
                       const src = typeof link.source === "string" ? link.source : link.source?.id;
                       const tgt = typeof link.target === "string" ? link.target : link.target?.id;
-                      return src === selectedNodeId || tgt === selectedNodeId ? 5 : 2.5;
+                      return src === selectedNodeId || tgt === selectedNodeId ? 3 : 1;
                     }}
                     linkDirectionalArrowLength={6}
                     linkDirectionalArrowRelPos={1}
@@ -630,8 +631,27 @@ export default function MapPage() {
                     d3AlphaDecay={0.01}
                     nodeCanvasObjectMode={() => "after"}
                     nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-                      if (globalScale < 1.8 && node.id !== selectedNodeId) return;
                       const label = (node.id as string).split("/").pop() || "";
+                      
+                      // Draw Icon inside bubble
+                      const iconInfo = getIconInfo(label);
+                      if (iconInfo) {
+                        const iconSize = Math.max(12, Math.min(24, Math.sqrt(node.val) * 4 * 0.7)); 
+                        ctx.font = `${iconSize}px "${iconInfo.fontFamily}", "file-icons"`;
+                        ctx.fillStyle = iconInfo.color;
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        ctx.fillText(iconInfo.content, node.x, node.y);
+                      } else {
+                        // Fallback circle if no icon
+                        ctx.beginPath();
+                        ctx.arc(node.x, node.y, 3, 0, 2 * Math.PI);
+                        ctx.fillStyle = getExtColor(node.id);
+                        ctx.fill();
+                      }
+
+                      // Label
+                      if (globalScale < 1.8 && node.id !== selectedNodeId) return;
                       const fontSize = Math.max(10 / globalScale, 2);
                       ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
                       ctx.textAlign = "center";
@@ -639,8 +659,8 @@ export default function MapPage() {
                       ctx.fillStyle =
                         node.id === selectedNodeId
                           ? "#ec4e02"
-                          : "rgba(255,255,255,0.7)";
-                      ctx.fillText(label, node.x, node.y + 8);
+                          : "rgba(255,255,255,0.8)";
+                      ctx.fillText(label, node.x, node.y + Math.max(10, Math.sqrt(node.val) * 4 + 2));
                     }}
                     d3VelocityDecay={0.4}
                   />

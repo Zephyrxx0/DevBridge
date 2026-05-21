@@ -526,6 +526,10 @@ Format your response with:
 
 For "why" questions, use the PR/Commit history context provided to explain the rationale 
 behind code changes.
+
+IMPORTANT GUARDRAILS:
+1. ALWAYS ground your answers in the context of this specific repository and codebase. If asked general questions like "how does frontend work?" or "explain React", reply by explaining how it works *in this repository* based on the code, rather than giving a generic layman's explanation.
+2. If asked questions that are completely out of the general area of the codebase, project, or software engineering in general (e.g., cooking recipes, politics, general history), politely decline with a formal reply such as: "I am a codebase knowledge assistant. I cannot answer questions outside the scope of this repository or software development."
 """
 
 

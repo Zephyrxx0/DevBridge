@@ -484,7 +484,7 @@ async def chat(request: Request, payload: ChatRequest):
         user_id = getattr(request.state, "user_id", None)
         if not user_id:
             raise HTTPException(status_code=401, detail="Authentication required")
-        config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id}}
+        config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id, "repo_id": payload.repo_id}}
         input_data = {"messages": [HumanMessage(content=payload.message)]}
         result = await graph.ainvoke(input_data, config=config)
         response = str(result["messages"][-1].content)
@@ -602,7 +602,7 @@ async def chat_stream(request: Request, payload: ChatRequest):
                 async def _produce_graph_events() -> None:
                     try:
                         async with asyncio.timeout(120):
-                            async for event in stream_graph_events(payload.message, payload.thread_id, user_id):
+                            async for event in stream_graph_events(payload.message, payload.thread_id, user_id, repo_id=payload.repo_id):
                                 await event_queue.put(("event", event))
                     except TimeoutError as timeout_error:
                         await event_queue.put(("timeout", timeout_error))
@@ -669,7 +669,7 @@ async def chat_stream(request: Request, payload: ChatRequest):
                 # Fallback for providers/modes that produce no incremental chunks.
                 if chunk_count == 0:
                     if not final_response:
-                        config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id}}
+                        config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id, "repo_id": payload.repo_id}}
                         input_data = {"messages": [HumanMessage(content=payload.message)]}
                         final_state = await asyncio.wait_for(graph.ainvoke(input_data, config=config), timeout=60)
                         final_metadata = _extract_metadata(final_state)
