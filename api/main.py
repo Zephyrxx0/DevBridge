@@ -91,6 +91,46 @@ def _extract_metadata(value) -> dict:
     return metadata
 
 
+def _extract_response_text(value) -> str:
+    """Extract final assistant text from LangGraph event/final-state payloads."""
+
+    def _message_content(message) -> str:
+        content = getattr(message, "content", None)
+        if content is None and isinstance(message, dict):
+            content = message.get("content")
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            parts: list[str] = []
+            for item in content:
+                if isinstance(item, str):
+                    parts.append(item)
+                elif isinstance(item, dict) and isinstance(item.get("text"), str):
+                    parts.append(item["text"])
+            return "".join(parts)
+        return ""
+
+    def _walk(node) -> str:
+        if isinstance(node, dict):
+            messages = node.get("messages")
+            if isinstance(messages, list) and messages:
+                text = _message_content(messages[-1])
+                if text:
+                    return text
+            for key in ("output", "value", "data"):
+                if key in node:
+                    text = _walk(node[key])
+                    if text:
+                        return text
+        return ""
+
+    return _walk(value)
+
+
+def _has_stream_metadata(metadata: dict) -> bool:
+    return bool(metadata.get("fallback") or metadata.get("model_used") or metadata.get("cascaded"))
+
+
 def _repo_slug_from_github_url(url: str | None) -> str | None:
     if not url:
         return None
@@ -528,7 +568,6 @@ async def health_db():
 
 
 @app.post("/chat/stream")
-@cache(expire=3600, namespace="chat_stream", key_builder=repo_id_key_builder)
 async def chat_stream(request: Request, payload: ChatRequest):
     """SSE streaming endpoint for real-time response delivery."""
     try:
@@ -559,41 +598,54 @@ async def chat_stream(request: Request, payload: ChatRequest):
 
                 chunk_count = 0
                 accumulated_response = ""
-                async for event in stream_graph_events(payload.message, payload.thread_id, user_id):
-                    extracted = _extract_metadata(event)
-                    if extracted != metadata_sent:
-                        metadata_sent = extracted
-                        yield f"data: {json.dumps({'type': 'metadata', **metadata_sent})}\n\n"
+                final_response = ""
+                try:
+                    async with asyncio.timeout(120):
+                        async for event in stream_graph_events(payload.message, payload.thread_id, user_id):
+                            extracted = _extract_metadata(event)
+                            if _has_stream_metadata(extracted) and extracted != metadata_sent:
+                                metadata_sent = extracted
+                                yield f"data: {json.dumps({'type': 'metadata', **metadata_sent})}\n\n"
 
-                    event_name = str(event.get("event", ""))
-                    if event_name != "on_chat_model_stream":
-                        continue
+                            if not chunk_count:
+                                final_response = _extract_response_text(event) or final_response
 
-                    message_chunk = event.get("data", {}).get("chunk")
-                    if message_chunk is None:
-                        continue
+                            event_name = str(event.get("event", ""))
+                            if event_name != "on_chat_model_stream":
+                                continue
 
-                    chunk_text = _extract_chunk_text(getattr(message_chunk, "content", ""))
-                    if chunk_text:
-                        chunk_count += 1
-                        accumulated_response += chunk_text
-                        yield f"data: {json.dumps({'type': 'chunk', 'content': chunk_text})}\n\n"
-                        await asyncio.sleep(0.02)
+                            message_chunk = event.get("data", {}).get("chunk")
+                            if message_chunk is None:
+                                continue
+
+                            chunk_text = _extract_chunk_text(getattr(message_chunk, "content", ""))
+                            if chunk_text:
+                                chunk_count += 1
+                                accumulated_response += chunk_text
+                                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk_text})}\n\n"
+                                await asyncio.sleep(0.02)
+                except TimeoutError:
+                    logger.error("chat stream timeout after 120s for thread_id=%s", payload.thread_id)
+                    if not accumulated_response:
+                        yield f"data: {json.dumps({'type': 'error', 'message': 'Response timed out'})}\n\n"
+                    yield f"data: {json.dumps({'type': 'done'})}\n\n"
+                    return
 
                 # Fallback for providers/modes that produce no incremental chunks.
                 if chunk_count == 0:
-                    config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id}}
-                    input_data = {"messages": [HumanMessage(content=payload.message)]}
-                    final_state = await graph.ainvoke(input_data, config=config)
-                    final_metadata = _extract_metadata(final_state)
-                    if final_metadata != metadata_sent:
-                        metadata_sent = final_metadata
-                        yield f"data: {json.dumps({'type': 'metadata', **metadata_sent})}\n\n"
+                    if not final_response:
+                        config = {"configurable": {"thread_id": payload.thread_id, "user_id": user_id}}
+                        input_data = {"messages": [HumanMessage(content=payload.message)]}
+                        final_state = await asyncio.wait_for(graph.ainvoke(input_data, config=config), timeout=60)
+                        final_metadata = _extract_metadata(final_state)
+                        if final_metadata != metadata_sent:
+                            metadata_sent = final_metadata
+                            yield f"data: {json.dumps({'type': 'metadata', **metadata_sent})}\n\n"
+                        final_response = _extract_response_text(final_state)
 
-                    response = str(final_state["messages"][-1].content)
-                    if response:
-                        accumulated_response = response
-                        yield f"data: {json.dumps({'type': 'chunk', 'content': response})}\n\n"
+                    if final_response:
+                        accumulated_response = final_response
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': final_response})}\n\n"
 
                 # Send done event
                 try:

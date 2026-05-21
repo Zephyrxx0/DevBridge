@@ -80,6 +80,42 @@ def test_user_isolation(monkeypatch) -> None:
     assert stream_user_ids == ["user-a", "user-b"]
 
 
+def test_stream_emits_final_graph_output_without_incremental_chunks(monkeypatch) -> None:
+    monkeypatch.setenv("INTERNAL_AUTH_TOKEN", "test-token")
+    monkeypatch.setenv("TRUSTED_PROXY_IPS", "testclient")
+
+    async def fake_stream_graph_events(message, thread_id, user_id):
+        _ = message, thread_id, user_id
+        yield {
+            "event": "on_chain_end",
+            "data": {
+                "output": {
+                    "messages": [SimpleNamespace(content="final answer")],
+                    "model_used": "gemini-2.5-flash-lite",
+                    "cascaded": True,
+                }
+            },
+        }
+
+    async def should_not_rerun(*args, **kwargs):
+        raise AssertionError("graph.ainvoke should not rerun when final stream output exists")
+
+    monkeypatch.setattr(main, "stream_graph_events", fake_stream_graph_events)
+    monkeypatch.setattr(main.graph, "ainvoke", should_not_rerun)
+
+    FastAPICache.init(InMemoryBackend(), prefix="phase29-test")
+    with TestClient(main.app) as client:
+        headers = {"X-Internal-Auth": "test-token", "X-User-Id": "user-a"}
+        response = client.post("/chat/stream", json=_chat_payload(), headers=headers)
+
+    assert response.status_code == 200
+    body = response.text
+    assert '"type": "metadata"' in body
+    assert '"model_used": "gemini-2.5-flash-lite"' in body
+    assert '"type": "chunk", "content": "final answer"' in body
+    assert '"type": "done"' in body
+
+
 def test_hindsight_initialize_sets_schema_and_returns_true(monkeypatch) -> None:
     manager = hindsight_module.HindsightManager()
     constructed_profiles: list[str] = []

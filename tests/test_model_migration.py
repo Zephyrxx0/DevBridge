@@ -29,11 +29,11 @@ def test_settings_loads_gemini_api_key_from_env(monkeypatch) -> None:
     assert settings.gemini_api_key == "gem-key-123"
 
 
-def test_get_model_big_uses_gemini_flash_with_auto_thinking() -> None:
+def test_get_model_big_uses_gemini_flash_lite_without_thinking() -> None:
     llm_module.settings.gemini_api_key = "gem-key-123"
     model = llm_module.get_model(is_fast=False)
-    assert getattr(model, "model_name", None) == "gemini-2.5-flash"
-    assert getattr(model, "thinking_budget", None) == -1
+    assert getattr(model, "model_name", None) == "gemini-2.5-flash-lite"
+    assert getattr(model, "thinking_budget", None) == 0
 
 
 def test_get_model_fast_uses_gemma_high_thinking() -> None:
@@ -50,7 +50,7 @@ def test_tokenizer_uses_sdk_count_tokens(monkeypatch) -> None:
     class FakeModels:
         @staticmethod
         def count_tokens(*, model, contents):
-            assert model == "gemini-2.5-flash"
+            assert model == "gemini-2.5-flash-lite"
             assert contents == "hello world"
             return SimpleNamespace(total_tokens=77)
 
@@ -59,3 +59,21 @@ def test_tokenizer_uses_sdk_count_tokens(monkeypatch) -> None:
 
     monkeypatch.setattr(tokenizer_module.genai, "Client", lambda api_key: FakeClient())
     assert tokenizer_module._count_tokens("hello world", "gemini") == 77
+
+
+def test_tokenizer_uses_gemma_for_fast_model(monkeypatch) -> None:
+    tokenizer_module._get_client.cache_clear()
+    tokenizer_module.settings.gemini_api_key = "gem-key-123"
+
+    class FakeModels:
+        @staticmethod
+        def count_tokens(*, model, contents):
+            assert model == "gemma-4-26b-a4b-it"
+            assert contents == "hello world"
+            return SimpleNamespace(total_tokens=42)
+
+    class FakeClient:
+        models = FakeModels()
+
+    monkeypatch.setattr(tokenizer_module.genai, "Client", lambda api_key: FakeClient())
+    assert tokenizer_module._count_tokens("hello world", "fast") == 42

@@ -7,7 +7,7 @@ from api.core.config import settings
 
 LOGGER = logging.getLogger(__name__)
 
-BIG_MODEL = "gemini-2.5-flash"
+BIG_MODEL = "gemini-2.5-flash-lite"
 FAST_MODEL = "gemma-4-26b-a4b-it"
 
 
