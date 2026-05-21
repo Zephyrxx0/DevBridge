@@ -681,6 +681,8 @@ async def chat_stream(request: Request, payload: ChatRequest):
                     if final_response:
                         accumulated_response = final_response
                         yield f"data: {json.dumps({'type': 'chunk', 'content': final_response})}\n\n"
+                    else:
+                        yield f"data: {json.dumps({'type': 'error', 'message': 'No response generated'})}\n\n"
 
                 # Send done event
                 try:

@@ -24,16 +24,52 @@ class GeminiModel:
         self.thinking_budget = thinking_budget
         self.thinking_level = thinking_level
 
-    def _build_config(self) -> types.GenerateContentConfig:
+    def _should_use_google_search(self, request_text: str) -> bool:
+        lowered = request_text.lower()
+        search_cues = (
+            "search the web",
+            "google search",
+            "latest",
+            "current",
+            "recent",
+            "today",
+            "news",
+            "online",
+            "web",
+        )
+        return any(cue in lowered for cue in search_cues)
+
+    def _should_use_flash_lite_directly(self, request_text: str) -> bool:
+        lowered = request_text.lower()
+        explanation_cues = (
+            "how ",
+            "how does",
+            "explain",
+            "why ",
+            "architecture",
+            "tradeoff",
+            "step by step",
+            "detailed",
+            "analysis",
+            "design",
+            "plan",
+        )
+        return len(request_text) > 320 or any(cue in lowered for cue in explanation_cues)
+
+    def _build_config(self, request_text: str) -> types.GenerateContentConfig:
         thinking_cfg = {}
         if self.thinking_budget is not None:
             thinking_cfg["thinking_budget"] = self.thinking_budget
         if self.thinking_level is not None:
             thinking_cfg["thinking_level"] = self.thinking_level
 
+        tools = [types.Tool(googleSearch=types.GoogleSearch())] if self._should_use_google_search(request_text) else None
+        automatic_function_calling = None if tools else types.AutomaticFunctionCallingConfig(disable=True)
+
         return types.GenerateContentConfig(
             thinking_config=types.ThinkingConfig(**thinking_cfg),
-            tools=[types.Tool(googleSearch=types.GoogleSearch())],
+            tools=tools,
+            automatic_function_calling=automatic_function_calling,
         )
 
     def _to_contents(self, payload) -> str:
@@ -50,7 +86,12 @@ class GeminiModel:
 
     async def ainvoke(self, payload):
         request_text = self._to_contents(payload)
-        config = self._build_config()
+        if self.model_name == "gemma-4-26b-a4b-it" and self._should_use_flash_lite_directly(request_text):
+            logger.info("Using gemini-2.5-flash-lite directly for explanatory prompt")
+            fallback = GeminiModel(client=self.client, model_name="gemini-2.5-flash-lite", thinking_budget=0)
+            return await fallback.ainvoke(payload)
+
+        config = self._build_config(request_text)
 
         def _stream_once() -> str:
             chunks: list[str] = []
@@ -71,9 +112,10 @@ class GeminiModel:
 
         last_error: Exception | None = None
         attempts = 1 if self.model_name == "gemma-4-26b-a4b-it" else 2
+        timeout = min(settings.fast_model_timeout, 6.0) if self.model_name == "gemma-4-26b-a4b-it" else settings.fast_model_timeout
         for _ in range(attempts):
             try:
-                text = await asyncio.wait_for(asyncio.to_thread(_stream_once), timeout=settings.fast_model_timeout)
+                text = await asyncio.wait_for(asyncio.to_thread(_stream_once), timeout=timeout)
                 return AIMessage(content=text)
             except Exception as error:  # pragma: no cover - runtime fallback path
                 last_error = error

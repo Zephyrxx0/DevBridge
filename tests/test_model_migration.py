@@ -43,6 +43,30 @@ def test_get_model_fast_uses_gemma_high_thinking() -> None:
     assert getattr(model, "thinking_level", None) == "HIGH"
 
 
+def test_gemini_config_skips_google_search_for_repo_chat() -> None:
+    model = llm_module.GeminiModel(client=object(), model_name="gemini-2.5-flash-lite", thinking_budget=0)
+    config = model._build_config("human: how does the frontend work?")
+    assert config.tools is None
+    assert config.automatic_function_calling.disable is True
+
+
+def test_gemini_config_uses_google_search_for_current_web_queries() -> None:
+    model = llm_module.GeminiModel(client=object(), model_name="gemini-2.5-flash-lite", thinking_budget=0)
+    config = model._build_config("human: search the web for latest Next.js release notes")
+    assert config.tools is not None
+    assert config.automatic_function_calling is None
+
+
+def test_gemma_skips_to_flash_lite_for_explanatory_prompts() -> None:
+    model = llm_module.GeminiModel(client=object(), model_name="gemma-4-26b-a4b-it", thinking_level="HIGH")
+    assert model._should_use_flash_lite_directly("human: how does the frontend work?") is True
+
+
+def test_gemma_keeps_fast_path_for_short_prompts() -> None:
+    model = llm_module.GeminiModel(client=object(), model_name="gemma-4-26b-a4b-it", thinking_level="HIGH")
+    assert model._should_use_flash_lite_directly("human: hi") is False
+
+
 def test_tokenizer_uses_sdk_count_tokens(monkeypatch) -> None:
     tokenizer_module._get_client.cache_clear()
     tokenizer_module.settings.gemini_api_key = "gem-key-123"
