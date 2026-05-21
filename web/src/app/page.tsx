@@ -73,7 +73,7 @@ function TrustStrip() {
             <div className="grid gap-4 sm:grid-cols-3 md:gap-6">
               {stats.map((stat) => (
                 <div key={stat.label} className="flex items-center gap-4">
-                  <div className="grid size-10 shrink-0 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--icon-contrast)]">
+                  <div className="grid size-10 shrink-0 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[#065f46] dark:text-[var(--icon-contrast)]">
                     {stat.icon}
                   </div>
                   <div>
@@ -117,7 +117,6 @@ function HowItWorks() {
     <section className="py-[var(--space-4xl)]">
       <SectionReveal>
         <SectionHeading
-          eyebrow="How it works"
           title="Onboard faster with grounded context."
           body="Connect a repo, ask questions, and navigate the codebase with visual cues and citations."
         />
@@ -129,7 +128,7 @@ function HowItWorks() {
               <Card className="group relative overflow-hidden bg-[color-mix(in_oklab,var(--surface-1)_84%,transparent)] backdrop-blur-sm">
                 <CardHeader className="p-6">
                   <div className="inline-flex items-center gap-2">
-                    <div className="grid size-9 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[var(--icon-contrast)]">
+                    <div className="grid size-9 place-items-center rounded-xl border border-[var(--brand-muted)] bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-[#065f46] dark:text-[var(--icon-contrast)]">
                       {s.icon}
                     </div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--foreground-subtle)]">
@@ -155,7 +154,6 @@ function CodebaseGraphSection() {
     <section className="pt-[var(--space-4xl)] pb-0">
       <SectionReveal>
         <SectionHeading
-          eyebrow="Repo graph"
           title="See how files connect across the codebase."
           body="A live map highlights relationships between files, hotspots, and annotated context—like an Obsidian vault for your repo."
         />
@@ -238,7 +236,7 @@ function FinalCTA() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link href="/repo/demo">
                   <Button size="lg" className="w-full rounded-full sm:w-auto">
-                    Start Building
+                    Start Exploring
                     <ArrowRight className="size-4" />
                   </Button>
                 </Link>

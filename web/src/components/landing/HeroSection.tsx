@@ -38,8 +38,8 @@ export function HeroSection() {
           className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center"
         >
           <Link href="/dashboard">
-            <Button size="lg" className="h-14 rounded-full px-10 text-base font-medium" aria-label="Start Building">
-              Start Building
+            <Button size="lg" className="h-14 rounded-full px-10 text-base font-medium" aria-label="Start Exploring">
+              Start Exploring
               <ArrowRight className="size-5" />
             </Button>
           </Link>
@@ -47,7 +47,7 @@ export function HeroSection() {
             <Button
               variant="outline"
               size="lg"
-              className="h-14 rounded-full border-white/15 bg-[color-mix(in_oklab,var(--surface-1)_30%,transparent)] px-10 text-base"
+              className="h-14 rounded-full border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_70%,transparent)] px-10 text-base"
             >
               View Repo Map
             </Button>

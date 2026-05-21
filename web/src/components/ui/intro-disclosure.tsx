@@ -112,10 +112,10 @@ function StepPreview({ step, direction }: { step: Step; direction: 1 | -1 }) {
   return (
     <motion.div
       {...slideInOut(direction)}
-      className="relative h-full w-full   overflow-hidden rounded-sm rounded-rb-lg rounded-tl-xl ring-2 ring-black/10 dark:ring-black/10 dark:ring-offset-black ring-offset-8"
+      className="relative h-full w-full   overflow-hidden rounded-sm rounded-rb-lg rounded-tl-xl ring-2 ring-[color-mix(in_oklab,var(--foreground)_10%,transparent)] ring-offset-8 ring-offset-[var(--background)]"
     >
       {step.media ? (
-        <div className="relative bg-black h-full w-full">
+        <div className="relative h-full w-full bg-[var(--background)]">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={controls}
@@ -136,16 +136,16 @@ function StepPreview({ step, direction }: { step: Step; direction: 1 | -1 }) {
               />
             )}
           </motion.div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[color-mix(in_oklab,var(--background)_80%,transparent)] to-transparent" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={controls}
             className="absolute bottom-0 left-0 right-0 p-6"
           >
-            <h3 className="mb-2 text-2xl font-semibold text-white">
+            <h3 className="mb-2 text-2xl font-semibold text-[var(--foreground)]">
               {step.title}
             </h3>
-            <p className="text-white hidden md:block">
+            <p className="hidden text-[var(--foreground)] md:block">
               {step.full_description}
             </p>
           </motion.div>

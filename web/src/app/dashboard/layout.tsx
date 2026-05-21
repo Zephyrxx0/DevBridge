@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-dvh text-[var(--foreground)] selection:bg-white/30 selection:text-white">
+    <div className="relative min-h-dvh text-[var(--foreground)] selection:bg-[var(--brand-muted)] selection:text-[var(--foreground)]">
       <BackgroundEffects />
       <DitheringBackground />
       <div className="relative pt-6">

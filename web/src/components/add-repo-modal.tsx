@@ -72,7 +72,7 @@ export function AddRepoModal() {
         <Plus className="size-4" />
         Connect Repository
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-[color-mix(in_oklab,var(--surface-1)_85%,transparent)] backdrop-blur-xl border-white/10 text-foreground">
+      <DialogContent className="sm:max-w-[425px] border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_85%,transparent)] text-foreground backdrop-blur-xl">
         <DialogHeader>
           <DialogTitle className="font-heading text-xl">Connect a GitHub Repo</DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -88,7 +88,7 @@ export function AddRepoModal() {
                 <Input
                   id="url"
                   placeholder="https://github.com/facebook/react"
-                  className="pl-9 bg-background/50 border-white/10 focus-visible:ring-brand-glow"
+                  className="border-[var(--border)] bg-background/50 pl-9 focus-visible:ring-brand-glow"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   disabled={loading}

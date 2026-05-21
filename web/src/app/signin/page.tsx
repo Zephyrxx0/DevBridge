@@ -74,14 +74,14 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="relative min-h-dvh text-[var(--foreground)] selection:bg-white/30 selection:text-white">
+    <div className="relative min-h-dvh text-[var(--foreground)] selection:bg-[var(--brand-muted)] selection:text-[var(--foreground)]">
       <BackgroundEffects />
       <DitheringBackground />
       <div className="relative pt-6">
         <FloatingHeader />
       </div>
       <main className="relative z-10 mx-auto flex min-h-[calc(100dvh-120px)] w-full max-w-5xl items-center justify-center px-4 py-10 md:px-8">
-        <Card className="w-full max-w-md border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_62%,transparent)] shadow-[0_24px_90px_rgba(0,0,0,0.2)] backdrop-blur-2xl">
+        <Card className="w-full max-w-md border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_78%,transparent)] shadow-xl backdrop-blur-2xl">
           <CardHeader>
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -94,7 +94,7 @@ export default function SignInPage() {
                 size="icon-sm"
                 aria-label="Toggle theme"
                 onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                className="border-white/10 bg-[color-mix(in_oklab,var(--surface-2)_25%,transparent)] text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                className="border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-2)_45%,transparent)] text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
               >
                 <Sun className="hidden size-4 dark:block" />
                 <Moon className="block size-4 dark:hidden" />

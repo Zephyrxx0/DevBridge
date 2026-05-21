@@ -152,14 +152,14 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="relative min-h-dvh text-[var(--foreground)] selection:bg-white/30 selection:text-white">
+    <div className="relative min-h-dvh text-[var(--foreground)] selection:bg-[var(--brand-muted)] selection:text-[var(--foreground)]">
       <BackgroundEffects />
       <DitheringBackground />
       <div className="relative pt-6">
         <FloatingHeader />
       </div>
       <main className="relative z-10 mx-auto flex min-h-[calc(100dvh-120px)] w-full max-w-5xl items-start px-0 pt-10 pb-12">
-        <Card className="mx-auto w-full border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_62%,transparent)] shadow-[0_24px_90px_rgba(0,0,0,0.2)] backdrop-blur-2xl">
+        <Card className="mx-auto w-full border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_78%,transparent)] shadow-xl backdrop-blur-2xl">
           <CardHeader className="pb-4">
             <div className="flex items-start gap-3">
               <div>
@@ -196,7 +196,7 @@ export default function ProfilePage() {
 								</div>
 							</div>
 							<div className="grid place-items-start pt-1">
-								<div className="h-64 w-64 overflow-hidden rounded-full border border-white/10">
+								<div className="h-64 w-64 overflow-hidden rounded-full border border-[var(--border)]">
 									<Image src={avatarUrl || "https://placehold.co/320x320/png"} alt="Profile" width={256} height={256} className="h-full w-full object-cover" />
 								</div>
 							</div>
@@ -206,19 +206,19 @@ export default function ProfilePage() {
 							<p className="mb-2 text-xs uppercase tracking-wide text-[var(--foreground-muted)]">Personal</p>
 						</div>
 						<div className="grid gap-3 md:grid-cols-2">
-							<div className="rounded-lg border border-white/10 bg-[var(--surface-2)]/30 p-3">
+							<div className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)]/30 p-3">
 								<p className="text-xs uppercase tracking-wide text-[var(--foreground-muted)]">Pronouns</p>
 								<p className="mt-1 text-sm">{pronouns || "Don't specify"}</p>
 							</div>
-							<div className="rounded-lg border border-white/10 bg-[var(--surface-2)]/30 p-3">
+							<div className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)]/30 p-3">
 								<p className="text-xs uppercase tracking-wide text-[var(--foreground-muted)]">Website</p>
 								<p className="mt-1 text-sm">{website || "Not set"}</p>
 							</div>
-							<div className="rounded-lg border border-white/10 bg-[var(--surface-2)]/30 p-3">
+							<div className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)]/30 p-3">
 								<p className="text-xs uppercase tracking-wide text-[var(--foreground-muted)]">Company</p>
 								<p className="mt-1 text-sm">{company || "Not set"}</p>
 							</div>
-							<div className="rounded-lg border border-white/10 bg-[var(--surface-2)]/30 p-3">
+							<div className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)]/30 p-3">
 								<p className="text-xs uppercase tracking-wide text-[var(--foreground-muted)]">Location</p>
 								<p className="mt-1 text-sm">{location || "Not set"}</p>
 							</div>
@@ -228,7 +228,7 @@ export default function ProfilePage() {
 							<p className="mb-2 text-xs uppercase tracking-wide text-[var(--foreground-muted)]">Social</p>
 							<div className="grid gap-2">
 								{[social1, social2, social3, social4].map((social, index) => (
-									<div key={index} className="flex items-center gap-2 rounded-lg border border-white/10 bg-[var(--surface-2)]/30 px-3 py-2 text-sm text-[var(--foreground-muted)]">
+									<div key={index} className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-2)]/30 px-3 py-2 text-sm text-[var(--foreground-muted)]">
 										<Link2 className="size-3.5" />
 										<span>{social || `Link to social profile ${index + 1}`}</span>
 									</div>
@@ -255,7 +255,7 @@ export default function ProfilePage() {
 						</div>
 						<div className="grid justify-items-end gap-3">
 							<div className="relative h-72 w-72">
-								<div className="h-72 w-72 overflow-hidden rounded-full border border-white/10">
+								<div className="h-72 w-72 overflow-hidden rounded-full border border-[var(--border)]">
 									<Image src={avatarUrl || "https://placehold.co/360x360/png"} alt="Avatar preview" width={288} height={288} className="h-full w-full object-cover" />
 								</div>
 								<div className="absolute right-5 bottom-5">
@@ -264,7 +264,7 @@ export default function ProfilePage() {
 										variant="outline"
 										size="icon"
 										onClick={() => setAvatarDialogOpen(true)}
-										className="size-14 rounded-full border-white/30 bg-black/80 hover:bg-black/90"
+										className="size-14 rounded-full border-[var(--border)] bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--brand-hover)]"
 									>
 										<Pencil className="size-6" />
 									</Button>
@@ -328,7 +328,7 @@ export default function ProfilePage() {
               )}
             </CardContent>
             <Dialog open={avatarDialogOpen} onOpenChange={setAvatarDialogOpen}>
-              <DialogContent className="max-w-[min(92vw,980px)] min-h-[520px] sm:max-w-4xl border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_78%,transparent)] backdrop-blur-xl">
+              <DialogContent className="max-w-[min(92vw,980px)] min-h-[520px] border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_78%,transparent)] backdrop-blur-xl sm:max-w-4xl">
                 <DialogHeader>
                   <DialogTitle>Profile Picture</DialogTitle>
                   <DialogDescription>Upload from file or choose an URL.</DialogDescription>

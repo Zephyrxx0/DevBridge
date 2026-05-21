@@ -14,16 +14,16 @@ export function DitheringBackground() {
   const { colorBack, colorFront } = useMemo(
     () =>
       isDark
-        ? { colorBack: "#0B2133", colorFront: "#B3F6E2" }
-        : { colorBack: "#F4FFFB", colorFront: "#2F796A" },
+        ? { colorBack: "#06100a", colorFront: "#054114" }
+        : { colorBack: "#f0fdfa", colorFront: "#065f46" },
     [isDark],
   );
 
   return (
     <div className="pointer-events-none fixed inset-0 -z-10">
-      <Suspense fallback={<div className="absolute inset-0 bg-muted/20" />}>
+      <Suspense fallback={<div className="absolute inset-0 bg-background" />}>
         <div
-          className="absolute inset-0 z-0 opacity-30 transition-[filter,opacity] duration-200 dark:opacity-[0.22]"
+          className="absolute inset-0 z-0 transition-[filter] duration-200 "
           style={{ filter: "blur(var(--dither-blur, 0px))" }}
         >
           <Dithering
@@ -31,11 +31,12 @@ export function DitheringBackground() {
             colorFront={colorFront}
             shape="warp"
             type="4x4"
-            speed={0.2}
+            speed={0.08}
             className="size-full"
             minPixelRatio={1}
           />
-        </div>
+        </div >
+        <div className="absolute inset-0 z-10 bg-black/15" />
       </Suspense>
     </div>
   );

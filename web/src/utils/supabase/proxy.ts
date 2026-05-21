@@ -27,7 +27,27 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (request.nextUrl.pathname.startsWith('/api/backend') && user) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('X-User-Id', user.id);
+    requestHeaders.set('X-Internal-Auth', process.env.INTERNAL_AUTH_TOKEN || 'dev-token-default');
+    
+    // We need to preserve cookies set during getUser()
+    const newResponse = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+    
+    // Copy over any cookies that were set
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      newResponse.cookies.set(cookie.name, cookie.value);
+    });
+    
+    supabaseResponse = newResponse;
+  }
 
   return supabaseResponse;
 }

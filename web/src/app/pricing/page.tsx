@@ -31,7 +31,7 @@ const tiers = [
 
 export default function PricingPage() {
   return (
-    <div className="relative min-h-dvh text-[var(--foreground)] selection:bg-white/30 selection:text-white">
+    <div className="relative min-h-dvh text-[var(--foreground)] selection:bg-[var(--brand-muted)] selection:text-[var(--foreground)]">
       <BackgroundEffects />
       <DitheringBackground />
       <div className="relative pt-6">
@@ -49,7 +49,7 @@ export default function PricingPage() {
           {tiers.map((tier) => (
             <div
               key={tier.name}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_48%,transparent)] p-0.5 shadow-[0_24px_90px_rgba(0,0,0,0.25)] backdrop-blur-2xl md:rounded-3xl"
+              className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_72%,transparent)] p-0.5 shadow-xl backdrop-blur-2xl md:rounded-3xl"
             >
               <div className="grid items-center divide-y md:grid-cols-2 md:divide-x md:divide-y-0">
                 <div className="p-6 md:p-8 md:pr-12">

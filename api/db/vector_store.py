@@ -24,6 +24,7 @@ class VectorStoreManager:
     def __init__(self):
         self.collection_name = "devbridge_codebase"
         self._vectorstore: Optional[PGVectorStore] = None
+        self._embedding_service = None
 
     def initialize(self) -> bool:
         """
@@ -37,23 +38,31 @@ class VectorStoreManager:
 
         try:
             embeddings = self.get_embedding_service()
+            self._embedding_service = embeddings
 
-            self._vectorstore = PGVectorStore(
-                engine=engine,
-                collection_name=self.collection_name,
-                embedding_service=embeddings,
-            )
+            try:
+                self._vectorstore = PGVectorStore(
+                    engine=engine,
+                    collection_name=self.collection_name,
+                    embedding_service=embeddings,
+                )
 
-            create_tables = self._vectorstore.create_tables_if_not_exists()
-            if inspect.isawaitable(create_tables):
-                try:
-                    loop = asyncio.get_running_loop()
-                except RuntimeError:
-                    asyncio.run(create_tables)
-                else:
-                    loop.create_task(create_tables)
+                create_tables = self._vectorstore.create_tables_if_not_exists()
+                if inspect.isawaitable(create_tables):
+                    try:
+                        loop = asyncio.get_running_loop()
+                    except RuntimeError:
+                        asyncio.run(create_tables)
+                    else:
+                        loop.create_task(create_tables)
+            except TypeError:
+                self._vectorstore = None
+                logger.warning(
+                    "PGVectorStore constructor mismatch with installed langchain_postgres version. "
+                    "Falling back to raw-SQL vector search path."
+                )
 
-            logger.info("Vector store initialized successfully.")
+            logger.info("Vector store initialized successfully (raw SQL path enabled).")
             return True
         except Exception as e:
             logger.error(f"Failed to initialize vector store: {e}")
@@ -73,12 +82,12 @@ class VectorStoreManager:
 
     def add_documents(self, docs: List[Document]):
         if not self._vectorstore:
-            raise ValueError("Vector store is not initialized.")
+            raise ValueError("PGVectorStore API is unavailable in this runtime; add_documents is disabled.")
         self._vectorstore.add_documents(docs)
 
     def similarity_search(self, query: str, k: int = 4) -> List[Document]:
         if not self._vectorstore:
-            logger.warning("Vector store is not initialized, returning empty search results.")
+            logger.warning("PGVectorStore API is unavailable in this runtime, returning empty search results.")
             return []
 
         return self._vectorstore.similarity_search(query, k=k)
@@ -113,7 +122,7 @@ class VectorStoreManager:
         """
         Hybrid search invocation method that calls SQL function and maps rows to normalized result objects.
         """
-        if not self._vectorstore:
+        if not self._embedding_service:
             logger.warning("Vector store is not initialized, returning empty hybrid search results.")
             return []
 
@@ -123,7 +132,7 @@ class VectorStoreManager:
 
         # 1. Generate embedding for query
         # embed_query is synchronous; run it in thread to keep loop responsive
-        embedding = await asyncio.to_thread(self._vectorstore.embedding_service.embed_query, query_text)
+        embedding = await asyncio.to_thread(self._embedding_service.embed_query, query_text)
 
         # 2. Call SQL function
         async with engine.connect() as conn:
@@ -182,7 +191,11 @@ class VectorStoreManager:
                 logger.warning("Vector store is not initialized, returning empty PR search results.")
                 return []
 
-            embedding = await asyncio.to_thread(self._vectorstore.embedding_service.embed_query, query_text)
+            if not self._embedding_service:
+                logger.warning("Embedding service is not initialized, returning empty PR search results.")
+                return []
+
+            embedding = await asyncio.to_thread(self._embedding_service.embed_query, query_text)
             semantic_sql = text(
                 """
                 SELECT repo, number, title, summary, author, merged_at,

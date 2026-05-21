@@ -136,6 +136,10 @@ export function FileExplorer({
 
   return (
     <div className="flex h-full min-h-0 flex-col p-0">
+      <div className="mb-2 mt-1 flex items-center justify-between px-1">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--foreground-subtle)]">Files</p>
+      </div>
+
       <div className="relative">
         <GitBranch className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-subtle)]" />
         <div className="relative">
@@ -151,10 +155,6 @@ export function FileExplorer({
           </select>
           <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-subtle)]" />
         </div>
-      </div>
-
-      <div className="mb-2 mt-3 flex items-center justify-between px-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--foreground-subtle)]">Files</p>
       </div>
 
       {branchLoadError ? (

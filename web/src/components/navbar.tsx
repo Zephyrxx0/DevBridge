@@ -26,7 +26,7 @@ export function Navbar({ className, showConnectButton = true }: NavbarProps) {
       <div className="mx-auto flex h-full w-full max-w-[1200px] items-center justify-between px-[1.25rem] md:px-[2.5rem]">
         <div className="flex items-center gap-3">
           <div
-            className="flex h-8 w-8 items-center justify-center rounded-[0.5rem] text-sm font-bold text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-[0.5rem] text-sm font-bold text-[var(--primary-foreground)]"
             style={{ background: "var(--gradient-brand)", fontFamily: "var(--font-heading)" }}
           >
             DB

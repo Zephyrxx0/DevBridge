@@ -43,7 +43,7 @@ export function AuthButton({ showThemeToggle = false }: { showThemeToggle?: bool
     await supabase.auth.signOut();
   };
 
-  if (loading) return <div className="h-9 w-9 animate-pulse rounded-full bg-white/10" />;
+  if (loading) return <div className="h-9 w-9 animate-pulse rounded-full bg-[var(--muted)]" />;
 
   if (!user) {
     return (
@@ -52,7 +52,7 @@ export function AuthButton({ showThemeToggle = false }: { showThemeToggle?: bool
           <Button
             variant="outline"
             size="sm"
-            className="h-9 gap-2 rounded-lg border-white/[0.08] bg-[color-mix(in_oklab,var(--surface-2)_30%,transparent)] px-3.5 hover:bg-white/[0.06]"
+            className="h-9 gap-2 rounded-lg border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-2)_55%,transparent)] px-3.5 hover:bg-[var(--muted)]"
           >
             <LogIn className="size-4" />
             <span className="hidden sm:inline">Sign In</span>
@@ -65,13 +65,13 @@ export function AuthButton({ showThemeToggle = false }: { showThemeToggle?: bool
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-transparent" />}>
-        <Avatar className="h-9 w-9 border border-white/10">
+        <Avatar className="h-9 w-9 border border-[var(--border)]">
           <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name || "User"} />
-          <AvatarFallback className="bg-white/5">{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+          <AvatarFallback className="bg-[var(--muted)]">{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-56 border-white/10 bg-background/95 backdrop-blur-md"
+        className="w-56 border-[var(--border)] bg-background/95 backdrop-blur-md"
         align="end"
         side="bottom"
         sideOffset={18}
@@ -84,19 +84,19 @@ export function AuthButton({ showThemeToggle = false }: { showThemeToggle?: bool
             </div>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator className="bg-white/10" />
-        <DropdownMenuItem render={<Link href="/dashboard" />} className="cursor-pointer focus:bg-white/5">
+        <DropdownMenuSeparator className="bg-[var(--border)]" />
+        <DropdownMenuItem render={<Link href="/dashboard" />} className="cursor-pointer focus:bg-[var(--muted)]">
           <UserIcon className="mr-2 h-4 w-4" />
           <span>Dashboard</span>
         </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/profile" />} className="cursor-pointer focus:bg-white/5">
+        <DropdownMenuItem render={<Link href="/profile" />} className="cursor-pointer focus:bg-[var(--muted)]">
           <Settings2 className="mr-2 h-4 w-4" />
           <span>Edit Profile</span>
         </DropdownMenuItem>
         {showThemeToggle ? (
           <DropdownMenuItem
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="cursor-pointer focus:bg-white/5"
+            className="cursor-pointer focus:bg-[var(--muted)]"
           >
             {theme === "light" ? <Moon className="mr-2 h-4 w-4" /> : <Sun className="mr-2 h-4 w-4" />}
             <span>{theme === "light" ? "Dark mode" : "Light mode"}</span>

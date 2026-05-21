@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Editor, { OnMount } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import { ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Code2, Folder, GitBranch, Plus, Sun, Moon } from "lucide-react";
@@ -24,6 +24,7 @@ import { ChatLayout } from "@/components/chat/ChatLayout";
 import { ChatStream } from "@/components/chat/ChatStream";
 import { ChatInput } from "@/components/chat/ChatInput";
 import type { Message, SourceReference, SnippetChip } from "@/components/chat/types";
+import type { OnboardingPlan } from "@/hooks/useOnboarding";
 
 type FileContent = {
   content: string;
@@ -64,6 +65,7 @@ import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 
 export default function RepoWorkspacePage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const repoId = String(params.id ?? "");
 
   const { repo } = useRepo();
@@ -767,6 +769,56 @@ export default function RepoWorkspacePage() {
     });
   };
 
+  const handleOnboardingComplete = useCallback((_plan: OnboardingPlan) => {
+    setMessages((prev) => {
+      if (prev.some((m) => m.role === "assistant" && m.content === "__DEVBRIDGE_ONBOARDING_READY__")) {
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          role: "assistant",
+          content: "__DEVBRIDGE_ONBOARDING_READY__",
+        },
+      ];
+    });
+  }, []);
+
+  const triggerIndexFiles = useCallback(async () => {
+    try {
+      setBranchIndexing(true);
+      setBranchIndexMsg("Indexing branch in background...");
+      const response = await fetch(`${apiUrl}/repo/${repoId}/trigger-index`, { method: "POST" });
+      if (!response.ok) {
+        setBranchIndexing(false);
+        setBranchIndexMsg("Failed to trigger indexing.");
+        setTimeout(() => setBranchIndexMsg(""), 3000);
+      }
+    } catch {
+      setBranchIndexing(false);
+      setBranchIndexMsg("Failed to trigger indexing.");
+      setTimeout(() => setBranchIndexMsg(""), 3000);
+    }
+  }, [apiUrl, repoId]);
+
+  const removeRepoFromWorkspace = useCallback(async () => {
+    const confirmed = window.confirm("Remove this repository from workspace? This deletes stored index and chats.");
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`${apiUrl}/repo/${repoId}`, { method: "DELETE" });
+      if (!response.ok) {
+        window.alert("Failed to remove repository from workspace.");
+        return;
+      }
+      localStorage.removeItem(`repo:${repoId}:activeSessionId`);
+      localStorage.removeItem(`repo:${repoId}:selectedBranch`);
+      router.push("/dashboard");
+    } catch {
+      window.alert("Failed to remove repository from workspace.");
+    }
+  }, [apiUrl, repoId, router]);
+
   return (
     <div className="h-dvh w-full overflow-hidden p-0">
       <ChatLayout 
@@ -775,10 +827,14 @@ export default function RepoWorkspacePage() {
             repoId={repoId}
             sessions={sessions}
             activeSessionId={activeSessionId}
+            branchIndexing={branchIndexing}
+            branchIndexMsg={branchIndexMsg}
             onSelectSession={setActiveSessionId}
             onCreateSession={createSession}
             onRenameSession={renameChat}
             onDeleteSession={deleteChat}
+            onTriggerIndex={triggerIndexFiles}
+            onRemoveRepo={removeRepoFromWorkspace}
           />
         }
         chatArea={
@@ -790,6 +846,7 @@ export default function RepoWorkspacePage() {
               repoId={repoId} 
               onOpenArtifact={openArtifact}
               onSelectSource={setSelectedSource}
+              onOnboardingComplete={handleOnboardingComplete}
             />
             <ChatInput
               input={input}

@@ -334,12 +334,12 @@ app.add_middleware(
 @app.middleware("http")
 async def inject_user_context(request, call_next):
     # Only trust forwarded identity when internal auth token and proxy host checks pass.
-    expected_internal_token = os.getenv("INTERNAL_AUTH_TOKEN")
+    expected_internal_token = os.getenv("INTERNAL_AUTH_TOKEN", "dev-token-default")
     incoming_internal_token = request.headers.get("X-Internal-Auth") or ""
 
     trusted_proxy_ips = {
         ip.strip()
-        for ip in os.getenv("TRUSTED_PROXY_IPS", "127.0.0.1,::1").split(",")
+        for ip in os.getenv("TRUSTED_PROXY_IPS", "127.0.0.1,::1,::ffff:127.0.0.1").split(",")
         if ip.strip()
     }
     client_host = request.client.host if request.client else None

@@ -14,7 +14,7 @@ interface StatusStreamProps {
 export function StatusStream({ statusMessages, className }: StatusStreamProps) {
   return (
     <div 
-      className={cn("flex flex-col gap-3 py-8 max-w-md mx-auto w-full", className)}
+      className={cn("flex w-full flex-col gap-3", className)}
       aria-busy="true"
       aria-live="polite"
     >

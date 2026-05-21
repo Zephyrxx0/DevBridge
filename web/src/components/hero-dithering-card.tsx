@@ -19,7 +19,7 @@ export function HeroDitheringCard({ className }: HeroDitheringCardProps) {
       )}
     >
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
-        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_40%,transparent)] px-4 py-1.5 text-sm font-medium backdrop-blur-md">
+        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_70%,transparent)] px-4 py-1.5 text-sm font-medium backdrop-blur-md">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--brand)] opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--brand)]" />
@@ -52,7 +52,7 @@ export function HeroDitheringCard({ className }: HeroDitheringCardProps) {
             <Button
               variant="outline"
               size="lg"
-              className="h-14 rounded-full border-white/15 bg-[color-mix(in_oklab,var(--surface-1)_30%,transparent)] px-10 text-base font-medium backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95"
+              className="h-14 rounded-full border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_70%,transparent)] px-10 text-base font-medium backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95"
             >
               View repo map
             </Button>

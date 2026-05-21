@@ -379,7 +379,7 @@ function OnboardingHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-1 text-center",
+        "mx-auto flex max-w-3xl flex-col gap-3 px-6 text-center",
         "[&_[data-slot=onboarding-title]]:font-normal [&_[data-slot=onboarding-title]]:font-serif [&_[data-slot=onboarding-title]]:text-3xl [&_[data-slot=onboarding-title]]:text-foreground",
         "[&_[data-slot=onboarding-description]]:text-base [&_[data-slot=onboarding-description]]:text-[var(--foreground-muted)]",
         className

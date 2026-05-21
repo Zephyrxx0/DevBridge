@@ -9,14 +9,14 @@ interface OnboardingTriggerProps {
 
 export function OnboardingTrigger({ onClick, className }: OnboardingTriggerProps) {
   return (
-    <div className={cn("flex flex-col items-center justify-center py-12", className)}>
+    <div className={cn("flex flex-col items-center justify-center py-6", className)}>
       <Button 
         onClick={onClick}
         size="lg"
         className="group relative overflow-hidden rounded-full px-8 py-6 text-base font-medium shadow-lg transition-all hover:scale-105"
         style={{ backgroundColor: "var(--brand)" }}
       >
-        <span className="absolute inset-0 animate-glow-pulse bg-white/20 opacity-0 group-hover:opacity-100" />
+        <span className="absolute inset-0 animate-glow-pulse bg-[var(--brand-glow)] opacity-0 group-hover:opacity-100" />
         <Sparkles className="mr-2 h-5 w-5" />
         Start Onboarding
       </Button>

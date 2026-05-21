@@ -47,10 +47,10 @@ export function FloatingHeader() {
 			className={cn(
 				'sticky top-4 z-50',
 				'mx-auto w-full max-w-5xl rounded-2xl',
-				'border border-white/[0.08]',
+				'border border-[var(--border)]',
 				'bg-[color-mix(in_oklab,var(--surface-1)_25%,transparent)]',
 				'backdrop-blur-[24px] backdrop-saturate-[180%]',
-				'shadow-[0_8px_32px_rgba(0,0,0,0.18),inset_0_1px_0_0_rgba(255,255,255,0.06)]',
+				'shadow-lg',
 			)}
 		>
 			<nav className="mx-auto flex items-center justify-between px-3 py-1.5">
@@ -59,7 +59,7 @@ export function FloatingHeader() {
 					className="flex items-center gap-2 rounded-lg px-2 py-1.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--brand-glow)]"
 					aria-label="DevBridge home"
 				>
-					<div className="grid size-9 place-items-center text-[color-mix(in_oklab,var(--icon-contrast)_70%,transparent)]">
+					<div className="grid size-9 place-items-center text-[#065f46] dark:text-[color-mix(in_oklab,var(--icon-contrast)_70%,transparent)]">
 						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 256 256" fill="none" aria-hidden="true">
 							<path d="M112 32H54.627L128 105.373 201.373 32H144V0h112v112h-32V54.627L150.627 128 224 201.373V144h32v112H144v-32h57.373L128 150.627 54.627 224H112v32H0V144h32v57.373L105.373 128 32 54.627V112H0V0h112z" fill="currentColor" />
 						</svg>
@@ -73,12 +73,12 @@ export function FloatingHeader() {
 					<DropdownMenuTrigger render={<Button variant="ghost" size="sm" nativeButton={true} className="gap-1.5 text-base font-medium text-[var(--foreground)] hover:text-[var(--foreground)]" />}>
 							Features <ChevronDown className="size-3.5" />
 						</DropdownMenuTrigger>
-						<DropdownMenuContent align="start" side="bottom" sideOffset={18} className="w-56 border-white/10 bg-background/95 backdrop-blur-md">
+						<DropdownMenuContent align="start" side="bottom" sideOffset={18} className="w-56 border-[var(--border)] bg-background/95 backdrop-blur-md">
 							<DropdownMenuGroup>
-								<DropdownMenuItem render={<Link href="/docs?feature=map" />} className="cursor-pointer focus:bg-white/5">Map</DropdownMenuItem>
-								<DropdownMenuItem render={<Link href="/docs?feature=search" />} className="cursor-pointer focus:bg-white/5">Search</DropdownMenuItem>
-								<DropdownMenuItem render={<Link href="/docs?feature=annotations" />} className="cursor-pointer focus:bg-white/5">Annotations</DropdownMenuItem>
-								<DropdownMenuItem render={<Link href="/docs?feature=prs" />} className="cursor-pointer focus:bg-white/5">PRs</DropdownMenuItem>
+								<DropdownMenuItem render={<Link href="/docs?feature=map" />} className="cursor-pointer focus:bg-[var(--muted)]">Map</DropdownMenuItem>
+								<DropdownMenuItem render={<Link href="/docs?feature=search" />} className="cursor-pointer focus:bg-[var(--muted)]">Search</DropdownMenuItem>
+								<DropdownMenuItem render={<Link href="/docs?feature=annotations" />} className="cursor-pointer focus:bg-[var(--muted)]">Annotations</DropdownMenuItem>
+								<DropdownMenuItem render={<Link href="/docs?feature=prs" />} className="cursor-pointer focus:bg-[var(--muted)]">PRs</DropdownMenuItem>
 							</DropdownMenuGroup>
 						</DropdownMenuContent>
 					</DropdownMenu>

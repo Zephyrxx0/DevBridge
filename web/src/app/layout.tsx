@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -7,15 +7,15 @@ import { LayoutTransition } from "@/components/layout/LayoutTransition";
 import { ResilienceHandler } from "@/components/ui/ResilienceHandler";
 import { AgentationMount } from "@/components/dev/AgentationMount";
 
-const geist = Geist({
+const fontSans = Inter({
   subsets: ["latin"],
-  variable: "--font-geist",
+  variable: "--font-sans",
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const fontMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -54,15 +54,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn("h-full", geist.variable, geistMono.variable)}>
+    <html lang="en" suppressHydrationWarning className={cn("h-full", fontSans.variable, fontMono.variable)}>
       <head />
       <body className="min-h-screen antialiased">
-        <a
-          href="#main-content"
-          className="skip-link"
-        >
-          Skip to Content
-        </a>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} disableTransitionOnChange>
           <ResilienceHandler />
           <AgentationMount />

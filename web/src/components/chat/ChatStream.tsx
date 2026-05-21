@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
+import type { OnboardingPlan } from "@/hooks/useOnboarding";
 import { Message as ElementsMessage, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Shimmer } from "@/components/ai-elements/shimmer";
@@ -38,6 +39,7 @@ interface ChatStreamProps {
   repoId: string;
   onOpenArtifact: (artifact: SnippetChip) => void;
   onSelectSource: (source: SourceReference) => void;
+  onOnboardingComplete: (plan: OnboardingPlan) => void;
 }
 
 export function ChatStream({
@@ -47,8 +49,11 @@ export function ChatStream({
   repoId,
   onOpenArtifact,
   onSelectSource,
+  onOnboardingComplete,
 }: ChatStreamProps) {
   const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
+  const [showOnboardingGuide, setShowOnboardingGuide] = useState(false);
+  const [latestOnboardingPlan, setLatestOnboardingPlan] = useState<OnboardingPlan | null>(null);
 
   const extractCodeBlocks = (content: string): Array<{ language: string; code: string }> => {
     const matches = [...content.matchAll(/```([a-zA-Z0-9_-]+)?\n([\s\S]*?)```/g)];
@@ -94,11 +99,48 @@ export function ChatStream({
     );
   };
 
+const onboardingSummaryToken = "__DEVBRIDGE_ONBOARDING_READY__";
+
+  const DevBridgeLogo = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 256 256" fill="none" aria-hidden="true">
+      <path d="M112 32H54.627L128 105.373 201.373 32H144V0h112v112h-32V54.627L150.627 128 224 201.373V144h32v112H144v-32h57.373L128 150.627 54.627 224H112v32H0V144h32v57.373L105.373 128 32 54.627V112H0V0h112z" fill="currentColor" />
+    </svg>
+  );
+
+  useEffect(() => {
+    const open = () => setShowOnboardingGuide(true);
+    window.addEventListener("devbridge:open-onboarding", open as EventListener);
+    return () => window.removeEventListener("devbridge:open-onboarding", open as EventListener);
+  }, []);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1 py-1">
       <Conversation>
-        <ConversationContent className="p-0">
-          <div className="h-full space-y-[var(--space-md)]">
+        {showOnboardingGuide && messages.length > 0 ? (
+          <div className="absolute inset-0 z-20 bg-[color-mix(in_oklab,var(--background)_78%,transparent)] p-4 backdrop-blur-sm">
+            <div className="relative mx-auto flex h-full w-full max-w-5xl flex-col">
+              <button
+                type="button"
+                onClick={() => setShowOnboardingGuide(false)}
+                className="absolute right-2 top-2 z-10 rounded-md border border-[var(--border)] bg-[var(--surface-1)] px-3 py-1.5 text-xs text-[var(--foreground-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
+              >
+                Close
+              </button>
+              <OnboardingGuide
+                repoId={repoId}
+                resumePlan={latestOnboardingPlan}
+                resumeAtPlan={Boolean(latestOnboardingPlan)}
+                onComplete={(plan) => {
+                  setLatestOnboardingPlan(plan);
+                  setShowOnboardingGuide(false);
+                  onOnboardingComplete(plan);
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
+        <ConversationContent className="h-full p-0">
+          <div className="h-full min-h-full space-y-[var(--space-md)]">
             {messages.length === 0 && !isLoading ? (
               isInitializing ? (
                 <div className="flex h-full flex-col gap-4 p-3">
@@ -122,8 +164,14 @@ export function ChatStream({
                   </div>
                 </div>
               ) : (
-                <div className="flex h-full flex-col animate-in fade-in zoom-in duration-500">
-                  <OnboardingGuide repoId={repoId} />
+                <div className="flex h-full min-h-full flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
+                  <OnboardingGuide
+                    repoId={repoId}
+                    onComplete={(plan) => {
+                      setLatestOnboardingPlan(plan);
+                      onOnboardingComplete(plan);
+                    }}
+                  />
                 </div>
               )
             ) : null}
@@ -149,6 +197,7 @@ export function ChatStream({
               };
 
               const isUser = message.role === "user";
+              const isOnboardingSummary = !isUser && message.content === onboardingSummaryToken;
               if (!isUser && message.content.trim() === "") return null;
               const hasSources = !isUser && Boolean(message.sources?.length);
               const isSourceOpen = expandedSources.has(index);
@@ -166,7 +215,13 @@ export function ChatStream({
                       <Avatar className="mt-1 shrink-0">
                         <AvatarFallback className="bg-[var(--surface-3)] text-[var(--foreground)]">U</AvatarFallback>
                       </Avatar>
-                    ) : null}
+                    ) : (
+                      <Avatar className="mt-1 shrink-0">
+                        <AvatarFallback className="bg-[var(--brand-muted)] text-[var(--brand)]">
+                          <DevBridgeLogo />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
 
                     <div className={cn("min-w-0", isUser ? "ml-auto max-w-[60%]" : "flex-1")}>
                       {!isUser && (typeof message.cascaded !== "undefined" || typeof message.model_used !== "undefined" || message.fallback) ? (
@@ -176,14 +231,32 @@ export function ChatStream({
                         />
                       ) : null}
                       
-                      <MessageContent className={cn(
-                        "px-0 py-0 text-[var(--text-body)] leading-[1.62] max-w-full",
-                        isUser
-                          ? "rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-4 py-3 text-[var(--foreground)] my-1"
-                          : "border-0 bg-transparent text-[var(--foreground)]"
-                      )}>
+                      <MessageContent
+                        className={cn(
+                          "px-0 py-0 text-[var(--text-body)] leading-[1.62] max-w-full",
+                          isUser
+                            ? "rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-4 py-3 text-[var(--foreground)] my-1"
+                            : "border-0 bg-transparent text-[var(--foreground)]"
+                        )}
+                      >
                         {!isUser ? (
-                          <MessageResponse>{message.content}</MessageResponse>
+                          isOnboardingSummary ? (
+                            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
+                              <p className="text-sm font-medium text-[var(--foreground)]">Onboarding guide ready.</p>
+                              <p className="mt-1 text-sm text-[var(--foreground-muted)]">Reopen onboarding anytime to review steps and setup.</p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  window.dispatchEvent(new CustomEvent("devbridge:open-onboarding"));
+                                }}
+                                className="mt-3 rounded-md border border-[var(--border)] px-3 py-2 text-xs text-[var(--foreground-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]"
+                              >
+                                Reopen onboarding
+                              </button>
+                            </div>
+                          ) : (
+                            <MessageResponse>{message.content}</MessageResponse>
+                          )
                         ) : (
                           renderUserMessage(message.content)
                         )}

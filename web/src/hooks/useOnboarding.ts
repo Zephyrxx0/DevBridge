@@ -27,6 +27,7 @@ interface UseOnboardingReturn {
   loading: boolean;
   error: string | null;
   startGeneration: (focus: string) => Promise<void>;
+  cancelGeneration: () => void;
   reset: () => void;
 }
 
@@ -37,6 +38,7 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
   const [error, setError] = useState<string | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const settledRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const cleanup = useCallback(() => {
     if (eventSourceRef.current) {
@@ -46,14 +48,27 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
   }, []);
 
   useEffect(() => {
-    return cleanup;
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      cleanup();
+    };
   }, [cleanup]);
 
   const reset = useCallback(() => {
     cleanup();
     settledRef.current = false;
+    if (!mountedRef.current) return;
     setStatus([]);
     setPlan(null);
+    setLoading(false);
+    setError(null);
+  }, [cleanup]);
+
+  const cancelGeneration = useCallback(() => {
+    cleanup();
+    settledRef.current = true;
+    if (!mountedRef.current) return;
     setLoading(false);
     setError(null);
   }, [cleanup]);
@@ -61,12 +76,15 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
   const startGeneration = useCallback(
     async (focus: string) => {
       reset();
-      setLoading(true);
+      if (mountedRef.current) {
+        setLoading(true);
+      }
 
       try {
         const existing = await fetch(`/api/backend/repo/${repoId}/onboarding-plan`);
         if (existing.ok) {
           const cachedPlan = (await existing.json()) as OnboardingPlan;
+          if (!mountedRef.current) return;
           setPlan(cachedPlan);
           setLoading(false);
           return;
@@ -86,6 +104,7 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
           const data = JSON.parse(event.data);
           
           if (data.type === "status") {
+            if (!mountedRef.current) return;
             setStatus((prev) => [
               ...prev,
               {
@@ -96,11 +115,13 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
             ]);
           } else if (data.type === "plan") {
             settledRef.current = true;
+            if (!mountedRef.current) return;
             setPlan(data.content);
             setLoading(false);
             cleanup();
           } else if (data.type === "error") {
             settledRef.current = true;
+            if (!mountedRef.current) return;
             setError(data.message || data.content || "An error occurred");
             setLoading(false);
             cleanup();
@@ -117,6 +138,7 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
           return;
         }
         console.error("SSE error", err);
+        if (!mountedRef.current) return;
         setError("Connection lost. Please try again.");
         setLoading(false);
         cleanup();
@@ -125,5 +147,5 @@ export function useOnboarding(repoId: string): UseOnboardingReturn {
     [repoId, reset, cleanup]
   );
 
-  return { status, plan, loading, error, startGeneration, reset };
+  return { status, plan, loading, error, startGeneration, cancelGeneration, reset };
 }

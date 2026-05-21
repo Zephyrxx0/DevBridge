@@ -56,7 +56,7 @@ export function Sidebar({ className, children }: React.ComponentProps<"aside">) 
           <button
             type="button"
             aria-label="Close sidebar"
-            className="fixed inset-0 z-30 bg-black/45"
+            className="fixed inset-0 z-30 bg-[color-mix(in_oklab,var(--foreground)_35%,transparent)]"
             onClick={() => setCollapsed(true)}
           />
         ) : null}

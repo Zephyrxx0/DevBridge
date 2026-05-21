@@ -84,7 +84,7 @@ export default function DashboardPage() {
 
   return (
     <div className="pb-12">
-      <section className="rounded-3xl border border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_45%,transparent)] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.25)] backdrop-blur-2xl md:p-8">
+      <section className="rounded-3xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_72%,transparent)] p-6 shadow-xl backdrop-blur-2xl md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-[var(--foreground-subtle)]">Workspace hub</p>
@@ -92,18 +92,18 @@ export default function DashboardPage() {
             <p className="mt-2 text-[var(--foreground-muted)]">Flow: workspace to project to chat. Recent projects appear first.</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="inline-flex rounded-xl border border-white/10 bg-black/20 p-1">
+            <div className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--muted)] p-1">
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${viewMode === "grid" ? "bg-white/10 text-white" : "text-[var(--foreground-muted)]"}`}
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${viewMode === "grid" ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "text-[var(--foreground-muted)]"}`}
               >
                 <LayoutGrid className="size-4" /> Grid
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${viewMode === "list" ? "bg-white/10 text-white" : "text-[var(--foreground-muted)]"}`}
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${viewMode === "list" ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "text-[var(--foreground-muted)]"}`}
               >
                 <List className="size-4" /> List
               </button>
@@ -116,12 +116,12 @@ export default function DashboardPage() {
 
         {loading ? (
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {[1, 2, 3].map((i) => <div key={i} className="h-44 animate-pulse rounded-2xl bg-white/5" />)}
+            {[1, 2, 3].map((i) => <div key={i} className="h-44 animate-pulse rounded-2xl bg-[var(--muted)]" />)}
           </div>
         ) : null}
 
         {empty ? (
-          <div className="mt-8 rounded-2xl border border-dashed border-white/15 bg-black/20 p-10 text-center">
+          <div className="mt-8 rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--muted)] p-10 text-center">
             <GitBranch className="mx-auto mb-4 size-8 text-[var(--foreground-subtle)]" />
             <h2 className="font-heading text-2xl">No workspaces connected</h2>
             <p className="mt-2 text-[var(--foreground-muted)]">Connect a GitHub repository to start chat, notes, and graph workflows.</p>
@@ -135,7 +135,7 @@ export default function DashboardPage() {
               return (
                 <Card key={repo.id} className="group overflow-hidden p-0 bg-[color-mix(in_oklab,var(--surface-1)_55%,transparent)] backdrop-blur-xl">
                   <CardHeader className="p-0">
-                    <div className="relative h-80 w-full overflow-hidden bg-black/35">
+                    <div className="relative h-80 w-full overflow-hidden bg-[var(--muted)]">
                       <Image
                         src={`https://github.com/${meta.owner}.png?size=180`}
                         alt={`${meta.owner} avatar`}
@@ -156,7 +156,7 @@ export default function DashboardPage() {
                       <p className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" /> Last opened {new Date(repo.created_at).toLocaleDateString()}</p>
                     </div>
                   </CardContent>
-                  <CardFooter className="border-t border-white/10 p-0">
+                  <CardFooter className="border-t border-[var(--border)] p-0">
                     <Link href={`/repo/${repo.id}`} className="w-full">
                       <Button className="h-14 w-full justify-between rounded-none" variant="ghost">
                         Open Chat
@@ -171,10 +171,10 @@ export default function DashboardPage() {
         ) : null}
 
         {!loading && repos.length > 0 && viewMode === "list" ? (
-          <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-[color-mix(in_oklab,var(--surface-1)_55%,transparent)]">
+          <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--surface-1)_72%,transparent)]">
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
-                <thead className="bg-black/25 text-[var(--foreground-subtle)]">
+                <thead className="bg-[var(--muted)] text-[var(--foreground-subtle)]">
                   <tr>
                     <th className="px-4 py-3 font-medium">Sr. No</th>
                     <th className="px-4 py-3 font-medium">Repo_Name</th>
@@ -187,7 +187,7 @@ export default function DashboardPage() {
                   {repos.map((repo, idx) => {
                     const meta = getRepoMeta(repo);
                     return (
-                      <tr key={repo.id} className="border-t border-white/10 text-[var(--foreground-muted)]">
+                      <tr key={repo.id} className="border-t border-[var(--border)] text-[var(--foreground-muted)]">
                         <td className="px-4 py-3">{idx + 1}</td>
                         <td className="px-4 py-3">
                           <Link href={`/repo/${repo.id}`} className="font-medium text-[var(--foreground)] hover:text-[var(--brand)]">
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                               alt={`${meta.owner} avatar`}
                               width={20}
                               height={20}
-                              className="size-5 rounded-full border border-white/20"
+                              className="size-5 rounded-full border border-[var(--border)]"
                               loading="lazy"
                             />
                             <span>{meta.owner}</span>

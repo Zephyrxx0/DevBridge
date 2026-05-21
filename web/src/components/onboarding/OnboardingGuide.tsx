@@ -8,16 +8,21 @@ import { OnboardingStepCard } from "./OnboardingStepCard";
 
 import { Onboarding } from "@/components/ui/onboarding";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { OnboardingPlan } from "@/hooks/useOnboarding";
 
 interface OnboardingGuideProps {
   repoId: string;
+  resumePlan?: OnboardingPlan | null;
+  resumeAtPlan?: boolean;
+  onComplete?: (plan: OnboardingPlan) => void;
 }
 
 type FlowState = "IDLE" | "QUALIFYING" | "STREAMING" | "PLAN_READY" | "DONE";
 
-export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
-  const [flowState, setFlowState] = useState<FlowState>("IDLE");
-  const { status, plan, loading, error, startGeneration } = useOnboarding(repoId);
+export function OnboardingGuide({ repoId, resumePlan = null, resumeAtPlan = false, onComplete }: OnboardingGuideProps) {
+  const [flowState, setFlowState] = useState<FlowState>(resumeAtPlan && resumePlan ? "PLAN_READY" : "IDLE");
+  const { status, plan, loading, error, startGeneration, cancelGeneration } = useOnboarding(repoId);
+  const effectivePlan = resumePlan ?? plan;
 
   useEffect(() => {
     if (flowState === "STREAMING" && !loading && plan) {
@@ -41,8 +46,8 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
 
   if (flowState === "IDLE") {
     return (
-      <div className="h-full flex items-center justify-center p-8">
-        <Card className="mx-auto w-full max-w-xl border-[var(--border)] bg-[var(--surface-1)]">
+      <div className="h-full flex items-center justify-center p-4">
+        <Card className="mx-auto w-full max-w-2xl border-[var(--border)] bg-[var(--surface-1)]">
           <CardHeader>
             <CardTitle className="text-[var(--text-heading)]">Ready to start a conversation?</CardTitle>
           </CardHeader>
@@ -64,8 +69,18 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
 
   if (flowState === "STREAMING" || (loading && !plan)) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">
+      <div className="h-full flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
         <StatusStream statusMessages={status} />
+        <button
+          type="button"
+          onClick={() => {
+            cancelGeneration();
+            setFlowState("IDLE");
+          }}
+          className="mt-3 rounded-md border border-[var(--border)] px-3 py-2 text-xs text-[var(--foreground-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
+        >
+          Cancel analysis
+        </button>
         {error && (
           <div className="mt-4 text-red-500 border border-red-500/20 bg-red-500/10 p-4 rounded-lg">
             {error}
@@ -76,28 +91,31 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
     );
   }
 
-  if (flowState === "PLAN_READY" && plan) {
+  if (flowState === "PLAN_READY" && effectivePlan) {
     // Total steps: Welcome + Architecture + <N Steps> + Setup
-    const totalSteps = 2 + plan.steps.length + (plan.setup_commands?.length ? 1 : 0);
+    const totalSteps = 2 + effectivePlan.steps.length + (effectivePlan.setup_commands?.length ? 1 : 0);
     
     return (
       <div className="mx-auto max-w-4xl p-6 h-full flex flex-col animate-in slide-in-from-bottom-4 duration-500">
         <Onboarding
           totalSteps={totalSteps}
-          onComplete={() => setFlowState("DONE")}
+          onComplete={() => {
+            setFlowState("DONE");
+            onComplete?.(effectivePlan);
+          }}
           className="flex-1 overflow-hidden flex flex-col border-[var(--border)] bg-[var(--surface-1)]"
         >
           <div className="mb-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
             <Onboarding.StepIndicator className="w-full sm:w-auto" variant="pills" />
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 pb-6">
+          <div className="flex-1 overflow-y-auto">
              <OnboardingStepCard
-               step={1}
-               title="Your Personalized Guide"
-               description={plan.summary}
-               keyFiles={plan.key_files?.map((kf) => kf.path) ?? []}
-             />
+                step={1}
+                title="Your Personalized Guide"
+                description={effectivePlan.summary}
+                keyFiles={effectivePlan.key_files?.map((kf) => kf.path) ?? []}
+              />
 
             {/* Step 2: Architecture */}
             <Onboarding.Step step={2}>
@@ -105,17 +123,13 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
                 title="Architecture Overview" 
                 description="High-level structure and patterns." 
               />
-              <div className="mt-8">
-                <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-4">
-                  <div className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">
-                    {plan.architecture}
-                  </div>
-                </div>
-              </div>
+              <pre className="mt-8 text-sm leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">
+                {effectivePlan.architecture}
+              </pre>
             </Onboarding.Step>
 
             {/* Dynamic Steps */}
-             {plan.steps.map((stepData, index) => (
+             {effectivePlan.steps.map((stepData, index) => (
                <OnboardingStepCard
                  key={`${stepData.title}-${index}`}
                  step={index + 3}
@@ -126,14 +140,14 @@ export function OnboardingGuide({ repoId }: OnboardingGuideProps) {
              ))}
 
             {/* Final Step: Setup */}
-            {plan.setup_commands?.length > 0 && (
+            {effectivePlan.setup_commands?.length > 0 && (
               <Onboarding.Step step={totalSteps}>
                 <Onboarding.Header 
                   title="Run it Locally" 
                   description="Follow these commands to spin up the environment." 
                 />
                 <div className="mt-8">
-                  <SetupGuide commands={plan.setup_commands} />
+                  <SetupGuide commands={effectivePlan.setup_commands} />
                 </div>
               </Onboarding.Step>
             )}

@@ -23,25 +23,21 @@ export function OnboardingStepCard({
       <Onboarding.Header title={title} description={description} />
 
       {hasKeyFiles && (
-        <div className="mt-8 p-4 border border-[var(--border)] rounded-xl bg-[var(--surface-2)]">
+        <section className="mt-8">
           <h3 className="text-sm font-semibold mb-3 text-[var(--foreground)]">Key Files to Know</h3>
-          <div className="h-64 overflow-auto rounded border border-[var(--border)] bg-[#0d0d0d] p-2">
-            <pre className="text-xs text-zinc-200 whitespace-pre-wrap break-all">
-              {keyFiles.join("\n")}
-            </pre>
-          </div>
-        </div>
+          <pre className="h-64 overflow-auto rounded border border-[var(--border)] bg-[#0d0d0d] p-2 text-xs text-zinc-200 whitespace-pre-wrap break-all">
+            {keyFiles.join("\n")}
+          </pre>
+        </section>
       )}
 
       {hasFiles && (
-        <div className="mt-8">
+        <section className="mt-8">
           <h3 className="text-sm font-semibold mb-3 text-[var(--foreground)]">Relevant Code</h3>
-          <div className="rounded border border-[var(--border)] bg-[#0d0d0d] overflow-hidden p-4">
-            <pre className="text-xs text-zinc-200 whitespace-pre-wrap break-all">
-              {files.join("\n")}
-            </pre>
-          </div>
-        </div>
+          <pre className="rounded border border-[var(--border)] bg-[#0d0d0d] p-4 text-xs text-zinc-200 whitespace-pre-wrap break-all">
+            {files.join("\n")}
+          </pre>
+        </section>
       )}
     </Onboarding.Step>
   );

@@ -372,7 +372,7 @@ export function CodebaseGraph() {
         {Object.entries(GROUP_COLORS).map(([group, color]) => (
           <span
             key={group}
-            className="inline-flex items-center gap-1 rounded-md bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white/70 backdrop-blur-sm"
+            className="inline-flex items-center gap-1 rounded-md bg-[color-mix(in_oklab,var(--background)_72%,transparent)] px-2 py-0.5 text-[10px] font-medium text-[var(--foreground-muted)] backdrop-blur-sm"
           >
             <span className="size-2 rounded-full" style={{ backgroundColor: color }} />
             {group}
