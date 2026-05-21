@@ -60,6 +60,12 @@ Status: Executing Phase 29
 
 - None currently.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260521-u8k | Fix AI Studio chat stream response passthrough | 2026-05-21 | 02f7ddd | [260521-u8k-fix-ai-studio-chat-stream-response-passt](./quick/260521-u8k-fix-ai-studio-chat-stream-response-passt/) |
+
 ## Session Continuity
 
 - [x] Initialize planning for Phase 29: Memory Storage & Foundations.
