@@ -6,3 +6,13 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm run start
     autoDeploy: true
+
+  - type: web
+    name: devbridge-amd-api
+    runtime: python
+    buildCommand: pip install -r api/requirements.txt
+    startCommand: python api/run_server.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+    autoDeploy: true

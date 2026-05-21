@@ -478,26 +478,12 @@ export default function RepoWorkspacePage() {
     let mentionResolvedMessage = userMessage;
     const mentionContextParts: string[] = [];
 
-    if (uniqueMentionPaths.length > 0) {
-      const fileResults = await Promise.allSettled(
-        uniqueMentionPaths.map(async (path) => {
-          const resp = await fetch(`${apiUrl}/repo/${repoId}/files/${encodeURIComponent(path)}`);
-          if (!resp.ok) return null;
-          const data = (await resp.json()) as FileContent;
-          return data.content || null;
-        })
+    for (const path of uniqueMentionPaths) {
+      mentionContextParts.push(`- ${path}`);
+      mentionResolvedMessage = mentionResolvedMessage.replace(
+        new RegExp(`@${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "g"),
+        path
       );
-
-      fileResults.forEach((result, idx) => {
-        if (result.status === "fulfilled" && result.value) {
-          const path = uniqueMentionPaths[idx];
-          mentionContextParts.push(`## ${path}\n\`\`\`\n${result.value}\n\`\`\``);
-          mentionResolvedMessage = mentionResolvedMessage.replace(
-            new RegExp(`@${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "g"),
-            path
-          );
-        }
-      });
     }
 
     const snippetContext = snippetPayloads.length

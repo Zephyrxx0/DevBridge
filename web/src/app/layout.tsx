@@ -6,7 +6,6 @@ import "file-icons-js/css/style.css";
 import { cn } from "@/lib/utils";
 import { LayoutTransition } from "@/components/layout/LayoutTransition";
 import { ResilienceHandler } from "@/components/ui/ResilienceHandler";
-import { AgentationMount } from "@/components/dev/AgentationMount";
 
 const fontSans = Inter({
   subsets: ["latin"],
@@ -22,8 +21,11 @@ const fontMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://devbridge.app"),
-  title: "DevBridge — Codebase Onboarding",
+  title: "DevBridge - Codebase Onboarding",
   description: "DevBridge turns repositories into living knowledge hubs with grounded answers, repo maps, and annotations for onboarding developers.",
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
     title: "DevBridge — Codebase Onboarding",
     description:
@@ -60,7 +62,6 @@ export default function RootLayout({
       <body className="min-h-screen antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} disableTransitionOnChange>
           <ResilienceHandler />
-          <AgentationMount />
           <LayoutTransition>{children}</LayoutTransition>
         </ThemeProvider>
       </body>
