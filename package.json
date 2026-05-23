@@ -1,8 +1,15 @@
 {
+  "private": true,
+  "scripts": {
+    "dev": "cd web && npm run dev",
+    "build": "cd web && npm run build && mv .next ../.next",
+    "start": "cd web && npm run start"
+  },
   "dependencies": {
     "@paper-design/shaders-react": "^0.0.76",
     "buffer": "^6.0.3",
     "docsify-cli": "^4.4.4",
+    "next": "16.2.3",
     "supabase": "^2.98.2",
     "tailwindcss": "^4.3.0"
   }

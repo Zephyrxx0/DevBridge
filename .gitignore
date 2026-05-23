@@ -11,18 +11,18 @@
 .gsd/
 .entire/
 .bob/
+.planning/
+.vercel/
 
 node_modules/
 graphify-out/
 docs/
 memories/
 .mcp.json
+skills-lock.json
 
 __pycache__/
-.bg-shell/backend-fix2.err.log
-.bg-shell/backend-fix2.out.log
-.bg-shell/backend-smoke.err.log
-.bg-shell/backend-smoke.log
+.bg-shell/
 .codex/hooks.json
 .entire/logs/entire.log
 GRAPH_REPORT.md
