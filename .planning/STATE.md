@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Chat System Rebuild
 status: planning
-last_updated: "2026-05-28T22:42:51.718Z"
-last_activity: 2026-05-28
+last_updated: "2026-05-29T00:00:00.000Z"
+last_activity: 2026-05-29
 progress:
-  total_phases: 0
+  total_phases: 7
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,47 +17,40 @@ progress:
 
 ## Project Reference
 
-**Core Value**: Contextually grounded understanding and intent retrieval over simple code generation, powered by multi-agent reasoning and persistent memory.
-**Current Focus**: Integrate Cascadeflow (speculative execution) and Hindsight (persistent memory) to optimize AI inference on a single MI300X GPU while enhancing agent contextual awareness.
+**Core Value**: Contextually grounded understanding and intent retrieval over simple code generation.
+**Current Focus**: v1.1 Chat System Rebuild — rebuild the chat workspace around clearer route/session/stream/prompt/file/render ownership boundaries, then add guarded OpenUI, GSAP, and servercn-informed polish.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 33 — Behavior Pinning & Prompt Helpers
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-28 — Milestone v1.1 started
+Status: Roadmap created; awaiting phase planning
+Last activity: 2026-05-29 — v1.1 roadmap created from requirements and research guidance
+
+Progress: [--------------------] 0% (0/7 phases complete)
 
 ## Performance Metrics
 
-- **Phases Completed**: 4 / 4
-- **Plans Completed**: 14 / 14
+- **v1.1 Phases Completed**: 0 / 7
+- **v1.1 Plans Completed**: 0 / 0
+- **v1.1 Requirements Mapped**: 23 / 23
 
 ## Accumulated Context
 
 ### Key Decisions
 
-- Adopted Cascadeflow for speculative execution (Gemma 4 fast path to Gemini 2.5 Flash) to conserve context spend while preserving quality.
-- Integrated Hindsight for long-term biomimetic memory, backed by the existing Supabase pgvector instance.
-- Offloaded Hindsight's `reflect()` operation to APScheduler to prevent HTTP request blocking.
-- Avoided replacing the standard routing mid-tool-call to preserve tool schemas during escalation.
-- **D-29-01**: Enforce unique authenticated identity for all memory-related chat endpoints to prevent cross-user leakage.
-- **D-29-02**: Reject `/chat` and `/chat/stream` requests without authenticated `user_id` via HTTP 401.
-- **D-29-03**: Enforce memory isolation with endpoint behavioral tests for per-user config propagation.
-- **D-30-01**: Add cascadeflow validator compatibility shim to handle v1.1.0 export drift while preserving schema-gate behavior.
-- **D-30-02**: Lock `model_used` and `cascaded` metadata expectations in scaffold tests before cascade node implementation.
-- **D-30-04-01**: Use `ValidatorCascadeAgent` wrapper to inject schema-validator gating with cascadeflow 1.1.0 API constraints.
-- **D-30-04-02**: On schema failure, rerun full turn with direct big-model path and return replaced content.
-- **D-31-01**: Added dedicated memory router with `verify_admin` + `bank_id=user_id` isolation for list/delete/update.
-- **D-31-02**: Implemented direct SQL fallback for memory text updates using parameterized query.
-- **D-31-03**: Stabilized memory dashboard e2e with deterministic Playwright route mocks (`@list`, `@delete`, `@edit`).
-- **D-32-01**: Emit only allowlisted SSE metadata fields (`fallback`, `model_used`, `cascaded`) via recursive extraction.
-- **D-32-02**: Merge metadata SSE events into latest assistant message state to preserve backward-compatible fallback behavior.
-- **D-32-03**: Use EscalationIndicator component as single rendering path for Fast Mode/Big Model UI state.
-- **D-32-04**: Preserve escalation metadata across history hydration and stream update paths.
+- v1.1 starts at Phase 33 because previous milestone ended at Phase 32.
+- Research order adopted: boundary cleanup first, liveness second, canonical UI third, OpenUI/GSAP/servercn polish last, regression/thermo closure final.
+- Phase 33 intentionally avoids GSAP/OpenUI polish and starts with behavior pinning plus pure prompt-context helpers.
+- OpenUI must remain behind guarded adapter and feature gate; CLI exploration uses `npx @openuidev/cli@latest create` in scratch only unless adapter review selects code.
+- GSAP is allowed only after ownership boundaries are stable, in scoped cleanup-safe hooks/components that respect reduced motion.
+- servercn is pattern review first; broad runtime adoption remains out of scope unless explicitly adopted by decision note.
 
 ### Blockers / Open Questions
 
-- None currently.
+- Phase 35 needs exact SSE timeout/max-duration constants during planning.
+- Phase 38 needs spikes for OpenUI runtime value, GSAP surface list, and servercn pattern fit before production adoption.
+- Phase 39 must verify thermo stop conditions before milestone closure.
 
 ### Quick Tasks Completed
 
@@ -67,13 +60,8 @@ Last activity: 2026-05-28 — Milestone v1.1 started
 
 ## Session Continuity
 
-- [x] Initialize planning for Phase 29: Memory Storage & Foundations.
-- [x] Setup Hindsight dependencies and schema.
-- [x] Implement HindsightManager and AgentState memory field.
-- [x] Integrate LangGraph recall/retain nodes.
-- [x] Close isolation safety gaps and implement tests (Plan 29-04).
-- [x] Setup cascadeflow dependency, validator schema utility, and phase-30 routing test scaffold (Plan 30-01).
-- [x] Close escalation gap with real rerun behavior and robust routing verification (Plan 30-04).
-- [x] Deliver memory curation dashboard backend + frontend + edit/delete flows (Phase 31).
-- [x] Enrich SSE protocol and frontend chat message state with escalation metadata (Plan 32-01).
-- [x] Ship escalation indicator visuals + amber pulse state with Playwright UX verification (Plan 32-02).
+- [x] Completed prior milestone through Phase 32: Streaming Escalation UX.
+- [x] Defined v1.1 requirements for chat system rebuild.
+- [x] Completed research summary and thermo context review for v1.1.
+- [x] Created Phase 33-39 roadmap with 23/23 v1.1 requirements mapped.
+- [ ] Plan Phase 33: Behavior Pinning & Prompt Helpers.

@@ -83,35 +83,35 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SHELL-01 | TBD | Pending |
-| SHELL-02 | TBD | Pending |
-| SHELL-03 | TBD | Pending |
-| SHELL-04 | TBD | Pending |
-| STRM-01 | TBD | Pending |
-| STRM-02 | TBD | Pending |
-| STRM-03 | TBD | Pending |
-| PRMP-01 | TBD | Pending |
-| PRMP-02 | TBD | Pending |
-| PRMP-03 | TBD | Pending |
-| FILE-01 | TBD | Pending |
-| FILE-02 | TBD | Pending |
-| FILE-03 | TBD | Pending |
-| RND-01 | TBD | Pending |
-| RND-02 | TBD | Pending |
-| RND-03 | TBD | Pending |
-| MOTN-01 | TBD | Pending |
-| MOTN-02 | TBD | Pending |
-| MOTN-03 | TBD | Pending |
-| BKND-01 | TBD | Pending |
-| BKND-02 | TBD | Pending |
-| QUAL-01 | TBD | Pending |
-| QUAL-02 | TBD | Pending |
+| SHELL-01 | Phase 34 | Pending |
+| SHELL-02 | Phase 34 | Pending |
+| SHELL-03 | Phase 33 | Pending |
+| SHELL-04 | Phase 34 | Pending |
+| STRM-01 | Phase 35 | Pending |
+| STRM-02 | Phase 35 | Pending |
+| STRM-03 | Phase 35 | Pending |
+| PRMP-01 | Phase 33 | Pending |
+| PRMP-02 | Phase 33 | Pending |
+| PRMP-03 | Phase 33 | Pending |
+| FILE-01 | Phase 37 | Pending |
+| FILE-02 | Phase 36 | Pending |
+| FILE-03 | Phase 36 | Pending |
+| RND-01 | Phase 37 | Pending |
+| RND-02 | Phase 38 | Pending |
+| RND-03 | Phase 38 | Pending |
+| MOTN-01 | Phase 38 | Pending |
+| MOTN-02 | Phase 38 | Pending |
+| MOTN-03 | Phase 38 | Pending |
+| BKND-01 | Phase 38 | Pending |
+| BKND-02 | Phase 38 | Pending |
+| QUAL-01 | Phase 39 | Pending |
+| QUAL-02 | Phase 39 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23
+- Mapped to phases: 23
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-29*
-*Last updated: 2026-05-29 after v1.1 requirements definition*
+*Last updated: 2026-05-29 after v1.1 roadmap creation*
