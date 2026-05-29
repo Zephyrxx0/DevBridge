@@ -293,17 +293,17 @@ if (existing.ok) {
 | A2 | New Enter handler ordering should keep mention-menu handling before submit handling. | Common Pitfalls | Medium; breaking ordering changes visible keyboard behavior. |
 | A3 | New app-level submit code should not read `message.files`. | Common Pitfalls | Medium; accidental attachment adoption violates D-12. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should planner add `@testing-library/user-event`?**
    - What we know: It is not installed; docs support realistic keyboard tests. [VERIFIED: `npm ls`; CITED: Testing Library docs]
    - What's unclear: Whether dependency churn is acceptable for Phase 33.
-   - Recommendation: Use existing Testing Library first; add `user-event` only if Enter/Shift+Enter tests are awkward or brittle. [VERIFIED: current test stack]
+   - Recommendation: RESOLVED — use existing Testing Library first; add `user-event` only if Enter/Shift+Enter tests are awkward or brittle. [VERIFIED: current test stack]
 
 2. **Where exactly should prompt helper live?**
    - What we know: Codebase conventions allow frontend helpers in `web/src/lib/`, `web/src/hooks/`, or chat-local helper; route should not grow. [VERIFIED: `.planning/codebase/CONVENTIONS.md`; VERIFIED: `33-CONTEXT.md`]
    - What's unclear: Team preference between `web/src/lib/chat/prompt-context.ts` and `web/src/components/chat/prompt-context.ts`.
-   - Recommendation: Use `web/src/lib/chat/prompt-context.ts` because helper is pure and non-UI. [VERIFIED: `.planning/codebase/STRUCTURE.md`]
+   - Recommendation: RESOLVED — use `web/src/lib/chat/prompt-context.ts` because helper is pure and non-UI. [VERIFIED: `.planning/codebase/STRUCTURE.md`]
 
 ## Environment Availability
 

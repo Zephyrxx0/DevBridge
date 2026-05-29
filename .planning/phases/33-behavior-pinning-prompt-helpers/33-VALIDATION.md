@@ -29,8 +29,8 @@ created: 2026-05-29
 
 - **After every task commit:** Run `npm run test --prefix web -- prompt-context ChatInput ChatStream useOnboarding`
 - **After every plan wave:** Run `npm run test --prefix web`
-- **Before `/gsd-verify-work`:** `npm run test --prefix web && npx --yes fallow --production` must be green or explicitly documented
-- **Max feedback latency:** 60 seconds for quick feedback
+- **Before `/gsd-verify-work`:** `npm run test --prefix web && npx --yes fallow --production && graphify update .` must be green or explicitly documented
+- **Max feedback latency:** 30 seconds for quick feedback
 
 ---
 
@@ -38,10 +38,12 @@ created: 2026-05-29
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 33-01-01 | 01 | 1 | PRMP-01 | T-33-01 | Prompt builder preserves display/backend separation and explicit failure notes | unit | `npm run test --prefix web -- prompt-context` | No - Wave 0 creates `web/src/lib/chat/prompt-context.test.ts` | pending |
-| 33-01-02 | 01 | 1 | PRMP-02 | T-33-02 | `ChatInput` submit callback carries typed text only; no `FormEvent` leaves component | component unit | `npm run test --prefix web -- ChatInput` | No - Wave 0 creates `web/src/components/chat/__tests__/ChatInput.test.tsx` | pending |
-| 33-01-03 | 01 | 1 | PRMP-03 | T-33-03 | Chip labels expose type/scope/caps and immediate removal | component unit | `npm run test --prefix web -- ChatInput` | No - Wave 0 creates `web/src/components/chat/__tests__/ChatInput.test.tsx` | pending |
-| 33-01-04 | 01 | 1 | SHELL-03 | T-33-04 | Onboarding full flow states, cached plan reuse, reopen, and completion remain unchanged | hook/render unit | `npm run test --prefix web -- useOnboarding ChatStream` | Yes - extend existing files | pending |
+| 33-01-01 | 01 | 1 | PRMP-01, PRMP-03 | T-33-01 | Chip metadata becomes discriminated union while artifacts remain typed | type/unit | `npm run test --prefix web -- ChatStream useOnboarding ChatInput && npm run build --prefix web` | Yes - modify `web/src/components/chat/types.ts` | pending |
+| 33-01-02 | 01 | 1 | PRMP-01 | T-33-02 | Prompt builder preserves display/backend separation, exact grouping, mentions, and explicit failure notes | unit | `npm run test --prefix web -- prompt-context` | No - Wave 0 creates `web/src/lib/chat/prompt-context.test.ts` | pending |
+| 33-02-01 | 02 | 2 | PRMP-02, PRMP-03 | T-33-03 | `ChatInput` submit callback carries typed text only; chips expose scope/caps and remove immediately | component unit | `npm run test --prefix web -- ChatInput` | No - Wave 0 creates `web/src/components/chat/__tests__/ChatInput.test.tsx` | pending |
+| 33-02-02 | 02 | 2 | PRMP-01, PRMP-02 | T-33-04 | Route sends `backendPrompt`, displays `displayMessage`, preserves `/clear`, and compiles after page changes | build/static + unit | `npm run test --prefix web -- prompt-context prompt-submit ChatInput && npm run build --prefix web` | Yes - modify `web/src/app/repo/[id]/page.tsx` | pending |
+| 33-03-01 | 03 | 1 | SHELL-03 | T-33-05 | Hook pins IDLE, STREAMING, PLAN_READY, cached reuse, cancel, and retry/error behavior | hook unit | `npm run test --prefix web -- useOnboarding` | Yes - extend `web/src/hooks/useOnboarding.test.ts` | pending |
+| 33-03-02 | 03 | 1 | SHELL-03 | T-33-06 | ChatStream pins first-run onboarding, QUALIFYING-equivalent entry, reopen, resume, and DONE completion callback | render unit | `npm run test --prefix web -- ChatStream` | Yes - extend `web/src/components/chat/__tests__/ChatStream.test.tsx` | pending |
 
 *Status: pending, green, red, flaky*
 
@@ -70,7 +72,7 @@ All phase behaviors have automated verification targets. Manual smoke in browser
 - [x] Sampling continuity: no 3 consecutive tasks without automated verify
 - [x] Wave 0 covers all missing references
 - [x] No watch-mode flags
-- [x] Feedback latency target below 60s for quick suite
+- [x] Feedback latency target at or below 30s for quick suite
 - [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** approved 2026-05-29

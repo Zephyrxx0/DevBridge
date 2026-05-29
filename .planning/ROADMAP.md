@@ -82,7 +82,14 @@
   2. User can compose messages with text, mentions, snippets, files, and folders and see the same sent context before and after helper extraction.
   3. User can remove file, folder, and snippet chips before send while seeing scope and cap information clearly.
   4. Tests verify the pure prompt builder returns both display artifacts and backend payloads without DOM submit events or broad ref casts.
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+**Wave 1**
+- [ ] 33-01-PLAN.md — Extract pure typed prompt-context contracts and exact builder tests
+- [ ] 33-03-PLAN.md — Pin onboarding cached/reopen/completion behavior with tests
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 33-02-PLAN.md — Wire typed ChatInput submit, scoped chips, and route prompt builder integration
 **UI hint**: yes
 
 ### Phase 34: Chat Shell & Session Boundaries
