@@ -93,16 +93,19 @@ Plans:
 **UI hint**: yes
 
 ### Phase 34: Chat Shell & Session Boundaries
-**Goal**: Users can manage repo-scoped chat sessions through a composed route shell with named ownership boundaries
-**Depends on**: Phase 33
-**Requirements**: SHELL-01, SHELL-02, SHELL-04
-**Success Criteria** (what must be TRUE):
-  1. User can create, rename, delete, switch, clear, and restore sessions for a repo without losing current repo context.
-  2. User sees session-list actions separated from repo utilities while existing navigation, indexing, theme, and repo-delete access still work.
-  3. The repo chat route composes named hooks/modules and no longer owns session, stream, prompt-context, branch/index, and file workspace behavior directly.
-  4. Route-level changes shrink or isolate orchestration rather than growing `web/src/app/repo/[id]/page.tsx`.
-**Plans**: TBD
-**UI hint**: yes
+  **Goal**: Users can manage repo-scoped chat sessions through a composed route shell with named ownership boundaries
+  **Depends on**: Phase 33
+  **Requirements**: SHELL-01, SHELL-02, SHELL-04
+  **Success Criteria** (what must be TRUE):
+    1. User can create, rename, delete, switch, clear, and restore sessions for a repo without losing current repo context.
+    2. User sees session-list actions separated from repo utilities while existing navigation, indexing, theme, and repo-delete access still work.
+    3. The repo chat route composes named hooks/modules and no longer owns session, stream, prompt-context, branch/index, and file workspace behavior directly.
+    4. Route-level changes shrink or isolate orchestration rather than growing `web/src/app/repo/[id]/page.tsx`.
+  **Plans**: 3 plans
+  - [ ] 34-01-PLAN.md — Update backend clear endpoint and extract useChatSessions hook
+  - [ ] 34-02-PLAN.md — Update HistorySidebar UI to include app-owned dialogs/inline editing
+  - [ ] 34-03-PLAN.md — Extract the heavy route orchestration into a ChatShell module
+  **UI hint**: yes
 
 ### Phase 35: Typed Transport & Liveness Budgets
 **Goal**: Users can stream, stop, and recover from chat/index liveness failures without permanent loading states
