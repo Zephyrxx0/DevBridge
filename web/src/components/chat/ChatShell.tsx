@@ -1,26 +1,162 @@
 "use client";
 
-import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Editor, { OnMount } from "@monaco-editor/react";
+import { useTheme } from "next-themes";
+import { ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Code2, Folder, GitBranch, Plus, Sun, Moon } from "lucide-react";
 
-import { ChatShell } from "@/components/chat/ChatShell";
-import { useRepo } from "@/contexts/repo-context";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
-export default function RepoWorkspacePage() {
-  const params = useParams<{ id: string }>();
-  const router = useRouter();
-  const repoId = String(params.id ?? "");
+import { HistorySidebar } from "@/components/chat/HistorySidebar";
+import { FileExplorer, type FileNode, type BranchInfo } from "@/components/chat/FileExplorer";
+import { ChatLayout } from "@/components/chat/ChatLayout";
+import { ChatStream } from "@/components/chat/ChatStream";
+import { ChatInput } from "@/components/chat/ChatInput";
+import type { Message, SourceReference, SnippetChip } from "@/components/chat/types";
+import type { OnboardingPlan } from "@/hooks/useOnboarding";
 
-  const { repo, error: repoError, loading: repoLoading } = useRepo();
+type FileContent = {
+  content: string;
+  language: string;
+  line_count: number;
+};
+
+function countTreeFiles(node: FileNode | null): number {
+  if (!node) return 0;
+  if (node.type === "file") return 1;
+  return (node.children || []).reduce((sum, child) => sum + countTreeFiles(child), 0);
+}
+
+const languageMap: Record<string, string> = {
+  ts: "typescript",
+  tsx: "typescript",
+  js: "javascript",
+  jsx: "javascript",
+  py: "python",
+  go: "go",
+  rs: "rust",
+  java: "java",
+  css: "css",
+  html: "html",
+  json: "json",
+  md: "markdown",
+  sql: "sql",
+  sh: "shell",
+};
+
+function detectLanguage(filePath: string, fallback: string): string {
+  const ext = filePath.split(".").pop()?.toLowerCase() || "";
+  return languageMap[ext] || fallback || "plaintext";
+}
+
+import { useRepo, type RepoMetadata } from "@/contexts/repo-context";
+import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
+import { useChatSessions } from "@/hooks/useChatSessions";
+
+export function ChatShell({ repoId, repo, apiUrl }: { repoId: string; repo: RepoMetadata | null; apiUrl: string }) {
+  const { resolvedTheme, theme, setTheme } = useTheme();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const {
+    sessions,
+    activeSessionId,
+    loadingSessions,
+    setActiveSessionId,
+    createSession,
+    renameSession,
+    deleteSession,
+    clearSession,
+  } = useChatSessions(repoId, apiUrl);
+  const [loadingMessages, setLoadingMessages] = useState(true);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [snippetChips, setSnippetChips] = useState<SnippetChip[]>([]);
+  const [selectedSource, setSelectedSource] = useState<SourceReference | null>(null);
+
+  const [fileTree, setFileTree] = useState<FileNode | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [loadingFiles, setLoadingFiles] = useState(false);
+  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
+  const [fileContent, setFileContent] = useState<FileContent | null>(null);
+  const [loadingFileContent, setLoadingFileContent] = useState(false);
+  const [branches, setBranches] = useState<BranchInfo[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>("");
+  const [branchIndexing, setBranchIndexing] = useState(false);
+  const [branchIndexMsg, setBranchIndexMsg] = useState("");
+  const [branchLoadError, setBranchLoadError] = useState("");
+  const defaultBranchName = useMemo(
+    () => branches.find((b) => b.is_default)?.name || branches.find((b) => b.name === "main")?.name || branches.find((b) => b.name === "master")?.name || "",
+    [branches]
+  );
+  const editorRef = useRef<import("monaco-editor").editor.IStandaloneCodeEditor | null>(null);
+  const selectionRef = useRef<import("monaco-editor").Selection | null>(null);
+  const streamAbortRef = useRef<AbortController | null>(null);
+  const branchStorageKey = `repo:${repoId}:selectedBranch`;
 
   useEffect(() => {
-    if (repoLoading) return;
-    if (!repoError) return;
-    router.replace("/dashboard");
-  }, [repoError, repoLoading, router]);
+    if (!repoId) return;
+    const savedBranch = localStorage.getItem(`repo:${repoId}:selectedBranch`) || "";
+    setSelectedBranch(savedBranch);
+  }, [repoId]);
 
-  return <ChatShell repoId={repoId} repo={repo} apiUrl="/api/backend" />;
-}
+  useEffect(() => {
+    async function loadMessages() {
+      if (!activeSessionId) {
+        setLoadingMessages(false);
+        return;
+      }
+      setLoadingMessages(true);
+      try {
+        const response = await fetch(`${apiUrl}/chats/${activeSessionId}/messages`);
+        if (!response.ok) return;
+        const data = (await response.json()) as Array<{
+          role: "user" | "assistant";
+          content: string;
+          sources?: SourceReference[];
+          fallback?: boolean;
+          model_used?: string;
+          cascaded?: boolean;
+        }>;
+        setMessages(
+          data.map((item) => ({
+            role: item.role,
+            content: item.content,
+            sources: item.sources,
+            fallback: item.fallback,
+            model_used: item.model_used,
+            cascaded: item.cascaded,
+          }))
+        );
+      } finally {
+        setLoadingMessages(false);
+      }
+    }
+    loadMessages();
+  }, [activeSessionId, apiUrl]);
+
+  useEffect(() => {
+    if (!activeSessionId) return;
+    localStorage.setItem(`repo:${repoId}:activeSessionId`, activeSessionId);
+  }, [activeSessionId, repoId]);
+
+  // Fetch branches list once
+  useEffect(() => {
+    async function loadBranches() {
+      try {
+        setBranchLoadError("");
+        const res = await fetch(`${apiUrl}/repo/${repoId}/branches`);
+        if (!res.ok) {
+          let detail = "Branch list unavailable";
+          try {
             const payload = (await res.json()) as { detail?: string };
             if (payload?.detail) detail = payload.detail;
           } catch {
@@ -157,104 +293,15 @@ export default function RepoWorkspacePage() {
     return () => clearInterval(interval);
   }, [branchIndexing, apiUrl, repoId, refreshRepo]);
 
-  const loadPromptReferences = useCallback(async (chips: SnippetChip[]): Promise<PromptLoadedReference[]> => {
-    return Promise.all(
-      chips.map(async (chip) => {
-        if (chip.kind === "snippet") {
-          if (chip.code.trim()) {
-            return {
-              kind: "snippet",
-              label: `${chip.filePath}:${chip.startLine}-${chip.endLine}`,
-              content: chip.code,
-            };
-          }
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-          return {
-            kind: "snippet",
-            label: `${chip.filePath}:${chip.startLine}-${chip.endLine}`,
-            content: "Reference provided without content.",
-          };
-        }
+    if (!input.trim() || isLoading) return;
 
-        if (chip.kind === "file") {
-          try {
-            const response = await fetch(`${apiUrl}/repo/${repoId}/files/${encodeURIComponent(chip.filePath)}`);
-            if (!response.ok) {
-              return {
-                kind: "file",
-                label: chip.filePath,
-                content: `Unable to load file content (${response.status}).`,
-              };
-            }
-            const data = (await response.json()) as FileContent;
-            return {
-              kind: "file",
-              label: chip.filePath,
-              content: data.content || "(empty file)",
-            };
-          } catch {
-            return {
-              kind: "file",
-              label: chip.filePath,
-              content: "Unable to load file content.",
-            };
-          }
-        }
-
-        const filesUnderFolder: string[] = [];
-        const walk = (node: FileNode | null) => {
-          if (!node) return;
-          if (node.type === "file" && node.path.startsWith(`${chip.filePath}/`)) {
-            filesUnderFolder.push(node.path);
-          }
-          node.children?.forEach(walk);
-        };
-        walk(fileTree);
-
-        const selectedFiles = filesUnderFolder.slice(0, 8);
-        if (selectedFiles.length === 0) {
-          return {
-            kind: "folder",
-            label: chip.filePath,
-            content: "Folder reference provided, but no files found.",
-          };
-        }
-
-        const folderChunks = await Promise.all(
-          selectedFiles.map(async (path) => {
-            try {
-              const response = await fetch(`${apiUrl}/repo/${repoId}/files/${encodeURIComponent(path)}`);
-              if (!response.ok) return `## ${path}\nUnable to load (${response.status}).`;
-              const data = (await response.json()) as FileContent;
-              const trimmed = data.content?.slice(0, 8000) || "";
-              return `## ${path}\n${trimmed || "(empty file)"}`;
-            } catch {
-              return `## ${path}\nUnable to load file content.`;
-            }
-          })
-        );
-
-        return {
-          kind: "folder",
-          label: chip.filePath,
-          content: folderChunks.join("\n\n"),
-        };
-      })
-    );
-  }, [apiUrl, fileTree, repoId]);
-
-  const handleSubmit = async ({ text }: { text: string }) => {
-    if (!text.trim() || isLoading) return;
-
-    if (text.trim() === "/clear") {
+    if (input.trim() === "/clear") {
       if (!activeSessionId) return;
       try {
-        const response = await fetch(`${apiUrl}/chats/${activeSessionId}/messages`, {
-          method: "DELETE",
-        });
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`);
-        }
+        await clearSession(activeSessionId);
         setMessages([]);
         setSnippetChips([]);
         setInput("");
@@ -265,16 +312,100 @@ export default function RepoWorkspacePage() {
       return;
     }
 
-    const loadedReferences = await loadPromptReferences(snippetChips);
-    const promptContext = buildPromptContext({
-      text,
-      chips: snippetChips,
-      loadedReferences,
-    });
+    const userMessage = input.trim();
+    const snippetPayloads = await Promise.all(
+      snippetChips.map(async (chip) => {
+        if (chip.code.trim()) {
+          return {
+            label: `${chip.filePath}:${chip.startLine}-${chip.endLine}`,
+            content: chip.code,
+          };
+        }
 
+        if (chip.kind === "file") {
+          try {
+            const response = await fetch(`${apiUrl}/repo/${repoId}/files/${encodeURIComponent(chip.filePath)}`);
+            if (!response.ok) {
+              return { label: chip.filePath, content: `Unable to load file content (${response.status}).` };
+            }
+            const data = (await response.json()) as FileContent;
+            return { label: chip.filePath, content: data.content || "(empty file)" };
+          } catch {
+            return { label: chip.filePath, content: "Unable to load file content." };
+          }
+        }
+
+        if (chip.kind === "folder") {
+          const filesUnderFolder: string[] = [];
+          const walk = (node: FileNode | null) => {
+            if (!node) return;
+            if (node.type === "file" && node.path.startsWith(`${chip.filePath}/`)) {
+              filesUnderFolder.push(node.path);
+            }
+            node.children?.forEach(walk);
+          };
+          walk(fileTree);
+
+          const selectedFiles = filesUnderFolder.slice(0, 8);
+          if (selectedFiles.length === 0) {
+            return { label: chip.filePath, content: "Folder reference provided, but no files found." };
+          }
+
+          const folderChunks = await Promise.all(
+            selectedFiles.map(async (path) => {
+              try {
+                const response = await fetch(`${apiUrl}/repo/${repoId}/files/${encodeURIComponent(path)}`);
+                if (!response.ok) return `## ${path}\nUnable to load (${response.status}).`;
+                const data = (await response.json()) as FileContent;
+                const trimmed = data.content?.slice(0, 8000) || "";
+                return `## ${path}\n${trimmed || "(empty file)"}`;
+              } catch {
+                return `## ${path}\nUnable to load file content.`;
+              }
+            })
+          );
+
+          return {
+            label: chip.filePath,
+            content: folderChunks.join("\n\n"),
+          };
+        }
+
+        return {
+          label: `${chip.filePath}:${chip.startLine}-${chip.endLine}`,
+          content: "Reference provided without content.",
+        };
+      })
+    );
+
+    const mentionRegex = /@([\w.\/-]+)/g;
+    const mentionMatches = [...userMessage.matchAll(mentionRegex)];
+    const uniqueMentionPaths = [...new Set(mentionMatches.map((m) => m[1]))];
+
+    let mentionResolvedMessage = userMessage;
+    const mentionContextParts: string[] = [];
+
+    for (const path of uniqueMentionPaths) {
+      mentionContextParts.push(`- ${path}`);
+      mentionResolvedMessage = mentionResolvedMessage.replace(
+        new RegExp(`@${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "g"),
+        path
+      );
+    }
+
+    const snippetContext = snippetPayloads.length
+      ? `\n\nReferenced snippets:\n${snippetPayloads
+          .map((payload) => `- ${payload.label}\n\`\`\`\n${payload.content}\n\`\`\``)
+          .join("\n")}`
+      : "";
+    const mentionContext = mentionContextParts.length
+      ? `\n\nReferenced files:\n${mentionContextParts.join("\n")}`
+      : "";
+    const fullPrompt = `${mentionResolvedMessage}${snippetContext}${mentionContext}`;
+    const artifactsForMessage = snippetChips.map((chip) => ({ ...chip }));
     setInput("");
     setSnippetChips([]);
-    setMessages((prev) => [...prev, { role: "user", content: promptContext.displayMessage, artifacts: promptContext.artifacts }]);
+    setMessages((prev) => [...prev, { role: "user", content: userMessage, artifacts: artifactsForMessage }]);
     setIsLoading(true);
 
     let accumulatedContent = "";
@@ -289,11 +420,11 @@ export default function RepoWorkspacePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
-        body: JSON.stringify(createChatStreamPayload({
-          promptContext,
-          repoId,
-          threadId: activeSessionId,
-        })),
+        body: JSON.stringify({
+          message: fullPrompt,
+          repo_id: repoId,
+          thread_id: activeSessionId,
+        }),
       });
 
       if (!response.ok) {
@@ -449,10 +580,27 @@ export default function RepoWorkspacePage() {
     const raw = event.dataTransfer.getData("application/x-devbridge-snippet") || event.dataTransfer.getData("application/x-devbridge-ref");
     if (!raw) return;
 
-    const chip = parseDroppedContextChip(raw);
-    if (!chip) return;
-    if (chip.kind === "snippet" || chip.kind === "file" || chip.kind === "folder") {
+    try {
+      const parsed = JSON.parse(raw) as {
+        kind?: "snippet" | "file" | "folder";
+        filePath: string;
+        startLine: number;
+        endLine: number;
+        code: string;
+      };
+
+      if (!parsed.filePath) return;
+      const chip: SnippetChip = {
+        id: `${parsed.filePath}:${parsed.startLine || 1}-${parsed.endLine || 1}:${Date.now()}`,
+        filePath: parsed.filePath,
+        startLine: parsed.startLine || 1,
+        endLine: parsed.endLine || 1,
+        code: parsed.code || "",
+        kind: parsed.kind,
+      };
       setSnippetChips((prev) => [...prev, chip]);
+    } catch {
+      // Ignore malformed drop payload.
     }
   };
 
@@ -625,7 +773,7 @@ export default function RepoWorkspacePage() {
     } catch {
       window.alert("Failed to remove repository from workspace.");
     }
-  }, [apiUrl, repoId, router]);
+  }, [apiUrl, repoId]);
 
   return (
     <div className="h-dvh w-full overflow-hidden p-0">
@@ -634,13 +782,14 @@ export default function RepoWorkspacePage() {
           <HistorySidebar 
             repoId={repoId}
             sessions={sessions}
-            activeSessionId={activeSessionId}
+            activeSessionId={activeSessionId ?? ""}
             branchIndexing={branchIndexing}
             branchIndexMsg={branchIndexMsg}
             onSelectSession={setActiveSessionId}
             onCreateSession={createSession}
-            onRenameSession={renameChat}
-            onDeleteSession={deleteChat}
+            onRenameSession={renameSession}
+            onDeleteSession={deleteSession}
+            onClearSession={clearSession}
             onTriggerIndex={triggerIndexFiles}
             onRemoveRepo={removeRepoFromWorkspace}
           />
@@ -747,7 +896,5 @@ export default function RepoWorkspacePage() {
       />
     </div>
   );
-=======
-  return <ChatShell repoId={repoId} repo={repo} apiUrl="/api/backend" />;
->>>>>>> phase-34-chat-shell-session-boundaries
 }
+

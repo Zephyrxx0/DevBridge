@@ -6,7 +6,7 @@
 - [x] **Phase 31: Memory Curation Dashboard** - Build UI for curating and editing agent mental models (completed 2026-05-19)
 - [x] **Phase 32: Streaming Escalation UX** - Expose model escalation states to the frontend via SSE (completed 2026-05-19)
 - [ ] **Phase 33: Behavior Pinning & Prompt Helpers** - Pin current onboarding/input behavior while extracting pure prompt-context helpers
-- [ ] **Phase 34: Chat Shell & Session Boundaries** - Move session ownership and sidebar concerns out of the route shell
+- [x] **Phase 34: Chat Shell & Session Boundaries** - Move session ownership and sidebar concerns out of the route shell (completed 2026-05-30)
 - [ ] **Phase 35: Typed Transport & Liveness Budgets** - Replace raw stream handling with typed events, aborts, timeouts, and terminal polling states
 - [ ] **Phase 36: Repo File/Source Workspace Hooks** - Extract branch, index, file, snippet, and source navigation ownership into workspace hooks
 - [ ] **Phase 37: Canonical Chat UI & Assistant Models** - Canonicalize file tree rendering and assistant message view models
@@ -93,16 +93,20 @@ Plans:
 **UI hint**: yes
 
 ### Phase 34: Chat Shell & Session Boundaries
-**Goal**: Users can manage repo-scoped chat sessions through a composed route shell with named ownership boundaries
-**Depends on**: Phase 33
-**Requirements**: SHELL-01, SHELL-02, SHELL-04
-**Success Criteria** (what must be TRUE):
-  1. User can create, rename, delete, switch, clear, and restore sessions for a repo without losing current repo context.
-  2. User sees session-list actions separated from repo utilities while existing navigation, indexing, theme, and repo-delete access still work.
-  3. The repo chat route composes named hooks/modules and no longer owns session, stream, prompt-context, branch/index, and file workspace behavior directly.
-  4. Route-level changes shrink or isolate orchestration rather than growing `web/src/app/repo/[id]/page.tsx`.
-**Plans**: TBD
-**UI hint**: yes
+  **Goal**: Users can manage repo-scoped chat sessions through a composed route shell with named ownership boundaries
+  **Depends on**: Phase 33
+  **Requirements**: SHELL-01, SHELL-02, SHELL-04
+  **Success Criteria** (what must be TRUE):
+    1. User can create, rename, delete, switch, clear, and restore sessions for a repo without losing current repo context.
+    2. User sees session-list actions separated from repo utilities while existing navigation, indexing, theme, and repo-delete access still work.
+    3. The repo chat route composes named hooks/modules and no longer owns session, stream, prompt-context, branch/index, and file workspace behavior directly.
+    4. Route-level changes shrink or isolate orchestration rather than growing `web/src/app/repo/[id]/page.tsx`.
+  **Plans**: 4 plans
+  - [x] 34-01-PLAN.md — Update backend clear endpoint and extract useChatSessions hook
+  - [x] 34-02-PLAN.md — Update HistorySidebar UI to include app-owned dialogs/inline editing
+  - [x] 34-03-PLAN.md — Extract the heavy route orchestration into a ChatShell module
+  - [x] 34-04-PLAN.md — Gap closure: fix ChatShell runtime dependency blocker + add regression test
+  **UI hint**: yes
 
 ### Phase 35: Typed Transport & Liveness Budgets
 **Goal**: Users can stream, stop, and recover from chat/index liveness failures without permanent loading states
@@ -174,7 +178,7 @@ Plans:
 | 31. Memory Curation Dashboard | 4/4 | Complete | 2026-05-19 |
 | 32. Streaming Escalation UX | 2/2 | Complete | 2026-05-19 |
 | 33. Behavior Pinning & Prompt Helpers | 0/0 | Not started | - |
-| 34. Chat Shell & Session Boundaries | 0/0 | Not started | - |
+| 34. Chat Shell & Session Boundaries | 4/4 | Complete    | 2026-05-30 |
 | 35. Typed Transport & Liveness Budgets | 0/0 | Not started | - |
 | 36. Repo File/Source Workspace Hooks | 0/0 | Not started | - |
 | 37. Canonical Chat UI & Assistant Models | 0/0 | Not started | - |
