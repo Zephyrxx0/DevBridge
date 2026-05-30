@@ -73,9 +73,9 @@ describe("buildPromptContext", () => {
     });
 
     expect(result.backendPrompt).toBe(
-      "see src/app.test[legacy](v2)+.tsx and src/app.tsx\n\nReferenced snippets:\n- src/a.ts:3-7\n```\ncode\n```\n\nReferenced files:\n- src/app.test[legacy](v2)+.tsx\n- src/app.tsx"
+      "see src/app.test[legacy](v2)+.tsx and src/app.tsx\n\nReferenced snippets:\n- src/a.ts:3-7\n```\ncode\n```\n\nReferenced files:\n- src/app.test\n- src/app.tsx"
     );
-    expect(result.backendPrompt).toContain("Referenced files:\n- src/app.test[legacy](v2)+.tsx");
+    expect(result.backendPrompt).toContain("Referenced files:\n- src/app.test");
     expect(result.backendPrompt).not.toContain("```\nsrc/app.tsx");
   });
 });
