@@ -12,7 +12,7 @@ Requirements for the chat system rebuild milestone. Each maps to exactly one roa
 - [x] **SHELL-01**: Route page becomes a composition shell; session, stream, prompt context, branch/index, and file workspace behavior move to named hooks/modules.
 - [x] **SHELL-02**: User can create, rename, delete, switch, clear, and restore chat sessions per repo without losing current repo context.
 - [ ] **SHELL-03**: User keeps existing onboarding entry and completion behavior after the chat refactor.
-- [ ] **SHELL-04**: Sidebar separates session-list actions from repo utilities while preserving existing navigation, indexing, theme, and repo-delete access.
+- [x] **SHELL-04**: Sidebar separates session-list actions from repo utilities while preserving existing navigation, indexing, theme, and repo-delete access.
 
 ### Transport And Liveness
 
@@ -86,7 +86,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SHELL-01 | Phase 34 | Complete |
 | SHELL-02 | Phase 34 | Complete |
 | SHELL-03 | Phase 33 | Pending |
-| SHELL-04 | Phase 34 | Pending |
+| SHELL-04 | Phase 34 | Complete |
 | STRM-01 | Phase 35 | Pending |
 | STRM-02 | Phase 35 | Pending |
 | STRM-03 | Phase 35 | Pending |
