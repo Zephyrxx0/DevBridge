@@ -25,6 +25,8 @@ import { ChatStream } from "@/components/chat/ChatStream";
 import { ChatInput } from "@/components/chat/ChatInput";
 import type { Message, SourceReference, SnippetChip } from "@/components/chat/types";
 import type { OnboardingPlan } from "@/hooks/useOnboarding";
+import { buildPromptContext, type PromptLoadedReference } from "@/lib/chat/prompt-context";
+import { createChatStreamPayload } from "@/lib/chat/prompt-submit";
 
 type FileContent = {
   content: string;
@@ -58,6 +60,50 @@ const languageMap: Record<string, string> = {
 function detectLanguage(filePath: string, fallback: string): string {
   const ext = filePath.split(".").pop()?.toLowerCase() || "";
   return languageMap[ext] || fallback || "plaintext";
+}
+
+function parseDroppedContextChip(raw: string): SnippetChip | null {
+  try {
+    const parsed = JSON.parse(raw) as {
+      kind?: unknown;
+      filePath?: unknown;
+      startLine?: unknown;
+      endLine?: unknown;
+      code?: unknown;
+    };
+
+    if (typeof parsed.filePath !== "string" || !parsed.filePath) return null;
+    if (parsed.kind !== "snippet" && parsed.kind !== "file" && parsed.kind !== "folder") return null;
+
+    if (parsed.kind === "snippet") {
+      if (typeof parsed.startLine !== "number" || typeof parsed.endLine !== "number" || typeof parsed.code !== "string") {
+        return null;
+      }
+      return {
+        id: `${parsed.filePath}:${parsed.startLine}-${parsed.endLine}:${Date.now()}`,
+        kind: "snippet",
+        filePath: parsed.filePath,
+        startLine: parsed.startLine,
+        endLine: parsed.endLine,
+        code: parsed.code,
+      };
+    }
+
+    if (parsed.startLine !== undefined && typeof parsed.startLine !== "number") return null;
+    if (parsed.endLine !== undefined && typeof parsed.endLine !== "number") return null;
+    if (parsed.code !== undefined && typeof parsed.code !== "string") return null;
+
+    return {
+      id: `${parsed.filePath}:${Date.now()}`,
+      kind: parsed.kind,
+      filePath: parsed.filePath,
+      startLine: 1,
+      endLine: 1,
+      code: "",
+    };
+  } catch {
+    return null;
+  }
 }
 
 import { useRepo } from "@/contexts/repo-context";
@@ -381,12 +427,96 @@ export default function RepoWorkspacePage() {
     return () => clearInterval(interval);
   }, [branchIndexing, apiUrl, repoId, refreshRepo]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const loadPromptReferences = useCallback(async (chips: SnippetChip[]): Promise<PromptLoadedReference[]> => {
+    return Promise.all(
+      chips.map(async (chip) => {
+        if (chip.kind === "snippet") {
+          if (chip.code.trim()) {
+            return {
+              kind: "snippet",
+              label: `${chip.filePath}:${chip.startLine}-${chip.endLine}`,
+              content: chip.code,
+            };
+          }
 
-    if (!input.trim() || isLoading) return;
+          return {
+            kind: "snippet",
+            label: `${chip.filePath}:${chip.startLine}-${chip.endLine}`,
+            content: "Reference provided without content.",
+          };
+        }
 
-    if (input.trim() === "/clear") {
+        if (chip.kind === "file") {
+          try {
+            const response = await fetch(`${apiUrl}/repo/${repoId}/files/${encodeURIComponent(chip.filePath)}`);
+            if (!response.ok) {
+              return {
+                kind: "file",
+                label: chip.filePath,
+                content: `Unable to load file content (${response.status}).`,
+              };
+            }
+            const data = (await response.json()) as FileContent;
+            return {
+              kind: "file",
+              label: chip.filePath,
+              content: data.content || "(empty file)",
+            };
+          } catch {
+            return {
+              kind: "file",
+              label: chip.filePath,
+              content: "Unable to load file content.",
+            };
+          }
+        }
+
+        const filesUnderFolder: string[] = [];
+        const walk = (node: FileNode | null) => {
+          if (!node) return;
+          if (node.type === "file" && node.path.startsWith(`${chip.filePath}/`)) {
+            filesUnderFolder.push(node.path);
+          }
+          node.children?.forEach(walk);
+        };
+        walk(fileTree);
+
+        const selectedFiles = filesUnderFolder.slice(0, 8);
+        if (selectedFiles.length === 0) {
+          return {
+            kind: "folder",
+            label: chip.filePath,
+            content: "Folder reference provided, but no files found.",
+          };
+        }
+
+        const folderChunks = await Promise.all(
+          selectedFiles.map(async (path) => {
+            try {
+              const response = await fetch(`${apiUrl}/repo/${repoId}/files/${encodeURIComponent(path)}`);
+              if (!response.ok) return `## ${path}\nUnable to load (${response.status}).`;
+              const data = (await response.json()) as FileContent;
+              const trimmed = data.content?.slice(0, 8000) || "";
+              return `## ${path}\n${trimmed || "(empty file)"}`;
+            } catch {
+              return `## ${path}\nUnable to load file content.`;
+            }
+          })
+        );
+
+        return {
+          kind: "folder",
+          label: chip.filePath,
+          content: folderChunks.join("\n\n"),
+        };
+      })
+    );
+  }, [apiUrl, fileTree, repoId]);
+
+  const handleSubmit = async ({ text }: { text: string }) => {
+    if (!text.trim() || isLoading) return;
+
+    if (text.trim() === "/clear") {
       if (!activeSessionId) return;
       try {
         const response = await fetch(`${apiUrl}/chats/${activeSessionId}/messages`, {
@@ -405,100 +535,16 @@ export default function RepoWorkspacePage() {
       return;
     }
 
-    const userMessage = input.trim();
-    const snippetPayloads = await Promise.all(
-      snippetChips.map(async (chip) => {
-        if (chip.code.trim()) {
-          return {
-            label: `${chip.filePath}:${chip.startLine}-${chip.endLine}`,
-            content: chip.code,
-          };
-        }
+    const loadedReferences = await loadPromptReferences(snippetChips);
+    const promptContext = buildPromptContext({
+      text,
+      chips: snippetChips,
+      loadedReferences,
+    });
 
-        if (chip.kind === "file") {
-          try {
-            const response = await fetch(`${apiUrl}/repo/${repoId}/files/${encodeURIComponent(chip.filePath)}`);
-            if (!response.ok) {
-              return { label: chip.filePath, content: `Unable to load file content (${response.status}).` };
-            }
-            const data = (await response.json()) as FileContent;
-            return { label: chip.filePath, content: data.content || "(empty file)" };
-          } catch {
-            return { label: chip.filePath, content: "Unable to load file content." };
-          }
-        }
-
-        if (chip.kind === "folder") {
-          const filesUnderFolder: string[] = [];
-          const walk = (node: FileNode | null) => {
-            if (!node) return;
-            if (node.type === "file" && node.path.startsWith(`${chip.filePath}/`)) {
-              filesUnderFolder.push(node.path);
-            }
-            node.children?.forEach(walk);
-          };
-          walk(fileTree);
-
-          const selectedFiles = filesUnderFolder.slice(0, 8);
-          if (selectedFiles.length === 0) {
-            return { label: chip.filePath, content: "Folder reference provided, but no files found." };
-          }
-
-          const folderChunks = await Promise.all(
-            selectedFiles.map(async (path) => {
-              try {
-                const response = await fetch(`${apiUrl}/repo/${repoId}/files/${encodeURIComponent(path)}`);
-                if (!response.ok) return `## ${path}\nUnable to load (${response.status}).`;
-                const data = (await response.json()) as FileContent;
-                const trimmed = data.content?.slice(0, 8000) || "";
-                return `## ${path}\n${trimmed || "(empty file)"}`;
-              } catch {
-                return `## ${path}\nUnable to load file content.`;
-              }
-            })
-          );
-
-          return {
-            label: chip.filePath,
-            content: folderChunks.join("\n\n"),
-          };
-        }
-
-        return {
-          label: `${chip.filePath}:${chip.startLine}-${chip.endLine}`,
-          content: "Reference provided without content.",
-        };
-      })
-    );
-
-    const mentionRegex = /@([\w.\/-]+)/g;
-    const mentionMatches = [...userMessage.matchAll(mentionRegex)];
-    const uniqueMentionPaths = [...new Set(mentionMatches.map((m) => m[1]))];
-
-    let mentionResolvedMessage = userMessage;
-    const mentionContextParts: string[] = [];
-
-    for (const path of uniqueMentionPaths) {
-      mentionContextParts.push(`- ${path}`);
-      mentionResolvedMessage = mentionResolvedMessage.replace(
-        new RegExp(`@${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "g"),
-        path
-      );
-    }
-
-    const snippetContext = snippetPayloads.length
-      ? `\n\nReferenced snippets:\n${snippetPayloads
-          .map((payload) => `- ${payload.label}\n\`\`\`\n${payload.content}\n\`\`\``)
-          .join("\n")}`
-      : "";
-    const mentionContext = mentionContextParts.length
-      ? `\n\nReferenced files:\n${mentionContextParts.join("\n")}`
-      : "";
-    const fullPrompt = `${mentionResolvedMessage}${snippetContext}${mentionContext}`;
-    const artifactsForMessage = snippetChips.map((chip) => ({ ...chip }));
     setInput("");
     setSnippetChips([]);
-    setMessages((prev) => [...prev, { role: "user", content: userMessage, artifacts: artifactsForMessage }]);
+    setMessages((prev) => [...prev, { role: "user", content: promptContext.displayMessage, artifacts: promptContext.artifacts }]);
     setIsLoading(true);
 
     let accumulatedContent = "";
@@ -513,11 +559,11 @@ export default function RepoWorkspacePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
-        body: JSON.stringify({
-          message: fullPrompt,
-          repo_id: repoId,
-          thread_id: activeSessionId,
-        }),
+        body: JSON.stringify(createChatStreamPayload({
+          promptContext,
+          repoId,
+          threadId: activeSessionId,
+        })),
       });
 
       if (!response.ok) {
@@ -673,27 +719,10 @@ export default function RepoWorkspacePage() {
     const raw = event.dataTransfer.getData("application/x-devbridge-snippet") || event.dataTransfer.getData("application/x-devbridge-ref");
     if (!raw) return;
 
-    try {
-      const parsed = JSON.parse(raw) as {
-        kind?: "snippet" | "file" | "folder";
-        filePath: string;
-        startLine: number;
-        endLine: number;
-        code: string;
-      };
-
-      if (!parsed.filePath) return;
-      const chip: SnippetChip = {
-        id: `${parsed.filePath}:${parsed.startLine || 1}-${parsed.endLine || 1}:${Date.now()}`,
-        filePath: parsed.filePath,
-        startLine: parsed.startLine || 1,
-        endLine: parsed.endLine || 1,
-        code: parsed.code || "",
-        kind: parsed.kind,
-      };
+    const chip = parseDroppedContextChip(raw);
+    if (!chip) return;
+    if (chip.kind === "snippet" || chip.kind === "file" || chip.kind === "folder") {
       setSnippetChips((prev) => [...prev, chip]);
-    } catch {
-      // Ignore malformed drop payload.
     }
   };
 
