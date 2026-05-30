@@ -6,14 +6,38 @@ export type SourceReference = {
   similarity?: number;
 };
 
-export type SnippetChip = {
+type BaseContextChip = {
   id: string;
   filePath: string;
   startLine: number;
   endLine: number;
   code: string;
-  kind?: "snippet" | "file" | "folder";
 };
+
+export type SnippetContextChip = BaseContextChip & {
+  kind: "snippet";
+  startLine: number;
+  endLine: number;
+  code: string;
+};
+
+export type FileContextChip = BaseContextChip & {
+  kind: "file";
+  code: "";
+};
+
+export type FolderContextChip = BaseContextChip & {
+  kind: "folder";
+  code: "";
+};
+
+type LegacyContextChip = BaseContextChip & {
+  kind: "snippet" | "file" | "folder" | undefined;
+};
+
+export type ChatContextChip = SnippetContextChip | FileContextChip | FolderContextChip | LegacyContextChip;
+
+export type SnippetChip = ChatContextChip;
 
 export interface Message {
   role: "user" | "assistant";
@@ -22,5 +46,5 @@ export interface Message {
   model_used?: string;
   cascaded?: boolean;
   sources?: SourceReference[];
-  artifacts?: SnippetChip[];
+  artifacts?: ChatContextChip[];
 }
