@@ -11,7 +11,7 @@
 .gsd/
 .entire/
 .bob/
-.planning/
+# .planning/
 .vercel/
 
 node_modules/
@@ -51,3 +51,4 @@ devbridge-amd-spec.md
 AMD-AUDIT-SPEC.md
 bun.lock
 test-results/.last-run.json
+temp.md

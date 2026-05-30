@@ -18,7 +18,7 @@ interface ChatInputProps {
   snippetChips: SnippetChip[];
   onRemoveSnippet: (id: string) => void;
   onDropSnippet: (e: React.DragEvent<HTMLDivElement>) => void;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit: (payload: { text: string }) => void | Promise<void>;
   onStopGenerating?: () => void;
   fileTree?: FileNode | null;
 }
@@ -102,20 +102,26 @@ export function ChatInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (mentionQuery !== null && filteredFiles.length > 0) {
+    const fallbackMentionQuery = input.match(/@([\w.\/-]*)$/)?.[1] ?? null;
+    const activeMentionQuery = mentionQuery ?? fallbackMentionQuery;
+    const activeMentionFiles = activeMentionQuery === null
+      ? []
+      : flatFiles.filter((file) => file.toLowerCase().includes(activeMentionQuery.toLowerCase())).slice(0, 10);
+
+    if (activeMentionQuery !== null && activeMentionFiles.length > 0) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev + 1) % filteredFiles.length);
+        setSelectedIndex((prev) => (prev + 1) % activeMentionFiles.length);
         return;
       }
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + filteredFiles.length) % filteredFiles.length);
+        setSelectedIndex((prev) => (prev - 1 + activeMentionFiles.length) % activeMentionFiles.length);
         return;
       }
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
-        insertMention(filteredFiles[selectedIndex]);
+        insertMention(activeMentionFiles[selectedIndex]);
         return;
       }
       if (e.key === "Escape") {
@@ -124,17 +130,21 @@ export function ChatInput({
       }
     }
 
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && (!input.trim() || isLoading)) {
       e.preventDefault();
-      // Trigger form submit
-      if (input.trim() && !isLoading) {
-        const form = e.currentTarget.closest("form");
-        if (form) {
-          const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
-          form.dispatchEvent(submitEvent);
-        }
-      }
     }
+  };
+
+  const getChipLabel = (chip: SnippetChip): string => {
+    if (chip.kind === "folder") {
+      return `Folder · ${chip.filePath} · up to 8 files, 8k chars each`;
+    }
+
+    if (chip.kind === "file") {
+      return `File · ${chip.filePath}`;
+    }
+
+    return `Snippet · ${chip.filePath}:${chip.startLine}-${chip.endLine}`;
   };
 
   return (
@@ -152,9 +162,10 @@ export function ChatInput({
                 type="button"
                 onClick={() => onRemoveSnippet(chip.id)}
                 className="min-h-11 rounded-full border border-[var(--brand-muted)] bg-[var(--brand-muted)] px-3 py-1 text-[var(--text-xs)] text-[var(--brand)] transition-opacity hover:opacity-80"
-                title="Click to remove snippet"
+                title={`Click to remove ${chip.kind} context`}
+                aria-label={`Remove ${chip.kind} context: ${chip.filePath}`}
               >
-                {chip.filePath.split("/").pop() || chip.filePath}
+                {getChipLabel(chip)}
               </button>
             ))}
           </div>
@@ -189,10 +200,14 @@ export function ChatInput({
 
           <PromptInput
             className="flex-1 ring-0 shadow-none [&_[data-slot=input-group]]:border-[var(--border-strong)] [&_[data-slot=input-group]]:bg-[var(--surface-2)] [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:has-[[data-slot=input-group-control]:focus-visible]:ring-0 [&_[data-slot=input-group-addon][data-align=inline-end]]:border-l-0 [&_[data-slot=input-group-addon][data-align=inline-end]]:pl-0 [&_[data-slot=input-group-addon][data-align=inline-end]]:pr-1"
-            onSubmit={(msg, e) => onSubmit(e)}
+            onSubmit={(message) => {
+              const text = message.text.trim();
+              if (!text || isLoading) return;
+              onSubmit({ text });
+            }}
           >
             <PromptInputTextarea
-              ref={inputRef as any}
+              ref={inputRef}
               value={input}
               onChange={handleInputChange}
               placeholder="Ask about your code, use @path/to/file, or drop snippet here..."

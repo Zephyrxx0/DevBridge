@@ -207,8 +207,7 @@ async def clear_chat_messages(session_id: str):
     update_query = text(
         """
         UPDATE chat_sessions
-        SET updated_at = NOW(),
-            title = 'New chat'
+        SET updated_at = NOW()
         WHERE id = CAST(:session_id AS uuid)
         """
     )
