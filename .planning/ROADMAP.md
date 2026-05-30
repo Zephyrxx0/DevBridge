@@ -178,7 +178,7 @@ Plans:
 | 31. Memory Curation Dashboard | 4/4 | Complete | 2026-05-19 |
 | 32. Streaming Escalation UX | 2/2 | Complete | 2026-05-19 |
 | 33. Behavior Pinning & Prompt Helpers | 0/0 | Not started | - |
-| 34. Chat Shell & Session Boundaries | 4/4 | Complete   | 2026-05-30 |
+| 34. Chat Shell & Session Boundaries | 4/4 | Complete    | 2026-05-30 |
 | 35. Typed Transport & Liveness Budgets | 0/0 | Not started | - |
 | 36. Repo File/Source Workspace Hooks | 0/0 | Not started | - |
 | 37. Canonical Chat UI & Assistant Models | 0/0 | Not started | - |

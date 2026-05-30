@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Chat System Rebuild
-status: verifying
+status: ready_to_plan
 last_updated: "2026-05-30T16:18:12.008Z"
 last_activity: 2026-05-30
 progress:
   total_phases: 11
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
   completed_plans: 4
-  percent: 57
+  percent: 18
 ---
 
 # Project State
@@ -22,9 +22,9 @@ progress:
 
 ## Current Position
 
-Phase: 34 (chat-shell-session-boundaries) — EXECUTING
-Plan: 4 of 4
-Status: Phase complete — ready for verification
+Phase: 35
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-05-30
 
 Progress: [██████░░░░] 57%
