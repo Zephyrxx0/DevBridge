@@ -1,0 +1,13 @@
+I want to create a day wise doc for my project [https://github.com/Zephyrxx0/DevBridge](https://github.com/Zephyrxx0/DevBridge) . It should be of 7 days, Sunday to Sunday. Fill updates upto today (wednesday) and leave the rest blank. Refer to early to mid stages of the project to write the doc
+
+phase 1-6 sunday
+phase 7-12 monday
+phase 13-18 tuesday
+phase 19-24 wednesday
+thursday friday saturday : to be decided
+
+do not write date or phase numbers 
+
+Write it in a human like language, notion compatible and detailed + point wise distribution wheverer needed , Tell what and why it was needed 
+
+At the very top, give a brief overview of what it is supposed to be (gist till phase 32)
