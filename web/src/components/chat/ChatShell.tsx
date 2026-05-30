@@ -773,7 +773,7 @@ export function ChatShell({ repoId, repo, apiUrl }: { repoId: string; repo: Repo
     } catch {
       window.alert("Failed to remove repository from workspace.");
     }
-  }, [apiUrl, repoId, router]);
+  }, [apiUrl, repoId]);
 
   return (
     <div className="h-dvh w-full overflow-hidden p-0">
