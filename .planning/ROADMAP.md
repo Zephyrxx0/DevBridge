@@ -103,7 +103,7 @@ Plans:
     4. Route-level changes shrink or isolate orchestration rather than growing `web/src/app/repo/[id]/page.tsx`.
   **Plans**: 3 plans
   - [x] 34-01-PLAN.md — Update backend clear endpoint and extract useChatSessions hook
-  - [ ] 34-02-PLAN.md — Update HistorySidebar UI to include app-owned dialogs/inline editing
+  - [x] 34-02-PLAN.md — Update HistorySidebar UI to include app-owned dialogs/inline editing
   - [ ] 34-03-PLAN.md — Extract the heavy route orchestration into a ChatShell module
   **UI hint**: yes
 
@@ -177,7 +177,7 @@ Plans:
 | 31. Memory Curation Dashboard | 4/4 | Complete | 2026-05-19 |
 | 32. Streaming Escalation UX | 2/2 | Complete | 2026-05-19 |
 | 33. Behavior Pinning & Prompt Helpers | 0/0 | Not started | - |
-| 34. Chat Shell & Session Boundaries | 1/3 | In Progress|  |
+| 34. Chat Shell & Session Boundaries | 2/3 | In Progress|  |
 | 35. Typed Transport & Liveness Budgets | 0/0 | Not started | - |
 | 36. Repo File/Source Workspace Hooks | 0/0 | Not started | - |
 | 37. Canonical Chat UI & Assistant Models | 0/0 | Not started | - |
