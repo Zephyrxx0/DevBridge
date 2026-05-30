@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.6.2",
+  "checkpoint_id": "3ca4d11c078c",
+  "session_id": "9c164333-b258-42be-861e-03df6e843790",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-30T10:08:40.8996289Z",
+  "branch": "phase-33-behavior-pinning-prompt-helpers",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".bg-shell/manifest.json",
+    ".planning/phases/33-behavior-pinning-prompt-helpers/33-01-SUMMARY.md",
+    ".planning/phases/33-behavior-pinning-prompt-helpers/33-02-SUMMARY.md",
+    ".planning/phases/33-behavior-pinning-prompt-helpers/33-03-SUMMARY.md",
+    ".vercel/project.json",
+    "temp.md"
+  ],
+  "agent": "Claude Code",
+  "model": "auto",
+  "turn_id": "f4fcf688036c",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-30T10:08:40.8904055Z",
+    "agent_lines": 154,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 52,
+    "human_removed": 0,
+    "total_committed": 206,
+    "total_lines_changed": 206,
+    "agent_percentage": 74.75728155339806,
+    "metric_version": 2
+  }
+}
