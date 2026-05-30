@@ -170,6 +170,28 @@ export default function RepoWorkspacePage() {
     }
   };
 
+  const clearChat = async (sessionId: string) => {
+    try {
+      const response = await fetch(`${apiUrl}/chats/${sessionId}/messages`, {
+        method: "DELETE",
+      });
+      if (!response.ok) return;
+      setMessages([]);
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === sessionId
+            ? {
+                ...session,
+                last_message: undefined,
+              }
+            : session
+        )
+      );
+    } catch (e) {
+      console.error("Failed to clear chat:", e);
+    }
+  };
+
   useEffect(() => {
     async function loadSessions() {
       setLoadingSessions(true);
@@ -878,6 +900,7 @@ export default function RepoWorkspacePage() {
             onCreateSession={createSession}
             onRenameSession={renameChat}
             onDeleteSession={deleteChat}
+            onClearSession={clearChat}
             onTriggerIndex={triggerIndexFiles}
             onRemoveRepo={removeRepoFromWorkspace}
           />

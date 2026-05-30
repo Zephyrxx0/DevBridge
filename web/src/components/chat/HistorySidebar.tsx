@@ -40,6 +40,7 @@ interface HistorySidebarProps {
   onCreateSession: () => void;
   onRenameSession: (id: string, newTitle: string) => void;
   onDeleteSession: (id: string) => void;
+  onClearSession: (id: string) => void;
   onTriggerIndex: () => void;
   onRemoveRepo: () => void;
 }
@@ -54,6 +55,7 @@ export function HistorySidebar({
   onCreateSession,
   onRenameSession,
   onDeleteSession,
+  onClearSession,
   onTriggerIndex,
   onRemoveRepo,
 }: HistorySidebarProps) {
@@ -65,6 +67,7 @@ export function HistorySidebar({
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [deleteDialogSessionId, setDeleteDialogSessionId] = useState<string | null>(null);
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -280,6 +283,18 @@ export function HistorySidebar({
                 type="button"
                 variant="ghost"
                 size="sm"
+                className={cn("min-h-11 w-full justify-start gap-2 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/30 dark:hover:text-amber-200", collapsed && "w-10 justify-center px-0")}
+                onClick={() => setClearDialogOpen(true)}
+                disabled={!activeSessionId}
+              >
+                <Trash2 className="size-4" />
+                {!collapsed ? "Clear active chat" : null}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 className={cn("min-h-11 w-full justify-start gap-2", collapsed && "w-10 justify-center px-0")}
                 aria-label="Toggle theme"
                 onClick={() => setTheme(theme === "light" ? "dark" : "light")}
@@ -338,6 +353,37 @@ export function HistorySidebar({
               }}
             >
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear active chat?</DialogTitle>
+            <DialogDescription>
+              This will remove all messages in current session. Session shell remains.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setClearDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (!activeSessionId) return;
+                onClearSession(activeSessionId);
+                setClearDialogOpen(false);
+              }}
+            >
+              Clear chat
             </Button>
           </DialogFooter>
         </DialogContent>
