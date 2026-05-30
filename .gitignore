@@ -11,6 +11,9 @@
 .gsd/
 .entire/
 .bob/
+# .planning/
+.vercel/
+
 
 node_modules/
 graphify-out/
@@ -19,10 +22,7 @@ memories/
 .mcp.json
 
 __pycache__/
-.bg-shell/backend-fix2.err.log
-.bg-shell/backend-fix2.out.log
-.bg-shell/backend-smoke.err.log
-.bg-shell/backend-smoke.log
+.bg-shell/
 .codex/hooks.json
 .entire/logs/entire.log
 GRAPH_REPORT.md
@@ -51,3 +51,4 @@ devbridge-amd-spec.md
 AMD-AUDIT-SPEC.md
 bun.lock
 test-results/.last-run.json
+temp.md
