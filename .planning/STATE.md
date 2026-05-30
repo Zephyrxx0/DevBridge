@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Chat System Rebuild
 status: executing
-last_updated: "2026-05-29T11:48:47.688Z"
-last_activity: 2026-05-29 -- Phase 33 planning complete
+last_updated: "2026-05-30T10:18:28.000Z"
+last_activity: 2026-05-30
 progress:
-  total_phases: 7
+  total_phases: 11
   completed_phases: 0
-  total_plans: 3
-  completed_plans: 0
-  percent: 0
+  total_plans: 6
+  completed_plans: 1
+  percent: 17
 ---
 
 # Project State
@@ -22,12 +22,12 @@ progress:
 
 ## Current Position
 
-Phase: 33 — Behavior Pinning & Prompt Helpers
-Plan: —
+Phase: 34 (chat-shell-session-boundaries) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-05-29 -- Phase 33 planning complete
+Last activity: 2026-05-30
 
-Progress: [--------------------] 0% (0/7 phases complete)
+Progress: [██░░░░░░░░] 17%
 
 ## Performance Metrics
 
