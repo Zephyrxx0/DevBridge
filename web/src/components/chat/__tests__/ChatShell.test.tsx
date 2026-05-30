@@ -59,7 +59,6 @@ describe("ChatShell remove repo callback", () => {
   const fetchMock = jest.fn();
   const confirmSpy = jest.spyOn(window, "confirm");
   const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => undefined);
-  const assignSpy = jest.spyOn(window.location, "assign").mockImplementation(() => undefined);
 
   beforeEach(() => {
     fetchMock.mockImplementation((input: RequestInfo | URL) => {
@@ -82,7 +81,6 @@ describe("ChatShell remove repo callback", () => {
 
   afterAll(() => {
     alertSpy.mockRestore();
-    assignSpy.mockRestore();
     confirmSpy.mockRestore();
   });
 
@@ -93,10 +91,13 @@ describe("ChatShell remove repo callback", () => {
 
     expect(() => {
       fireEvent.click(removeButton);
-    }).toThrow();
+    }).not.toThrow();
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("http://localhost:8000/repo/repo-1", { method: "DELETE" });
     });
+
+    expect(localStorage.getItem("repo:repo-1:activeSessionId")).toBeNull();
+    expect(localStorage.getItem("repo:repo-1:selectedBranch")).toBeNull();
   });
 });
