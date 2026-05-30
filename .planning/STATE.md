@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Chat System Rebuild
 status: verifying
-last_updated: "2026-05-30T16:01:45.182Z"
+last_updated: "2026-05-30T16:18:12.008Z"
 last_activity: 2026-05-30
 progress:
   total_phases: 11
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 3
-  percent: 50
+  total_plans: 7
+  completed_plans: 4
+  percent: 57
 ---
 
 # Project State
@@ -23,11 +23,11 @@ progress:
 ## Current Position
 
 Phase: 34 (chat-shell-session-boundaries) — EXECUTING
-Plan: 3 of 3
+Plan: 4 of 4
 Status: Phase complete — ready for verification
 Last activity: 2026-05-30
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 57%
 
 ## Performance Metrics
 
@@ -45,6 +45,8 @@ Progress: [█████░░░░░] 50%
 - OpenUI must remain behind guarded adapter and feature gate; CLI exploration uses `npx @openuidev/cli@latest create` in scratch only unless adapter review selects code.
 - GSAP is allowed only after ownership boundaries are stable, in scoped cleanup-safe hooks/components that respect reduced motion.
 - servercn is pattern review first; broad runtime adoption remains out of scope unless explicitly adopted by decision note.
+- Plan 34-04 removed out-of-scope `router` from ChatShell remove callback dependencies to prevent runtime ReferenceError.
+- Plan 34-04 added mount/remove callback regression coverage to lock hook dependency safety for shell runtime path.
 
 ### Blockers / Open Questions
 
