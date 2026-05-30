@@ -129,21 +129,19 @@ export default function RepoWorkspacePage() {
     return created;
   }, [apiUrl, repoId]);
 
-  const renameChat = async (sessionId: string) => {
-    const session = sessions.find((s) => s.id === sessionId);
-    if (!session) return;
-    const newTitle = window.prompt("Enter new chat name:", session.title);
-    if (!newTitle || newTitle === session.title) return;
+  const renameChat = async (sessionId: string, newTitle: string) => {
+    const normalizedTitle = newTitle.trim();
+    if (!normalizedTitle) return;
 
     try {
       const response = await fetch(`${apiUrl}/repo/${repoId}/chats/${sessionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newTitle }),
+        body: JSON.stringify({ title: normalizedTitle }),
       });
       if (response.ok) {
         setSessions((prev) =>
-          prev.map((s) => (s.id === sessionId ? { ...s, title: newTitle } : s))
+          prev.map((s) => (s.id === sessionId ? { ...s, title: normalizedTitle } : s))
         );
       }
     } catch (e) {
@@ -152,8 +150,6 @@ export default function RepoWorkspacePage() {
   };
 
   const deleteChat = async (sessionId: string) => {
-    if (!window.confirm("Are you sure you want to delete this chat?")) return;
-
     try {
       const response = await fetch(`${apiUrl}/repo/${repoId}/chats/${sessionId}`, {
         method: "DELETE",

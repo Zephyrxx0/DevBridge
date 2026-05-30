@@ -13,6 +13,14 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Sidebar, SidebarHeader, SidebarContent, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 
 export type ChatSession = {
@@ -30,7 +38,7 @@ interface HistorySidebarProps {
   branchIndexMsg: string;
   onSelectSession: (id: string) => void;
   onCreateSession: () => void;
-  onRenameSession: (id: string) => void;
+  onRenameSession: (id: string, newTitle: string) => void;
   onDeleteSession: (id: string) => void;
   onTriggerIndex: () => void;
   onRemoveRepo: () => void;
@@ -54,6 +62,9 @@ export function HistorySidebar({
   const { collapsed } = useSidebar();
   const [mounted, setMounted] = useState(false);
   const [heroImageIndex, setHeroImageIndex] = useState(0);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [deleteDialogSessionId, setDeleteDialogSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -85,6 +96,28 @@ export function HistorySidebar({
       ]
     : [];
   const heroImageUrl = heroImageCandidates[heroImageIndex] ?? null;
+  const deleteDialogSession = sessions.find((session) => session.id === deleteDialogSessionId) ?? null;
+
+  const startRenameSession = (session: ChatSession) => {
+    setEditingSessionId(session.id);
+    setEditingTitle(session.title || "");
+  };
+
+  const cancelRenameSession = () => {
+    setEditingSessionId(null);
+    setEditingTitle("");
+  };
+
+  const saveRenameSession = (session: ChatSession) => {
+    const trimmedTitle = editingTitle.trim();
+    const currentTitle = (session.title || "").trim();
+    if (!trimmedTitle || trimmedTitle === currentTitle) {
+      cancelRenameSession();
+      return;
+    }
+    onRenameSession(session.id, trimmedTitle);
+    cancelRenameSession();
+  };
 
   return (
     <Sidebar className="border-r border-[var(--border)] bg-[var(--surface-1)]">
@@ -171,12 +204,36 @@ export function HistorySidebar({
                       onClick={() => onSelectSession(session.id)}
                       className={cn("flex min-w-0 flex-1 items-center gap-2 text-left", collapsed && "justify-center")}
                     >
-                      {!collapsed ? <span className="truncate">{session.title || "New chat"}</span> : null}
+                      {!collapsed ? (
+                        editingSessionId === session.id ? (
+                          <input
+                            value={editingTitle}
+                            autoFocus
+                            onChange={(event) => setEditingTitle(event.target.value)}
+                            onClick={(event) => event.stopPropagation()}
+                            onBlur={() => saveRenameSession(session)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                saveRenameSession(session);
+                              }
+                              if (event.key === "Escape") {
+                                event.preventDefault();
+                                cancelRenameSession();
+                              }
+                            }}
+                            className="w-full rounded border border-[var(--border)] bg-[var(--surface-1)] px-2 py-1 text-sm text-[var(--foreground)] outline-none ring-offset-0 focus:ring-1 focus:ring-[var(--brand)]"
+                            aria-label="Rename chat session"
+                          />
+                        ) : (
+                          <span className="truncate">{session.title || "New chat"}</span>
+                        )
+                      ) : null}
                     </button>
                   </ContextMenuTrigger>
                   <ContextMenuContent>
-                    <ContextMenuItem onClick={() => onRenameSession(session.id)}>Rename</ContextMenuItem>
-                    <ContextMenuItem onClick={() => onDeleteSession(session.id)} className="text-red-500">Delete</ContextMenuItem>
+                    <ContextMenuItem onClick={() => startRenameSession(session)}>Rename</ContextMenuItem>
+                    <ContextMenuItem onClick={() => setDeleteDialogSessionId(session.id)} className="text-red-500">Delete</ContextMenuItem>
                   </ContextMenuContent>
                 </ContextMenu>
               ))}
@@ -250,6 +307,41 @@ export function HistorySidebar({
           )}
         </div>
       </SidebarContent>
+
+      <Dialog open={Boolean(deleteDialogSession)} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteDialogSessionId(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete chat session?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete <span className="font-medium text-foreground">{deleteDialogSession?.title || "New chat"}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteDialogSessionId(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (!deleteDialogSessionId) return;
+                onDeleteSession(deleteDialogSessionId);
+                setDeleteDialogSessionId(null);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   );
 }
